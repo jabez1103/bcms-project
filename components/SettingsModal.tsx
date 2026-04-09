@@ -7,8 +7,11 @@ interface SettingsModalProps {
 }
 
 export function SettingsModal({ onClose }: SettingsModalProps) {
-  const [windowSize, setWindowSize] = useState<{ width: number; height: number } | null>(null);
-  
+  const [windowSize, setWindowSize] = useState<{
+    width: number;
+    height: number;
+  } | null>(null);
+
   // Track position in state to force centering
   const [position, setPosition] = useState({ x: 0, y: 0 });
 
@@ -30,8 +33,8 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
       const modalH = 650; // Using minHeight as the reference for centering
 
       setPosition({
-        x: (width / 2) - (modalW / 2),
-        y: (height / 2) - (modalH / 2),
+        x: width / 2 - modalW / 2,
+        y: height / 2 - modalH / 2,
       });
     };
 
@@ -69,12 +72,14 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
         minWidth={300}
         minHeight={400}
         dragHandleClassName="handle"
-        style={{ zIndex: 50, position: 'fixed' }} 
+        style={{ zIndex: 50, position: "fixed" }}
       >
         <div className="bg-white border rounded-xl shadow-2xl w-full h-full flex flex-col overflow-hidden border-gray-200">
           {/* Drag handle */}
           <div className="handle bg-gray-50 border-b px-4 py-3 flex justify-between items-center cursor-move select-none">
-            <span className="font-semibold text-gray-800 text-sm lg:text-base">Settings</span>
+            <span className="font-semibold text-gray-800 text-sm lg:text-base">
+              Settings
+            </span>
             <button
               onClick={onClose}
               className="text-xs lg:text-sm bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded transition-colors text-gray-700"
@@ -87,7 +92,9 @@ export function SettingsModal({ onClose }: SettingsModalProps) {
           <div className="p-6 flex-1 overflow-auto text-gray-700">
             <h3 className="text-lg font-medium mb-2">User Preferences</h3>
             <p className="text-sm text-gray-500">
-              Basta Settings ni siya, wala pa koy gibutang diri kay wala pa koy nahuna-hunaan nga settings nga i-add. Pero pwede nimo i-close ang modal by clicking the close button or pressing Escape key.
+              Basta Settings ni siya, wala pa koy gibutang diri kay wala pa koy
+              nahuna-hunaan nga settings nga i-add. Pero pwede nimo i-close ang
+              modal by clicking the close button or pressing Escape key.
             </p>
             {/* Additional settings can go here */}
           </div>

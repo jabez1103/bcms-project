@@ -1,14 +1,10 @@
-// components/types.ts
 
-// ----- USER ROLES -----
 export type UserRole =
   | "student"
   | "admin"
   | "signatory";
 
 
-// ----- ALL POSSIBLE PAGES -----
-// types.ts
 export type PageType =
   | "Home"
   | "Signatories"

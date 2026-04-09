@@ -1,4 +1,3 @@
-// 1. Define the Interface so TypeScript knows what to expect
 export interface Signatory {
   id: number;
   person: {
@@ -7,14 +6,14 @@ export interface Signatory {
     avatar: string;
   };
   role: string;
-  status: 'Approved' | 'Pending' | 'Not Submitted'; // Specific string union
-  subStatus?: 'In Queue' | 'Rejected' | '';        // The '?' makes it optional
-  rejectionComment?: string;                       // The '?' makes it optional
+  status: 'Approved' | 'Pending' | 'Not Submitted'; 
+  subStatus?: 'In Queue' | 'Rejected' | '';        
+  rejectionComment?: string;                       
   requirements: string[];
   description: string;
 }
 
-// 2. Create the Mock Data Array
+// Mock Data Array
 export const signatories: Signatory[] = [
   {
     id: 1,
@@ -72,8 +71,8 @@ export const signatories: Signatory[] = [
     },
     role: "Clinic / Medical",
     status: "Not Submitted",
-    subStatus: "", // Corrected to empty string
-    rejectionComment: undefined, // optional, can remove entirely
+    subStatus: "", 
+    rejectionComment: undefined, 
     requirements: ["Medical Clearance Form", "Health Certificate"],
     description: "Responsible for endorsing medical clearance for students."
   }

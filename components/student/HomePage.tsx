@@ -41,7 +41,7 @@ export default function HomePage() {
   );
 
   return (
-    <div className="bg-white min-h-screen min-w-full relative">
+    <div className="bg-gray-50 min-h-screen min-w-full relative">
       {/* --- STICKY HEADER --- */}
       <div
         className={`sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-gray-200 px-6 md:px-10 py-4 transition-transform duration-300 ease-in-out ${

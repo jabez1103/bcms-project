@@ -34,7 +34,7 @@ export default function SignatoryLayout({ children }: { children: React.ReactNod
         <div className="flex-1 flex flex-col min-w-0 bg-[#f4f6f9] overflow-y-auto"> 
           
           {/* Main content - removed internal scroll */}
-          <main className="flex-1 p-4 bg-white">
+          <main className="flex-1 p-4 bg-gray-50">
             {children}
           </main>
           
