@@ -14,14 +14,14 @@ import {
   Settings as SettingsIcon,
   LogOut
 } from "lucide-react";
-import { PageType, UserRole } from "./types";
+import { PageType, UserRole } from "@/types";
 import { SettingsModal } from "./SettingsModal";
 import { LogoutModal } from "./LogoutModal";
 
 interface HeaderProps {
   role: UserRole;
-  activePage: PageType;
-  onPageClick: (page: PageType) => void;
+  activePage?: PageType;
+  onPageClick?: (page: PageType) => void;
 }
 
 interface NotificationItem {

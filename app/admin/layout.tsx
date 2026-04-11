@@ -3,7 +3,7 @@ import { Header } from "@/components/Header";
 import { LogoutModal } from "@/components/LogoutModal";
 import { SettingsModal } from "@/components/SettingsModal";
 import { Sidebar } from "@/components/Sidebar";
-import { PageType } from "@/components/types";
+import { PageType } from "@/types";
 import { useState } from "react";
 import { Footer } from "@/components/Footer";
 

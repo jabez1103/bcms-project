@@ -16,10 +16,11 @@ import {
   ArrowLeft,
 } from "lucide-react";
 interface SettingsModalProps {
-  isOpen: boolean; // Add this
+  isOpen?: boolean;
   onClose: () => void;
 }
-export function SettingsModal({ onClose, isOpen }: any) {
+
+export function SettingsModal({ onClose, isOpen = false }: SettingsModalProps) {
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [activeTab, setActiveTab] = useState("Account");
   const [isMobile, setIsMobile] = useState(false);

@@ -4,6 +4,7 @@ export interface Signatory {
     id: number;
     name: string;
     avatar: string;
+    email?: string;
   };
   role: string;
   status: 'Approved' | 'Pending' | 'Not Submitted'; 

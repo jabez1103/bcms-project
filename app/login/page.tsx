@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import DesktopLogin from "./loggingIn/desktopLogInPage";
-import MobileLogin from "./loggingIn/mobileLoginPage";
+import DesktopLogin from "@/components/login/DesktopLoginPage";
+import MobileLogin from "@/components/login/MobileLoginPage";
 
 export default function LoginLayout() {
   const [isMobile, setIsMobile] = useState(false);

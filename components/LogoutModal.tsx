@@ -7,13 +7,10 @@ import { LogOut, AlertCircle, Loader2 } from "lucide-react"; // Added Icons
 
 interface LogoutModalProps {
   onClose: () => void;
+  isOpen?: boolean;
 }
-interface LogoutModalProps {
-  // Renamed for clarity
-  isOpen: boolean;
-  onClose: () => void;
-}
-export function LogoutModal({ onClose, isOpen }: LogoutModalProps) {
+
+export function LogoutModal({ onClose, isOpen = false }: LogoutModalProps) {
   const router = useRouter();
   const [windowSize, setWindowSize] = useState<{
     width: number;
