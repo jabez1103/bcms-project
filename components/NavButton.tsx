@@ -1,59 +1,68 @@
+"use client";
+
+import React from "react";
+import { ChevronDown } from "lucide-react";
+
 interface NavButtonProps {
   label: string;
-  icon?: string;
-  hideLabel?: boolean; 
+  icon: React.ReactNode; // Changed from string to React.ReactNode
   active?: boolean;
+  hideLabel?: boolean;
   onClick?: () => void;
-  isDropdownOpen?: boolean; 
-  showArrow?: boolean;      
+  showArrow?: boolean;
+  isDropdownOpen?: boolean;
 }
 
-export function NavButton({ 
-  label, 
-  icon, 
-  active, 
-  onClick, 
-  isDropdownOpen, 
+export function NavButton({
+  label,
+  icon,
+  active,
+  hideLabel,
+  onClick,
   showArrow,
-  hideLabel 
+  isDropdownOpen,
 }: NavButtonProps) {
   return (
     <button
       onClick={onClick}
       className={`
-        w-full flex items-center justify-between
-        px-3 py-3 rounded-xl
-        cursor-pointer transition-all duration-200
-        ${active ? "bg-purple-100 font-semibold text-purple-700" : "text-gray-700"}
-        ${!hideLabel ? "hover:bg-purple-100/50 hover:shadow-sm" : ""}
+        w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all relative group
+        ${active 
+          ? "bg-purple-50 text-purple-600" 
+          : "hover:bg-slate-50 text-slate-500 hover:text-slate-900"
+        }
       `}
     >
-      <div className={`flex items-center ${hideLabel ? "justify-center w-full" : "space-x-3"}`}>
-        {icon && (
-          <img 
-            src={icon} 
-            alt={`${label} Icon`} 
-            /* Added flex-shrink-0 and fixed dimensions */
-            className="w-5 h-5 min-w-[20px] min-h-[20px] flex-shrink-0 opacity-80" 
-          />
-        )}
-        
-        {!hideLabel && (
-          <span className="text-sm whitespace-nowrap overflow-hidden">
-            {label}
-          </span>
-        )}
+      {/* --- ICON CONTAINER --- */}
+      <div className={`flex-shrink-0 transition-colors ${active ? "text-purple-600" : "text-slate-400 group-hover:text-purple-500"}`}>
+        {icon}
       </div>
 
-      {showArrow && !hideLabel && (
-        <img
-          src="/arrow.png"
-          alt="Dropdown Arrow"
-          /* Added flex-shrink-0 here too */
-          className={`w-4 h-4 flex-shrink-0 transform transition-transform duration-300 ${
-            isDropdownOpen ? "rotate-180" : "rotate-0"
-          }`}
+      {/* --- LABEL --- */}
+      {!hideLabel && (
+        <span className={`text-sm font-bold truncate flex-1 text-left ${active ? "text-slate-900" : ""}`}>
+          {label}
+        </span>
+      )}
+
+      {/* --- DROPDOWN ARROW --- */}
+      {!hideLabel && showArrow && (
+        <ChevronDown
+          size={16}
+          className={`transition-transform duration-300 ${isDropdownOpen ? "rotate-180 text-purple-600" : "text-slate-400"}`}
         />
+      )}
+
+      {/* --- TOOLTIP (Visible only when collapsed) --- */}
+      {hideLabel && (
+        <div className="absolute left-full ml-4 px-2 py-1 bg-slate-800 text-white text-[10px] font-bold rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50">
+          {label}
+        </div>
+      )}
+
+      {/* --- ACTIVE INDICATOR (Vertical Line) --- */}
+      {active && (
+        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-purple-600 rounded-r-full" />
       )}
     </button>
   );
