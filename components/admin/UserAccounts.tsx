@@ -89,11 +89,11 @@ export default function UserAccounts() {
           </button>
         </div>
 
-        <table className="w-full border text-sm">
+        <table className="w-full border text-sm bg-black">
           <thead className="bg-gray-100">
             <tr className="font-bold">
               {["User ID", "Name", "Email", "Role", "Account Status", "Actions"].map(h => (
-                <th key={h} className="border px-3 py-2 text-left">{h}</th>
+                <th key={h} className="border px-3 py-2 text-left bg-pink-600">{h}</th>
               ))}
             </tr>
           </thead>
@@ -116,7 +116,7 @@ export default function UserAccounts() {
 
         {showModal && (
           <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-xl">
+            <div className="bg-pink-600 rounded-lg p-6 w-full max-w-md shadow-xl">
               <h2 className="tex-lg font-bold mb-4">{editingId ? "Edit User" : "Add User"}</h2>
 
               {error && <p className="text-red-600 text-sm mb-3">{error}</p>}
@@ -125,19 +125,22 @@ export default function UserAccounts() {
                 { label: "User Id", key: "user_id" },
                 { label: "First Name", key: "first_name" },
                 { label: "Middle Name", key: "middle_name" },
-                { label: "Last Name", key: "last_name" },
-                { label: "Email", key: "email" },
-                { label: "Password", key: "password" },
+                { label: "Last Name", key: "last_name" }
               ].map(({ label, key }) => (
                 <div key={key} className="mb-3">
                   <label className="block text-sm font-meduim mb-1">{label}</label>
                   <input
-                    type={ key === "password" ? "password" : "text"}
+                    type= "text" //{ key === "password" ? "password" : "text"}
                     value={(form as any) [key]}
                     disabled={ key === "user_id" && !!editingId}
                     onChange={e => {
-                      const val = key === "user_id" ? parseInt(e.target.value) || 0 : e.target.value;
-                      setForm({...form, [key]: val });
+                      const val = key === "user_id" ? (parseInt(e.target.value) || "") : e.target.value;
+                      const new_form = { ...form, [key]: val };
+                      const first_name = new_form.first_name.replace( /\s+/g, "").toLowerCase();
+                      const last_name = new_form.last_name.replace( /\s+/g, "").toLowerCase();
+                      const email = `${first_name}.${last_name}@bisu.edu.ph`;
+                      const def_pword = `${new_form.user_id}${last_name}`;
+                      setForm({...new_form, "email": email, "password": def_pword });
                       setError("");
                     }}
                     className={`w-full border rounded px-3 py-2 text-sm ${key === "user_id" && editingId ? "bg-gray-100 cursor-not-allowed" : ""}`}
@@ -162,7 +165,7 @@ export default function UserAccounts() {
                 </select>
               </div>
 
-              <div className="flex justify-end space-x-2">
+              <div className="flex justify-end space-x-2 mt-4">
                 <button onClick={() => setShowModal(false)} className="px-4 py-2 border rounded text-sm">Cancel</button>
                 <button onClick={modifyUser} className="px-4 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">
                   {editingId ? "Update" : "Create"}
