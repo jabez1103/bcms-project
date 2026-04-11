@@ -47,7 +47,7 @@ export default function UserAccounts() {
   };
 
   const editUser = (user: User) => {
-    setForm({ ...user, password: "" });
+    setForm({ ...user});
     setEditingId(user.user_id);
     setError("");
     setShowModal(true);
@@ -132,7 +132,7 @@ export default function UserAccounts() {
                   <input
                     type= "text" //{ key === "password" ? "password" : "text"}
                     value={(form as any) [key]}
-                    disabled={ key === "user_id" && !!editingId}
+                    disabled={ key === "user_id" && !!editingId }
                     onChange={e => {
                       const val = key === "user_id" ? (parseInt(e.target.value) || "") : e.target.value;
                       const new_form = { ...form, [key]: val };
@@ -150,7 +150,7 @@ export default function UserAccounts() {
 
               <div className="mb-3">
                 <label className="block text-sm font-meduim mb-1">Role</label>
-                <select value={form.role} onChange={e => setForm({ ...form, role: e.target.value })} className="w-full border rounded px-3 py-2 text-sm">
+                <select disabled={ !!editingId } value={form.role} onChange={e => setForm({ ...form, role: e.target.value })} className={ `w-full border rounded px-3 py-2 text-sm ${ !!editingId ? "bg-gray-100 cursor-not-allowed" : ""}` }>
                   <option value="student">Student</option>
                   <option value="signatory">Signatory</option>
                   <option value="admin">Administrator</option>

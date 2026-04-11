@@ -15,12 +15,36 @@ export async function POST(request: Request) {
     if (!user_id || !first_name || !last_name || !email || !password || !role) {
         return NextResponse.json({error: "All fields are required!"}, {status: 400});
     }
-
+    
     let db = await createConnection();
-    await db.query(
-        "INSERT INTO users (user_id, first_name, middle_name, last_name, email, password, role) VALUES(?, ?, ?, ?, ?, ?, ?)",
-        [user_id, first_name, middle_name ?? null, last_name, email, password, role]
-    );
+    if (role === "admin") {
+        await db.query(
+            "INSERT INTO users (user_id, first_name, middle_name, last_name, email, password, role) VALUES(?, ?, ?, ?, ?, ?, ?)",
+            [user_id, first_name, middle_name ?? null, last_name, email, password, role]
+        );
+        await db.query(
+            "INSERT INTO administrators (admin_id, user_id) VALUES(?, ?)",
+            [user_id, user_id]
+        );
+    } else if (role === "signatory") {
+        await db.query(
+            "INSERT INTO users (user_id, first_name, middle_name, last_name, email, password, role) VALUES(?, ?, ?, ?, ?, ?, ?)",
+            [user_id, first_name, middle_name ?? null, last_name, email, password, role]
+        );
+        await db.query(
+            "INSERT INTO signatories (signatory_id, user_id) VALUES(?, ?)",
+            [user_id, user_id]
+        );
+    } else {
+        await db.query(
+            "INSERT INTO users (user_id, first_name, middle_name, last_name, email, password, role) VALUES(?, ?, ?, ?, ?, ?, ?)",
+            [user_id, first_name, middle_name ?? null, last_name, email, password, role]
+        );
+        await db.query(
+            "INSERT INTO students (student_id, user_id) VALUES( ?, ?)",
+            [user_id, user_id]
+        );
+    }
 
     return NextResponse.json({success: true, message: "User created!"});
 }
