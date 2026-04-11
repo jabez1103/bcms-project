@@ -17,13 +17,13 @@ import {
   ChevronDown,
   UserCheck
 } from "lucide-react";
-import { PageType, UserRole } from "./types";
+import { PageType, UserRole } from "@/types";
 import { signatories } from "@/lib/mock-data/signatories";
 
 interface SidebarProps {
   role: UserRole;
-  activePage: PageType;
-  onPageClick: (page: PageType) => void;
+  activePage?: PageType;
+  onPageClick?: (page: PageType) => void;
 }
 
 export function Sidebar({ role, activePage, onPageClick }: SidebarProps) {
