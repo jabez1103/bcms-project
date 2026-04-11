@@ -1,13 +1,13 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { Search, MoreVertical, Info } from 'lucide-react';
+import { Info, CheckCircle2, Clock, AlertCircle, ArrowRight } from 'lucide-react';
 import { useRouter } from "next/navigation";
 
 const signatories = [
   { id: 1, role: 'Cashier', name: 'Rebecca C. Remulta', status: 'Approved', description: 'Responsible for verifying tuition and miscellaneous payments and stamping cash clearance.' },
   { id: 2, role: 'Librarian', name: 'Carmella C. Sarabello', status: 'Pending', description: 'Oversees book returns, overdue fines, and issuance of library clearance slips.' },
   { id: 13, role: 'Guidance Counselor', name: 'Maria L. Santos', status: 'Not Submitted', description: 'Requires exit interview and personality assessment completion.' },
-  { id: 14, role: 'Clinic / Medical', name: 'Dr. Jose Rizal', status: 'Not Submitted', description: 'Verification of medical records and updated dental records.' },
+  { id: 14, role: 'Clinic / Medical', name: 'Dr. Jabez Bautista', status: 'Not Submitted', description: 'Verification of medical records and updated dental records.' },
   { id: 15, role: 'Sports Office', name: 'Coach Manny P.', status: 'Not Submitted', description: 'Return of borrowed sports equipment and uniforms.' },
   { id: 3, role: 'Director, SAS', name: 'Patricio S. Doroy, PhD', status: 'Approved', description: 'Leads Student Affairs Services review.' },
   { id: 4, role: 'Dean', name: 'Rey Anthony G. Godmalin', status: 'Pending', description: 'Responsible for endorsing graduation eligibility.' },
@@ -41,38 +41,30 @@ export default function HomePage() {
   );
 
   return (
-    <div className="bg-gray-50 min-h-screen min-w-full relative">
+    <div className="bg-[#F8FAFC] min-h-screen min-w-full relative font-sans">
       {/* --- STICKY HEADER --- */}
       <div
-        className={`sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-gray-200 px-6 md:px-10 py-4 transition-transform duration-300 ease-in-out ${
-          isVisible ? 'translate-y-0' : '-translate-y-full'
+        className={`sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-slate-200 px-6 md:px-10 py-4 transition-all duration-500 ease-in-out ${
+          isVisible ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
         }`}
       >
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4 relative">
-          <h2 className="text-xl font-bold text-gray-800">Signatories Dashboard</h2>
+          <div>
+            <h2 className="text-xl font-bold text-slate-900 tracking-tight">Signatories Dashboard</h2>
+            <p className="text-[11px] text-slate-500 font-medium">Clearance Progress 2026</p>
+          </div>
 
-          {/* --- FILTER BUTTONS --- */}
-          <div className="flex flex-wrap gap-2 relative z-50">
+          <div className="flex flex-wrap gap-2 p-1 bg-slate-100 rounded-2xl w-fit">
             {filters.map((filter) => {
               const isActive = activeFilter === filter;
-              const isNotSubmitted = filter === 'Not Submitted';
-
               return (
                 <button
                   key={filter}
                   onClick={() => setActiveFilter(filter)}
-                  style={{
-                    color: !isActive && isNotSubmitted ? '#dc2626' : undefined,
-                    borderColor: !isActive && isNotSubmitted ? '#dc2626' : undefined
-                  }}
-                  className={`px-4 py-1 rounded-full border text-xs font-semibold transition-all shadow-sm ${
+                  className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all duration-300 ${
                     isActive
-                      ? 'bg-[#A855F7] text-white border-[#A855F7]'
-                      : filter === 'Approved'
-                      ? 'bg-white text-green-600 border-green-500'
-                      : filter === 'Pending'
-                      ? 'bg-white text-orange-500 border-orange-400'
-                      : 'bg-white text-gray-500 border-gray-200'
+                      ? 'bg-white text-purple-600 shadow-sm scale-105'
+                      : 'text-slate-500 hover:text-slate-800 hover:bg-white/50'
                   }`}
                 >
                   {filter}
@@ -83,10 +75,9 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* --- CONTENT --- */}
       <div className="p-6 md:p-10">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredData.map((person) => (
               <SignatoryCard key={person.id} person={person} />
             ))}
@@ -104,62 +95,56 @@ function SignatoryCard({ person }: { person: any }) {
   const isPending = currentStatus === 'Pending';
   const isNotSubmitted = currentStatus === 'Not Submitted';
 
-  const getHeaderStyle = () => {
-    if (isApproved) return { backgroundColor: '#10B981' };
-    if (isPending) return { backgroundColor: '#F59E0B' };
-    if (isNotSubmitted) return { backgroundColor: '#ef4444' };
-    return { backgroundColor: '#9ca3af' };
+  const getTheme = () => {
+    if (isApproved) return { color: 'bg-emerald-500', light: 'bg-emerald-50', text: 'text-emerald-600', icon: <CheckCircle2 size={12}/> };
+    if (isPending) return { color: 'bg-amber-500', light: 'bg-amber-50', text: 'text-amber-600', icon: <Clock size={12}/> };
+    if (isNotSubmitted) return { color: 'bg-rose-500', light: 'bg-rose-50', text: 'text-rose-600', icon: <AlertCircle size={12}/> };
+    return { color: 'bg-slate-400', light: 'bg-slate-50', text: 'text-slate-500', icon: null };
   };
 
+  const theme = getTheme();
+
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col overflow-hidden transition-all hover:shadow-md group">
-      <button 
-        onClick={() => router.push(`/student/signatories/${person.id}`)}
-        style={getHeaderStyle()}
-        className="p-4 flex justify-between items-center text-white text-left w-full transition-opacity hover:opacity-95"
-      >
-        <div className="flex-1 pr-2">
-          <div className="flex items-center gap-1.5">
-            <h3 className="font-bold text-base leading-tight truncate">{person.role}</h3>
-            <Info size={14} className="opacity-70" />
+    <div className="bg-white rounded-2xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07)] border border-slate-100 flex flex-col overflow-hidden transition-all duration-300 hover:shadow-[0_20px_25px_-5px_rgba(0,0,0,0.1)] hover:-translate-y-1 group">
+      {/* --- HEADER --- */}
+      <div className={`${theme.color} p-5 flex justify-between items-center text-white`}>
+        <div className="flex-1 pr-3">
+          <div className="flex items-center gap-1.5 mb-0.5">
+            <h3 className="font-bold text-[14px] tracking-tight leading-tight uppercase">{person.role}</h3>
+            <Info size={14} className="opacity-60" />
           </div>
-          <p className="text-[11px] opacity-90 truncate">{person.name}</p>
+          <p className="text-[12px] font-medium opacity-80 truncate">{person.name}</p>
         </div>
-        <div className="w-10 h-10 rounded-full border-2 border-white/40 bg-gray-100 overflow-hidden shrink-0 shadow-sm">
+        <div className="w-11 h-11 rounded-xl border-2 border-white/30 bg-white/20 backdrop-blur-sm overflow-hidden shrink-0 transform group-hover:scale-110 transition-transform duration-500">
           <img
-            src={`https://api.dicebear.com/7.x/initials/svg?seed=${person.name}`}
+            src={`https://api.dicebear.com/7.x/initials/svg?seed=${person.name}&backgroundColor=f8fafc`}
             alt="avatar"
             className="w-full h-full object-cover"
           />
         </div>
-      </button>
+      </div>
 
-      <div className="p-5 flex-1 min-h-[100px]">
-        <p className="text-gray-500 text-xs leading-relaxed line-clamp-3">
+      {/* --- BODY --- */}
+      <div className="p-6 flex-1 min-h-[110px]">
+        <p className="text-slate-500 text-xs leading-relaxed font-medium line-clamp-3">
           {person.description}
         </p>
       </div>
 
-      <div className="p-4 border-t border-gray-50 flex justify-between items-center">
-        <span 
-          style={{ color: isNotSubmitted ? '#dc2626' : undefined }}
-          className={`text-[10px] font-black tracking-widest uppercase ${
-            isApproved ? 'text-green-600' : isPending ? 'text-amber-500' : ''
-          }`}
-        >
-          {isApproved && '● APPROVED'}
-          {isPending && '○ PENDING FOR APPROVAL'}
-          {isNotSubmitted && '× NOT SUBMITTED'}
-        </span>
-
-        <div className="flex gap-1.5">
-          <button className="p-1.5 bg-gray-50 rounded-md text-gray-400">
-            <Search size={16} />
-          </button>
-          <button className="p-1.5 bg-gray-50 rounded-md text-gray-400">
-            <MoreVertical size={16} />
-          </button>
+      {/* --- FOOTER --- */}
+      <div className="px-5 py-4 bg-slate-50/50 border-t border-slate-100 flex justify-between items-center">
+        <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full ${theme.light} ${theme.text} font-bold text-[10px] tracking-wider uppercase`}>
+          {theme.icon}
+          {currentStatus === 'Not Submitted' ? 'NOT SUBMITTED' : currentStatus}
         </div>
+
+        <button 
+          onClick={() => router.push(`/student/signatories/${person.id}`)}
+          className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-[11px] font-bold text-slate-700 hover:text-purple-600 hover:border-purple-200 hover:shadow-sm transition-all active:scale-95 group/btn"
+        >
+          DETAILS
+          <ArrowRight size={14} className="transition-transform group-hover/btn:translate-x-1" />
+        </button>
       </div>
     </div>
   );

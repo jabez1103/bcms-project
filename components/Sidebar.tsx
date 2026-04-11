@@ -1,20 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { NavButton } from "./NavButton";
+import { 
+  Home, 
+  Users, 
+  Calendar, 
+  BarChart3, 
+  ClipboardCheck, 
+  ClipboardList, 
+  History, 
+  HelpCircle, // Added for Support
+  ChevronRight, 
+  ChevronLeft,
+  ChevronDown,
+  UserCheck
+} from "lucide-react";
 import { PageType, UserRole } from "./types";
-
-const signatoriesData = [
-  { id: 1, role: "Cashier", name: "Rebecca C. Remulta" },
-  { id: 2, role: "Librarian", name: "Carmella C. Sarabello" },
-  { id: 13, role: "Guidance Counselor", name: "Maria L. Santos" },
-  { id: 14, role: "Clinic / Medical", name: "Dr. Jose Rizal" },
-  { id: 15, role: "Sports Office", name: "Coach Manny P." },
-  { id: 3, role: "Director, SAS", name: "Patricio S. Doroy, PhD" },
-  { id: 4, role: "Dean", name: "Rey Anthony G. Godmalin" },
-];
+import { signatories } from "@/lib/mock-data/signatories";
 
 interface SidebarProps {
   role: UserRole;
@@ -23,115 +27,144 @@ interface SidebarProps {
 }
 
 export function Sidebar({ role, activePage, onPageClick }: SidebarProps) {
+  const pathname = usePathname();
+  const [isCollapsed, setIsCollapsed] = useState<boolean | null>(null);
   const [signatoriesOpen, setSignatoriesOpen] = useState(false);
   const [activityLogsOpen, setActivityLogsOpen] = useState(false);
-  const pathname = usePathname();
-  const [isCollapsed, setIsCollapsed] = useState(false);
 
-  let topLinks: PageType[] = [];
-  if (role === "student") topLinks = ["Home", "Signatories", "Activity Logs"];
-  if (role === "admin")
-    topLinks = [
-      "Home",
-      "User Accounts",
-      "Clearance Periods",
-      "Clearance Progress",
-    ];
-  if (role === "signatory")
-    topLinks = [
-      "Home",
-      "Manage Requirements",
-      "Student Clearance Status",
-      "Review Submissions",
-    ];
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 768;
+      setIsCollapsed(mobile);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  if (isCollapsed === null) return null;
+
+  const getLinksByRole = () => {
+    switch (role) {
+      case "student":
+        return [
+          { label: "Home", icon: <Home size={20} /> },
+          { label: "Signatories", icon: <UserCheck size={20} />, hasDropdown: true },
+          { label: "Activity Logs", icon: <History size={20} />, hasDropdown: true },
+        ];
+      case "admin":
+        return [
+          { label: "Home", icon: <Home size={20} /> },
+          { label: "User Accounts", icon: <Users size={20} /> },
+          { label: "Clearance Periods", icon: <Calendar size={20} /> },
+          { label: "Clearance Progress", icon: <BarChart3 size={20} /> },
+        ];
+      case "signatory":
+        return [
+          { label: "Home", icon: <Home size={20} /> },
+          { label: "Manage Requirements", icon: <ClipboardList size={20} /> },
+          { label: "Student Clearance Status", icon: <UserCheck size={20} /> },
+          { label: "Review Submissions", icon: <ClipboardCheck size={20} /> },
+        ];
+      default:
+        return [];
+    }
+  };
 
   const linkToRoute = (link: string) => {
     const slug = link.toLowerCase().replace(/ /g, "-");
-    return slug === "home" ? `/${role}/home` : `/${role}/${slug}`;
+    if (slug === "home") return `/${role}/home`;
+    if (slug === "recent-logs") return `/${role}/activity-logs/recent-logs`;
+    if (slug === "system-history") return `/${role}/activity-logs/system-history`;
+    return `/${role}/${slug}`;
   };
 
   return (
     <aside
-      className={`${isCollapsed ? "w-15" : "w-64"} bg-white border-r border-gray-400 h-full flex flex-col text-black transition-all duration-300 relative`}
+      className={`
+        ${isCollapsed ? "w-20" : "w-64"}
+        bg-white border-r border-slate-200
+        h-full flex flex-col text-slate-600
+        transition-all duration-300 relative shrink-0 z-30
+      `}
     >
-      {/* TOGGLE BUTTON */}
-      <img
+      <button
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="absolute -right-3 top-10 bg-white border w-7 h-7 border-gray-400 rounded-full p-1 hover:bg-gray-100 hidden md:block cursor-pointer z-30"
-        src={isCollapsed ? "/forward.png" : "/back.png"}
-        alt={isCollapsed ? "Expand" : "Collapse"}
-      />
+        className="absolute -right-3 top-8 bg-white border border-slate-200 w-6 h-6 rounded-md flex items-center justify-center hover:bg-slate-50 hover:border-purple-300 transition-all shadow-sm z-50"
+      >
+        {isCollapsed ? <ChevronRight size={14} className="text-purple-600" /> : <ChevronLeft size={14} className="text-purple-600" />}
+      </button>
 
-      {/* TOP MENU */}
-      <div className="flex flex-col overflow-y-auto px-2 md:px-4 space-y-1 md:space-y-2 h-full py-6">
-        {topLinks.map((link) => {
-          const isDropdown = link === "Signatories" || link === "Activity Logs";
-          const isOpen =
-            link === "Signatories" ? signatoriesOpen : activityLogsOpen;
+      {/* --- MAIN NAVIGATION --- */}
+      <div className="flex flex-col overflow-y-auto px-4 space-y-2 h-full py-8 custom-scrollbar">
+        {getLinksByRole().map((item) => {
+          const isSignatories = item.label === "Signatories";
+          const isActivityLogs = item.label === "Activity Logs";
+          const isOpen = isSignatories ? signatoriesOpen : isActivityLogs ? activityLogsOpen : false;
+          const isActive = pathname.startsWith(linkToRoute(item.label));
 
           return (
-            <div key={link} className="w-full">
-              {/* Top-level NavButton */}
-              {isDropdown ? (
-                <NavButton
-                  label={link}
-                  hideLabel={isCollapsed}
-                  icon={`/${link.toLowerCase().replace(/ /g, "_")}.png`}
-                  active={pathname.startsWith(linkToRoute(link))}
+            <div key={item.label} className="flex flex-col">
+              {item.hasDropdown ? (
+                <button
                   onClick={() => {
-                    if (link === "Signatories")
-                      setSignatoriesOpen(!signatoriesOpen);
-                    if (link === "Activity Logs")
-                      setActivityLogsOpen(!activityLogsOpen);
+                    if (isSignatories) setSignatoriesOpen(!signatoriesOpen);
+                    if (isActivityLogs) setActivityLogsOpen(!activityLogsOpen);
                   }}
-                  showArrow
-                  isDropdownOpen={isOpen}
-                />
+                  className={`
+                    flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all w-full
+                    ${isOpen ? "bg-slate-50 text-purple-600" : "hover:bg-slate-50 text-slate-500"}
+                  `}
+                >
+                  <span className={isOpen ? "text-purple-600" : "text-slate-400"}>{item.icon}</span>
+                  {!isCollapsed && (
+                    <>
+                      <span className={`flex-1 text-sm font-bold text-left ${isOpen ? "text-slate-900" : ""}`}>
+                        {item.label}
+                      </span>
+                      <ChevronDown size={14} className={`transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`} />
+                    </>
+                  )}
+                </button>
               ) : (
-                <Link href={linkToRoute(link)}>
-                  <NavButton
-                    label={link}
-                    hideLabel={isCollapsed}
-                    icon={`/${link.toLowerCase().replace(/ /g, "_")}.png`}
-                    active={pathname.startsWith(linkToRoute(link))}
-                  />
+                <Link href={linkToRoute(item.label)}>
+                  <div className={`
+                    flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all cursor-pointer
+                    ${isActive ? "bg-purple-50 text-purple-600" : "hover:bg-slate-50 text-slate-500"}
+                  `}>
+                    <span className={isActive ? "text-purple-600" : "text-slate-400"}>{item.icon}</span>
+                    {!isCollapsed && (
+                      <span className={`text-sm font-bold ${isActive ? "text-slate-900" : ""}`}>
+                        {item.label}
+                      </span>
+                    )}
+                  </div>
                 </Link>
               )}
 
-              {/* DROPDOWN ITEMS */}
-              {link === "Signatories" && isOpen && !isCollapsed && (
-                <div className="mt-1 ml-6 space-y-1 border-l-2 border-purple-100 pl-2">
-                  {signatoriesData.map((sig) => (
-                    <Link key={sig.id} href={`/${role}/signatories/${sig.id}`}>
-                      <div
-                        className={`px-3 py-2 rounded-lg cursor-pointer ${pathname === `/${role}/signatories/${sig.id}` ? "bg-purple-50" : "hover:bg-gray-50"}`}
-                      >
-                        <p className="text-[11px] font-bold text-gray-800">
-                          {sig.role}
-                        </p>
-                        <p className="text-[10px] text-gray-500 truncate mt-1">
-                          {sig.name}
-                        </p>
-                      </div>
+              {isOpen && !isCollapsed && (
+                <div className="ml-9 mt-1 space-y-1 border-l-2 border-slate-100 pl-3">
+                  {isSignatories && signatories.map((sig) => (
+                    <Link key={sig.id} href={`/${role}/signatories/${sig.id}`} className="block py-2 group">
+                      <p className="text-[11px] font-black text-slate-800 uppercase tracking-tighter leading-none group-hover:text-purple-600 transition-colors">
+                        {sig.role}
+                      </p>
+                      <p className="text-[10px] text-slate-400 truncate group-hover:text-slate-600">
+                        {sig.person.name}
+                      </p>
                     </Link>
                   ))}
-                </div>
-              )}
 
-              {link === "Activity Logs" && isOpen && !isCollapsed && (
-                <div className="mt-1 ml-6 space-y-1 border-l-2 border-purple-100 pl-2">
-                  <Link href={linkToRoute("Recent Logs")}>
-                    <NavButton
-                      label="Recent Logs"
-                      active={pathname === linkToRoute("Recent Logs")}
-                    />
-                  </Link>
-                  <Link href={linkToRoute("System History")}>
-                    <NavButton
-                      label="System History"
-                      active={pathname === linkToRoute("System History")}
-                    />
-                  </Link>
+                  {isActivityLogs && (
+                    <>
+                      <Link href={linkToRoute("Recent Logs")} className="block py-2 text-xs font-bold text-slate-500 hover:text-purple-600 transition-colors">
+                        Recent Logs
+                      </Link>
+                      <Link href={linkToRoute("System History")} className="block py-2 text-xs font-bold text-slate-500 hover:text-purple-600 transition-colors">
+                        System History
+                      </Link>
+                    </>
+                  )}
                 </div>
               )}
             </div>
@@ -139,22 +172,21 @@ export function Sidebar({ role, activePage, onPageClick }: SidebarProps) {
         })}
       </div>
 
-      {/* BOTTOM MENU */}
-      <div className="flex flex-col px-2 md:px-4 pt-4 border-t border-gray-200 mt-auto space-y-1">
-        <NavButton
-          label="Settings"
-          icon="/settings.png"
-          active={false}
-          hideLabel={isCollapsed}
-          onClick={() => onPageClick("Settings")}
-        />
-        <NavButton
-          label="Log out"
-          icon="/log_out.png"
-          hideLabel={isCollapsed}
-          active={false}
-          onClick={() => onPageClick("Log out")}
-        />
+      {/* --- SUPPORT / HELP SECTION --- */}
+      {/* Replaces redundant settings/logout with a helpful resource area */}
+      <div className="px-4 py-6 border-t border-slate-100 mt-auto">
+        <Link 
+          href={`/${role}/support`}
+          className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-slate-500 hover:bg-purple-50 hover:text-purple-600 transition-all group"
+        >
+          <HelpCircle size={20} className="text-slate-400 group-hover:text-purple-500" />
+          {!isCollapsed && (
+            <div className="flex flex-col items-start leading-tight">
+              <span className="text-sm font-bold">Help & Support</span>
+              <span className="text-[10px] text-slate-400">Documentation</span>
+            </div>
+          )}
+        </Link>
       </div>
     </aside>
   );

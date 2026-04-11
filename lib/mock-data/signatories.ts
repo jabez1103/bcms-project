@@ -66,8 +66,8 @@ export const signatories: Signatory[] = [
     id: 14,
     person: {
       id: 14,
-      name: "Dr. Jose Rizal",
-      avatar: "/avatars/rizal.png",
+      name: "Dr. Jabez Bautista",
+      avatar: "/avatars/jabez.png",
     },
     role: "Clinic / Medical",
     status: "Not Submitted",
