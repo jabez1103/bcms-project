@@ -150,7 +150,7 @@ export default function UserAccounts() {
                       const email = `${noSpaceFname}.${noSpaceLname}@bisu.edu.ph`;
                       const def_pword = `${noSpaceLname}${new_form.user_id}`;
                       //const avatar = `/avatars/${noSpaceFname}${noSpaceLname}.jpg`; 
-                      const avatar = "/avatars/defaultAvatar.jpg"; // default avatar
+                      const avatar = "/avatars/defaultAvatar.jpg"; // default avatar/
                       setForm({ 
                         ...new_form, 
                         "first_name": capitalizeFname,
