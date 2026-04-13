@@ -10,6 +10,7 @@ type User = {
   password: string;
   role: string;
   account_status: string;
+  profile_picture: string;
 };
 
 const emptyForm = {
@@ -20,8 +21,12 @@ const emptyForm = {
   email: "",
   password: "",
   role: "student",
-  account_status: "active",
+  account_status: "active"
 };
+
+function capitalizeWords(str: string) {
+  return str.replace(/\b\w/g, (char) => char.toUpperCase());
+}
 
 export default function UserAccounts() {
   const [users, setUsers] = useState<User[]>([]);
@@ -48,7 +53,7 @@ export default function UserAccounts() {
   };
 
   const editUser = (user: User) => {
-    setForm({ ...user, password: "" });
+    setForm({ ...user});
     setEditingId(user.user_id);
     setError("");
     setShowModal(true);
@@ -78,8 +83,8 @@ export default function UserAccounts() {
     if (confirm("Delete this user? Buotan raba ni sya.")) return;
     await fetch(`/api/users/${user_id}`, { method: "DELETE" });
     fetchUsers();
-  };
-
+  }
+  
   return (
     <>
       <div className="bg-white p-4 rounded shadow text-black">
@@ -167,28 +172,17 @@ export default function UserAccounts() {
                     {label}
                   </label>
                   <input
-                    type="text" //{ key === "password" ? "password" : "text"}
-                    value={(form as any)[key]}
-                    disabled={key === "user_id" && !!editingId}
-                    onChange={(e) => {
-                      const val =
-                        key === "user_id"
-                          ? parseInt(e.target.value) || ""
-                          : e.target.value;
+                    type= "text" //{ key === "password" ? "password" : "text"}
+                    value={(form as any) [key]}
+                    disabled={ key === "user_id" && !!editingId}
+                    onChange={e => {
+                      const val = key === "user_id" ? (parseInt(e.target.value) || "") : e.target.value;
                       const new_form = { ...form, [key]: val };
-                      const first_name = new_form.first_name
-                        .replace(/\s+/g, "")
-                        .toLowerCase();
-                      const last_name = new_form.last_name
-                        .replace(/\s+/g, "")
-                        .toLowerCase();
+                      const first_name = new_form.first_name.replace( /\s+/g, "").toLowerCase();
+                      const last_name = new_form.last_name.replace( /\s+/g, "").toLowerCase();
                       const email = `${first_name}.${last_name}@bisu.edu.ph`;
                       const def_pword = `${new_form.user_id}${last_name}`;
-                      setForm({
-                        ...new_form,
-                        email: email,
-                        password: def_pword,
-                      });
+                      setForm({...new_form, "email": email, "password": def_pword });
                       setError("");
                     }}
                     className={`w-full border rounded px-3 py-2 text-sm ${key === "user_id" && editingId ? "bg-gray-100 cursor-not-allowed" : ""}`}
@@ -198,11 +192,7 @@ export default function UserAccounts() {
 
               <div className="mb-3">
                 <label className="block text-sm font-meduim mb-1">Role</label>
-                <select
-                  value={form.role}
-                  onChange={(e) => setForm({ ...form, role: e.target.value })}
-                  className="w-full border rounded px-3 py-2 text-sm"
-                >
+                <select value={form.role} onChange={e => setForm({ ...form, role: e.target.value })} className="w-full border rounded px-3 py-2 text-sm">
                   <option value="student">Student</option>
                   <option value="signatory">Signatory</option>
                   <option value="admin">Administrator</option>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useState } from "react";
 import Link from "next/link";
 import { 
@@ -34,7 +35,7 @@ interface NotificationItem {
 
 const user = {
   avatar: "/monique.png",
-  name: "Monique Cantarona",
+  name: "Monique Cantaronamm",
 };
 
 export function Header({ role, activePage, onPageClick }: HeaderProps) {
@@ -65,6 +66,24 @@ export function Header({ role, activePage, onPageClick }: HeaderProps) {
   };
 
   const displayedNotifications = notifications.filter(n => notifTab === "All" ? true : !n.read);
+
+  const { user, loading } = useCurrentUser(); // current user data/info
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-slate-400 text-sm">Loading profile...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-red-400 text-sm">Not logged in.</p>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -221,48 +240,21 @@ export function Header({ role, activePage, onPageClick }: HeaderProps) {
                 <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-white rounded-full" />
               </div>
               <div className="hidden md:block text-left">
-                <p className="text-sm font-bold text-slate-800 line-clamp-1 group-hover:text-purple-600 transition-colors">{user.name}</p>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{role}</p>
+                <p className="text-sm font-bold text-slate-800 line-clamp-1 group-hover:text-purple-600 transition-colors">{user.full_name as string}</p>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{user.role as string}</p>
               </div>
               <ChevronDown size={18} className={`text-gray-400 transition-transform duration-300 ${isDropdownOpen ? "rotate-180 text-purple-600" : ""}`} />
             </button>
 
             {isDropdownOpen && (
-              <>
-                <div className="fixed inset-0 z-40" onClick={() => setDropdownOpen(false)} />
-                <div className="absolute right-0 top-full mt-3 w-64 bg-white border border-gray-100 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
-                  
-                  {/* MOBILE-ONLY PROFILE HEADER */}
-                  <div className="md:hidden px-4 py-5 bg-slate-50/50 border-b border-gray-100 flex flex-col items-center gap-2">
-                    <img 
-                      src={user.avatar} 
-                      alt="Profile" 
-                      className="w-16 h-16 rounded-xl object-cover border border-purple-100 shadow-sm" 
-                    />
-                    <div className="text-center mb-1">
-                      <p className="text-sm font-bold text-slate-800">{user.name}</p>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{role}</p>
-                    </div>
-                    {/* Centered See Profile Button - Sized to match width constraints */}
-                    <Link
-                      href={`/${role}/profile`}
-                      onClick={() => setDropdownOpen(false)}
-                      className="w-full max-w-[140px] py-2 bg-white border border-purple-200 text-purple-600 text-[11px] font-bold rounded-lg hover:bg-purple-50 transition-all text-center flex items-center justify-center gap-2"
-                    >
-                      <UserIcon size={12} />
-                      See Profile
-                    </Link>
-                  </div>
-
-                  {/* DESKTOP-ONLY PROFILE LINK */}
-                  <Link
-                    href={`/${role}/profile`}
-                    onClick={() => setDropdownOpen(false)}
-                    className="hidden md:flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-purple-50 hover:text-purple-600 transition-colors"
-                  >
-                    <UserIcon size={16} />
-                    Profile
-                  </Link>
+              <div className="absolute right-0 top-full mt-3 w-56 bg-white border border-gray-100 rounded-2xl shadow-2xl z-50 py-2 animate-in fade-in slide-in-from-top-2">
+                <Link
+                  href={`/${role}/profile`}
+                  onClick={() => setDropdownOpen(false)}
+                  className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-purple-50 hover:text-purple-600 transition-colors"
+                >
+                  Profile
+                </Link>
 
                   <button
                     onClick={() => {

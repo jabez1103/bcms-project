@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import {
   User, Mail, Phone, MapPin, Building2, 
   CheckCircle2, KeyRound, BookOpen, Layers, 
@@ -8,8 +8,10 @@ import {
   XCircle, Lock, Edit2, Save, X
 } from "lucide-react";
 
+
 /* ---------------- MOCK DATA ---------------- */
-const INITIAL_DATA = {
+
+const userData = {
   fullName: "Monique Cantarona",
   schoolId: "BCMS-2024-0047",
   campus: "Clarin Campus",
@@ -26,48 +28,84 @@ const INITIAL_DATA = {
   lastLogin: "Apr 8, 2026 • 09:14 AM",
 };
 
+const recentActivities = [
+  { id: "1", type: "Clearance Requirements", status: "Approved", date: "Oct 12, 2025" },
+  { id: "2", type: "Clearance Requirements", status: "Pending", date: "Nov 05, 2025" },
+  { id: "3", type: "Clearance Requirements", status: "Approved", date: "Jan 20, 2026" },
+];
+
 export default function ProfilePage() {
-  // State for editable fields
-  const [email, setEmail] = useState(INITIAL_DATA.email);
-  const [phone, setPhone] = useState(INITIAL_DATA.phone);
-  const [isEditing, setIsEditing] = useState(false);
-  
-  // State for password change (simple simulation)
-  const [showPassModal, setShowPassModal] = useState(false);
-  const [passwords, setPasswords] = useState({ old: "", new: "" });
-
-  const handleSave = () => {
-    // Logic to save to database would go here
-    setIsEditing(false);
-    alert("Profile updated successfully!");
-  };
-
   return (
     <div className="min-h-screen bg-white pb-6 sm:pb-12 font-sans text-slate-900">
       <div className="w-full h-24 sm:h-40 bg-gradient-to-r from-indigo-500 to-purple-600" />
 
-      <main className="max-w-[1400px] mx-auto px-3 sm:px-10 -mt-12 sm:-mt-16 relative z-10">
-        
-        {/* HEADER CARD */}
-        <header className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-xl border border-slate-100 flex flex-col md:flex-row items-center justify-between gap-4 sm:gap-6 mb-6 sm:mb-10">
-          <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 w-full md:w-auto text-center sm:text-left">
-            <div className="relative shrink-0">
-              <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-full overflow-hidden border-4 border-white shadow-md">
-                <img src="/monique.png" alt="Profile" className="w-full h-full object-cover" />
-              </div>
-              <div className="absolute bottom-1 right-1 bg-green-500 w-4 h-4 sm:w-5 sm:h-5 rounded-full border-2 sm:border-4 border-white shadow-sm" />
-            </div>
+        {/* CONTENT */}
+        <div className="
+          px-4
+          sm:px-6
+          lg:px-10
+          -mt-14 sm:-mt-16
+          pb-10 sm:pb-14
+          max-w-[1400px]
+          mx-auto
+        ">
 
-            <div className="space-y-1">
-              <h1 className="text-xl sm:text-3xl font-bold text-slate-800 tracking-tight">{INITIAL_DATA.fullName}</h1>
-              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 sm:gap-3">
-                <span className="px-2 py-0.5 rounded-full text-[9px] sm:text-[11px] font-bold bg-indigo-50 text-indigo-600 border border-indigo-100 uppercase tracking-wider">
-                  Student Account
-                </span>
-                <span className="text-[10px] sm:text-xs text-slate-400 font-medium">Since {INITIAL_DATA.joinedDate}</span>
+          {/* PROFILE HEADER */}
+          <header className="
+            bg-white rounded-2xl
+            p-4 sm:p-6
+            shadow-lg border border-slate-100
+            flex flex-col lg:flex-row
+            items-center lg:items-center
+            justify-between
+            gap-5 sm:gap-6
+            mb-8
+          ">
+
+            <div className="
+              flex flex-col sm:flex-row
+              items-center
+              gap-4 sm:gap-6
+              text-center sm:text-left
+              w-full
+            ">
+
+              {/* AVATAR */}
+              <div className="relative shrink-0">
+                <div className="
+                  w-20 h-20
+                  sm:w-24 sm:h-24
+                  md:w-28 md:h-28
+                  rounded-full overflow-hidden
+                  border-4 border-white shadow-md
+                ">
+                  <img
+                    src="/monique.png"
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+
+                <div className="absolute bottom-1 right-1 bg-green-500 w-4 h-4 sm:w-5 sm:h-5 rounded-full border-4 border-white" />
+              </div>
+
+              {/* NAME */}
+              <div className="space-y-1">
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-800">
+                  {userData.fullName}
+                </h1>
+
+                <div className="flex flex-wrap justify-center sm:justify-start gap-2">
+                  <span className="px-3 py-0.5 rounded-full text-xs font-bold bg-indigo-50 text-indigo-600 border border-indigo-100">
+                    {userData.role}
+                  </span>
+
+                  <span className="text-xs text-slate-400">
+                    Member since {userData.joinedDate}
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
 
           <div className="flex gap-2">
             {!isEditing ? (
@@ -96,29 +134,23 @@ export default function ProfilePage() {
                 <h2 className="text-md sm:text-lg font-bold uppercase tracking-tight">Personal Information</h2>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-                {/* READ ONLY FIELDS (Admin only/Static) */}
-                <InfoItem label="School ID" value={INITIAL_DATA.schoolId} icon={<CreditCard size={14}/>} />
-                <InfoItem label="Program" value={INITIAL_DATA.program} icon={<BookOpen size={14}/>} />
-                <InfoItem label="Year & Section" value={`${INITIAL_DATA.yearLevel} - ${INITIAL_DATA.section}`} icon={<Layers size={14}/>} />
-                <InfoItem label="Campus" value={INITIAL_DATA.campus} icon={<Building2 size={14}/>} />
-                
-                {/* EDITABLE FIELDS */}
-                <div className={`p-3 sm:p-4 rounded-xl border transition-all ${isEditing ? "bg-white border-indigo-300 ring-2 ring-indigo-50" : "bg-slate-50/50 border-slate-100"}`}>
-                  <p className="text-[8px] sm:text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Email Address</p>
-                  <div className="flex items-center gap-2">
-                    <Mail size={14} className="text-indigo-400" />
-                    {isEditing ? (
-                      <input 
-                        type="email" 
-                        value={email} 
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="w-full bg-transparent text-xs sm:text-sm font-bold text-slate-700 outline-none"
-                      />
-                    ) : (
-                      <p className="text-xs sm:text-sm font-bold text-slate-700">{email}</p>
-                    )}
-                  </div>
+                <div className="
+                  grid
+                  grid-cols-1
+                  sm:grid-cols-2
+                  gap-4
+                  bg-slate-50/50
+                  p-4 sm:p-6
+                  rounded-3xl border border-slate-100
+                ">
+                  <InfoItem label="Full Name" value={userData.fullName} icon={<User size={16}/>} />
+                  <InfoItem label="School ID" value={userData.barangayId} icon={<CreditCard size={16}/>} />
+                  <InfoItem label="Email Address" value={userData.email} icon={<Mail size={16}/>} />
+                  <InfoItem label="Contact Number" value={userData.phone} icon={<Phone size={16}/>} />
+                  <InfoItem label="Current Address" value={userData.address} icon={<MapPin size={16}/>} />
+                  <InfoItem label="Birthdate" value={userData.birthdate} icon={<Calendar size={16}/>} />
+                  <InfoItem label="Gender" value={userData.gender} />
+                  <InfoItem label="Civil Status" value={userData.civilStatus} />
                 </div>
 
                 <div className={`p-3 sm:p-4 rounded-xl border transition-all ${isEditing ? "bg-white border-indigo-300 ring-2 ring-indigo-50" : "bg-slate-50/50 border-slate-100"}`}>
@@ -138,10 +170,22 @@ export default function ProfilePage() {
                   </div>
                 </div>
 
-                <InfoItem label="Address" value={INITIAL_DATA.address} icon={<MapPin size={14}/>} colSpan={2} />
-              </div>
-            </section>
-          </div>
+                <div className="
+                  grid
+                  grid-cols-1
+                  sm:grid-cols-2
+                  lg:grid-cols-3
+                  gap-4
+                  bg-slate-50/50
+                  p-4 sm:p-6
+                  rounded-3xl border border-slate-100
+                ">
+                  <InfoItem label="Username" value={`@${userData.username}`} />
+                  <InfoItem label="Verification" value={userData.status} />
+                  <InfoItem label="Last Login" value={userData.lastLogin} />
+                </div>
+              </section>
+            </div>
 
           <div className="space-y-4 sm:space-y-6">
             {/* ELIGIBILITY CARD */}
