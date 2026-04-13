@@ -1,5 +1,6 @@
 "use client";
 
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import React from "react";
 import {
   User, Mail, Phone, MapPin, Calendar,
@@ -7,8 +8,9 @@ import {
   History
 } from "lucide-react";
 
-/* ---------------- MOCK DATA ---------------- */
 
+/* ---------------- MOCK DATA ---------------- */
+/*
 const userData = {
   fullName: "Monique Cantarona",
   role: "Student",
@@ -24,6 +26,7 @@ const userData = {
   joinedDate: "Aug 12, 2021",
   lastLogin: "Apr 8, 2026 • 09:14 AM",
 };
+*/
 
 const recentActivities = [
   { id: "1", type: "Clearance Requirements", status: "Approved", date: "Oct 12, 2025" },
@@ -32,6 +35,25 @@ const recentActivities = [
 ];
 
 export default function ProfilePage() {
+
+  const { user, loading } = useCurrentUser();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-slate-400 text-sm">Loading profile...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-red-400 text-sm">Not logged in.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-white text-slate-900">
 
@@ -81,7 +103,7 @@ export default function ProfilePage() {
                   border-4 border-white shadow-md
                 ">
                   <img
-                    src="/monique.png"
+                    src={`${user.avatar}`}
                     alt="Profile"
                     className="w-full h-full object-cover"
                   />
@@ -93,16 +115,16 @@ export default function ProfilePage() {
               {/* NAME */}
               <div className="space-y-1">
                 <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-800">
-                  {userData.fullName}
+                  {user.full_name as string}
                 </h1>
 
                 <div className="flex flex-wrap justify-center sm:justify-start gap-2">
                   <span className="px-3 py-0.5 rounded-full text-xs font-bold bg-indigo-50 text-indigo-600 border border-indigo-100">
-                    {userData.role}
+                    {user.role as string}
                   </span>
 
                   <span className="text-xs text-slate-400">
-                    Member since {userData.joinedDate}
+                    Member since {"N/A"}
                   </span>
                 </div>
               </div>
@@ -152,14 +174,14 @@ export default function ProfilePage() {
                   p-4 sm:p-6
                   rounded-3xl border border-slate-100
                 ">
-                  <InfoItem label="Full Name" value={userData.fullName} icon={<User size={16}/>} />
-                  <InfoItem label="School ID" value={userData.barangayId} icon={<CreditCard size={16}/>} />
-                  <InfoItem label="Email Address" value={userData.email} icon={<Mail size={16}/>} />
-                  <InfoItem label="Contact Number" value={userData.phone} icon={<Phone size={16}/>} />
-                  <InfoItem label="Current Address" value={userData.address} icon={<MapPin size={16}/>} />
-                  <InfoItem label="Birthdate" value={userData.birthdate} icon={<Calendar size={16}/>} />
-                  <InfoItem label="Gender" value={userData.gender} />
-                  <InfoItem label="Civil Status" value={userData.civilStatus} />
+                  <InfoItem label="Full Name" value={user.full_name as string} icon={<User size={16}/>} />
+                  <InfoItem label="School ID" value={user.user_id as string} icon={<CreditCard size={16}/>} />
+                  <InfoItem label="Email Address" value={user.email as string} icon={<Mail size={16}/>} />
+                  <InfoItem label="Contact Number" value={"N/A"} icon={<Phone size={16}/>} />
+                  <InfoItem label="Current Address" value={"N/A"} icon={<MapPin size={16}/>} />
+                  <InfoItem label="Birthdate" value={"N/A"} icon={<Calendar size={16}/>} />
+                  <InfoItem label="Gender" value={"N/A"} />
+                  <InfoItem label="Civil Status" value={"Palautog"} />
                 </div>
               </section>
 
@@ -180,9 +202,9 @@ export default function ProfilePage() {
                   p-4 sm:p-6
                   rounded-3xl border border-slate-100
                 ">
-                  <InfoItem label="Username" value={`@${userData.username}`} />
-                  <InfoItem label="Verification" value={userData.status} />
-                  <InfoItem label="Last Login" value={userData.lastLogin} />
+                  <InfoItem label="Username" value={"N/A"} />
+                  <InfoItem label="Verification" value={"N/A"} />
+                  <InfoItem label="Last Login" value={"N/A"} />
                 </div>
               </section>
             </div>

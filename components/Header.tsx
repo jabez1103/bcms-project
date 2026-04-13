@@ -1,5 +1,6 @@
 "use client";
 
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useState } from "react";
 import Link from "next/link";
 import { 
@@ -34,7 +35,7 @@ interface NotificationItem {
 
 const user = {
   avatar: "/monique.png",
-  name: "Monique Cantarona",
+  name: "Monique Cantaronamm",
 };
 
 export function Header({ role, activePage, onPageClick }: HeaderProps) {
@@ -65,6 +66,24 @@ export function Header({ role, activePage, onPageClick }: HeaderProps) {
   };
 
   const displayedNotifications = notifications.filter(n => notifTab === "All" ? true : !n.read);
+
+  const { user, loading } = useCurrentUser(); // current user data/info
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-slate-400 text-sm">Loading profile...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-red-400 text-sm">Not logged in.</p>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -125,8 +144,8 @@ export function Header({ role, activePage, onPageClick }: HeaderProps) {
                 <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-white rounded-full" />
               </div>
               <div className="hidden md:block text-left">
-                <p className="text-sm font-bold text-slate-800 line-clamp-1 group-hover:text-purple-600 transition-colors">{user.name}</p>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{role}</p>
+                <p className="text-sm font-bold text-slate-800 line-clamp-1 group-hover:text-purple-600 transition-colors">{user.full_name as string}</p>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{user.role as string}</p>
               </div>
               <ChevronDown size={18} className={`text-gray-400 transition-transform duration-300 ${isDropdownOpen ? "rotate-180 text-purple-600" : ""}`} />
             </button>
@@ -134,7 +153,7 @@ export function Header({ role, activePage, onPageClick }: HeaderProps) {
             {isDropdownOpen && (
               <div className="absolute right-0 top-full mt-3 w-56 bg-white border border-gray-100 rounded-2xl shadow-2xl z-50 py-2 animate-in fade-in slide-in-from-top-2">
                 <Link
-                  href={`/${role}/profile`}
+                  href={`/${user.role as string}/profile`}
                   onClick={() => setDropdownOpen(false)}
                   className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-purple-50 hover:text-purple-600 transition-colors"
                 >
