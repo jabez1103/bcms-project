@@ -60,7 +60,7 @@ export default function LoginForm({ mobile = false }: LoginFormProps) {
     onSubmit={handleLogin}
     className={`
       flex flex-col items-center font-body z-10 transition-all duration-500
-      rounded-[2.5rem] border border-purple-100 bg-white p-10 shadow-2xl
+      rounded-2xl border border-purple-100 bg-white p-10 shadow-2xl
       w-full max-w-[440px] mx-auto
       ${mobile ? "my-10" : "relative"}
     `}
@@ -69,7 +69,6 @@ export default function LoginForm({ mobile = false }: LoginFormProps) {
       <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-purple-50 p-3">
         <img src="/logo.png" className="h-full w-full object-contain" alt="BCMS Logo" />
       </div>
-
       <h2 className="font-heading text-3xl font-bold tracking-tight text-gray-900">
         Welcome Back
       </h2>

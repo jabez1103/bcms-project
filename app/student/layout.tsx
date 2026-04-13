@@ -1,15 +1,22 @@
 "use client";
+
 import { Header } from "@/components/Header";
 import { LogoutModal } from "@/components/LogoutModal";
 import { SettingsModal } from "@/components/SettingsModal";
 import { Sidebar } from "@/components/Sidebar";
-import { PageType } from "@/components/types";
+import { PageType } from "@/types/index";
 import { useState } from "react";
 import { Footer } from "@/components/Footer";
 
-export default function StudentLayout({ children }: { children: React.ReactNode }) {
+export default function StudentLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const [activePage, setActivePage] = useState<PageType>("Home");
-  const [overlayPage, setOverlayPage] = useState<"Settings" | "Log out" | null>(null);
+  const [overlayPage, setOverlayPage] = useState<
+    "Settings" | "Log out" | null
+  >(null);
 
   const handlePageClick = (page: PageType) => {
     if (page === "Settings" || page === "Log out") {
@@ -22,30 +29,38 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
 
   return (
     <div className="flex flex-col h-screen overflow-hidden">
-      {/* 1. Header stays fixed at top */}
-      <Header role="student" activePage="Home" />
-      
+      {/* HEADER */}
+      <Header
+        role="student"
+        activePage={activePage}
+        onPageClick={handlePageClick}
+      />
+
       <div className="flex flex-1 overflow-hidden">
-        {/* 2. Sidebar stays fixed at left */}
-        <Sidebar role="student" onPageClick={handlePageClick} activePage={activePage} />
-        
-        {/* 3. SCROLLABLE WRAPPER */}
-        {/* We move 'overflow-y-auto' here so everything inside scrolls together */}
-        <div className="flex-1 flex flex-col min-w-0 bg-[#f4f6f9] overflow-y-auto"> 
-          
-          {/* Main content - removed internal scroll */}
-          <main className="flex-1 p-4 bg-white">
-            {children}
-          </main>
-          
-          {/* 4. Footer - now follows the content */}
+        {/* SIDEBAR */}
+        <Sidebar
+          role="student"
+          onPageClick={handlePageClick}
+          activePage={activePage}
+        />
+
+        {/* MAIN WRAPPER */}
+        <div className="flex-1 flex flex-col min-w-0 bg-[#f4f6f9] overflow-y-auto">
+          <main className="flex-1 p-4 bg-white">{children}</main>
+
           <Footer />
-          
         </div>
 
-        {/* Overlay Modals */}
-        {overlayPage === "Settings" && <SettingsModal onClose={() => setOverlayPage(null)} />}
-        {overlayPage === "Log out" && <LogoutModal onClose={() => setOverlayPage(null)} />}
+        {/* MODALS */}
+        <SettingsModal
+          isOpen={overlayPage === "Settings"}
+          onClose={() => setOverlayPage(null)}
+        />
+
+        <LogoutModal
+          isOpen={overlayPage === "Log out"}
+          onClose={() => setOverlayPage(null)}
+        />
       </div>
     </div>
   );

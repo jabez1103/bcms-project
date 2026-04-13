@@ -9,12 +9,12 @@ import {
   FileText, 
   CheckCheck, 
   Search, 
-  X, 
   ChevronDown,
   Settings as SettingsIcon,
-  LogOut
+  LogOut,
+  User as UserIcon
 } from "lucide-react";
-import { PageType, UserRole } from "./types";
+import { PageType, UserRole } from "@/types/index";
 import { SettingsModal } from "./SettingsModal";
 import { LogoutModal } from "./LogoutModal";
 
@@ -87,14 +87,25 @@ export function Header({ role, activePage, onPageClick }: HeaderProps) {
         <div className="flex items-center space-x-2 md:space-x-6">
           
           {/* SEARCH BAR */}
-          <div className="relative hidden lg:block">
-            <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <div className="relative flex items-center">
+            {/* The container is now visible on all screens (flex) */}
+            <Search 
+              size={18} 
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10" 
+            />
             <input
               type="text"
-              placeholder="Search student or file..."
+              placeholder="Search..."
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
-              className="bg-gray-50 text-black border border-gray-200 rounded-xl pl-10 pr-10 py-2 w-64 text-sm focus:bg-white focus:ring-2 focus:ring-purple-100 transition-all outline-none"
+              className="
+                bg-gray-50 text-black border border-gray-200 rounded-xl 
+                pl-10 pr-4 py-2 text-sm outline-none transition-all
+                focus:bg-white focus:ring-2 focus:ring-purple-100
+                w-32 
+                md:w-48 
+                lg:w-64
+              "
             />
           </div>
 
@@ -111,7 +122,92 @@ export function Header({ role, activePage, onPageClick }: HeaderProps) {
                 </span>
               )}
             </button>
-            {/* ... Notification Dropdown logic remains same ... */}
+
+            {/* NOTIFICATION DROPDOWN */}
+            {isNotifOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setNotifOpen(false)} />
+                <div className="absolute right-0 top-full mt-3 w-[320px] md:w-[380px] bg-white border border-gray-100 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
+                  <div className="px-5 py-4 border-b border-gray-50 flex justify-between items-center bg-gray-50/50">
+                    <h3 className="font-bold text-slate-800">Notifications</h3>
+                    <button 
+                      onClick={markAllAsRead}
+                      className="text-[11px] font-bold text-purple-600 hover:text-purple-700 uppercase tracking-wider"
+                    >
+                      Mark all as read
+                    </button>
+                  </div>
+
+                  <div className="flex p-1 bg-gray-100/50 mx-4 mt-3 rounded-lg">
+                    {(["Unread", "All"] as const).map((tab) => (
+                      <button
+                        key={tab}
+                        onClick={() => setNotifTab(tab)}
+                        className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${
+                          notifTab === tab 
+                            ? "bg-white text-purple-600 shadow-sm" 
+                            : "text-slate-500 hover:text-slate-700"
+                        }`}
+                      >
+                        {tab}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="max-h-[400px] overflow-y-auto p-2">
+                    {displayedNotifications.length > 0 ? (
+                      displayedNotifications.map((n) => (
+                        <button
+                          key={n.id}
+                          onClick={() => handleClickNotification(n.id)}
+                          className={`w-full flex gap-4 p-3 rounded-xl transition-colors text-left group ${
+                            !n.read ? "bg-purple-50/50" : "hover:bg-gray-50"
+                          }`}
+                        >
+                          <div className={`mt-1 p-2 rounded-lg shrink-0 ${
+                            n.type === 'approval' ? 'bg-green-100 text-green-600' : 
+                            n.type === 'request' ? 'bg-blue-100 text-blue-600' : 'bg-amber-100 text-amber-600'
+                          }`}>
+                            {n.type === 'approval' ? <CheckCircle2 size={16} /> : 
+                             n.type === 'request' ? <FileText size={16} /> : <Clock size={16} />}
+                          </div>
+                          
+                          <div className="flex-1">
+                            <div className="flex justify-between items-start">
+                              <p className={`text-sm font-bold ${!n.read ? "text-slate-900" : "text-slate-600"}`}>
+                                {n.title}
+                              </p>
+                              {!n.read && <div className="w-2 h-2 bg-purple-500 rounded-full mt-1.5" />}
+                            </div>
+                            <p className="text-xs text-slate-500 leading-relaxed mt-0.5">
+                              {n.content}
+                            </p>
+                            <p className="text-[10px] font-medium text-slate-400 mt-2 uppercase tracking-tight">
+                              Just now
+                            </p>
+                          </div>
+                        </button>
+                      ))
+                    ) : (
+                      <div className="py-12 flex flex-col items-center justify-center text-center px-6">
+                        <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mb-3">
+                          <CheckCheck className="text-gray-300" size={24} />
+                        </div>
+                        <p className="text-sm font-bold text-slate-400">All caught up!</p>
+                        <p className="text-xs text-slate-400">No new notifications to show.</p>
+                      </div>
+                    )}
+                  </div>
+                  <Link
+                    href={`/${role}/notifications`}
+                    onClick={() => setNotifOpen(false)}
+                    className="block py-3 text-center text-xs font-bold text-slate-500 hover:text-purple-600 hover:bg-gray-50 border-t border-gray-50 transition-colors"
+                  >
+                    View all notifications
+                  </Link>
+                </div>
+              </>
+            )}
           </div>
 
           {/* PROFILE DROPDOWN */}
@@ -132,45 +228,73 @@ export function Header({ role, activePage, onPageClick }: HeaderProps) {
             </button>
 
             {isDropdownOpen && (
-              <div className="absolute right-0 top-full mt-3 w-56 bg-white border border-gray-100 rounded-2xl shadow-2xl z-50 py-2 animate-in fade-in slide-in-from-top-2">
-                <Link
-                  href={`/${role}/profile`}
-                  onClick={() => setDropdownOpen(false)}
-                  className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-purple-50 hover:text-purple-600 transition-colors"
-                >
-                  Profile
-                </Link>
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setDropdownOpen(false)} />
+                <div className="absolute right-0 top-full mt-3 w-64 bg-white border border-gray-100 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
+                  
+                  {/* MOBILE-ONLY PROFILE HEADER */}
+                  <div className="md:hidden px-4 py-5 bg-slate-50/50 border-b border-gray-100 flex flex-col items-center gap-2">
+                    <img 
+                      src={user.avatar} 
+                      alt="Profile" 
+                      className="w-16 h-16 rounded-xl object-cover border border-purple-100 shadow-sm" 
+                    />
+                    <div className="text-center mb-1">
+                      <p className="text-sm font-bold text-slate-800">{user.name}</p>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{role}</p>
+                    </div>
+                    {/* Centered See Profile Button - Sized to match width constraints */}
+                    <Link
+                      href={`/${role}/profile`}
+                      onClick={() => setDropdownOpen(false)}
+                      className="w-full max-w-[140px] py-2 bg-white border border-purple-200 text-purple-600 text-[11px] font-bold rounded-lg hover:bg-purple-50 transition-all text-center flex items-center justify-center gap-2"
+                    >
+                      <UserIcon size={12} />
+                      See Profile
+                    </Link>
+                  </div>
 
-                <button
-                  onClick={() => {
-                    setSettingsOpen(true);
-                    setDropdownOpen(false);
-                  }}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-purple-50 hover:text-purple-600 transition-colors"
-                >
-                  <SettingsIcon size={16} />
-                  Settings
-                </button>
+                  {/* DESKTOP-ONLY PROFILE LINK */}
+                  <Link
+                    href={`/${role}/profile`}
+                    onClick={() => setDropdownOpen(false)}
+                    className="hidden md:flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-purple-50 hover:text-purple-600 transition-colors"
+                  >
+                    <UserIcon size={16} />
+                    Profile
+                  </Link>
 
-                <div className="border-t border-gray-50 my-1" />
+                  <button
+                    onClick={() => {
+                      setSettingsOpen(true);
+                      setDropdownOpen(false);
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-purple-50 hover:text-purple-600 transition-colors"
+                  >
+                    <SettingsIcon size={16} />
+                    Settings
+                  </button>
 
-                <button 
-                  onClick={() => {
-                    setLogoutOpen(true);
-                    setDropdownOpen(false);
-                  }}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-red-500 hover:bg-red-50 transition-colors"
-                >
-                  <LogOut size={16} />
-                  Logout
-                </button>
-              </div>
+                  <div className="border-t border-gray-50 my-1" />
+
+                  <button 
+                    onClick={() => {
+                      setLogoutOpen(true);
+                      setDropdownOpen(false);
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-red-500 hover:bg-red-50 transition-colors"
+                  >
+                    <LogOut size={16} />
+                    Logout
+                  </button>
+                </div>
+              </>
             )}
           </div>
         </div>
       </header>
 
-      {/* RENDER MODALS AS OVERLAYS */}
+      {/* MODALS */}
       <SettingsModal 
         isOpen={isSettingsOpen} 
         onClose={() => setSettingsOpen(false)} 

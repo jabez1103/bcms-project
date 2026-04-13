@@ -17,8 +17,8 @@ import {
   ChevronDown,
   UserCheck
 } from "lucide-react";
-import { PageType, UserRole } from "./types";
-import { signatories } from "@/lib/mock-data/signatories";
+import { PageType, UserRole } from "@/types/index";
+import { signatories } from "@/lib/mock-data/id/signatories";
 
 interface SidebarProps {
   role: UserRole;
@@ -95,7 +95,6 @@ export function Sidebar({ role, activePage, onPageClick }: SidebarProps) {
         {isCollapsed ? <ChevronRight size={14} className="text-purple-600" /> : <ChevronLeft size={14} className="text-purple-600" />}
       </button>
 
-      {/* --- MAIN NAVIGATION --- */}
       <div className="flex flex-col overflow-y-auto px-4 space-y-2 h-full py-8 custom-scrollbar">
         {getLinksByRole().map((item) => {
           const isSignatories = item.label === "Signatories";
@@ -172,8 +171,7 @@ export function Sidebar({ role, activePage, onPageClick }: SidebarProps) {
         })}
       </div>
 
-      {/* --- SUPPORT / HELP SECTION --- */}
-      {/* Replaces redundant settings/logout with a helpful resource area */}
+    
       <div className="px-4 py-6 border-t border-slate-100 mt-auto">
         <Link 
           href={`/${role}/support`}

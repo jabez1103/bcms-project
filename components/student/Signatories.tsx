@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { signatories } from "@/lib/mock-data/signatories";
+import { signatories } from "@/lib/mock-data/id/signatories";
 
 export default function SignatoriesPage() {
   return (
