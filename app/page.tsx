@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { 
-  Info, FileText, Phone, Globe, ArrowRight, 
+  ArrowRight, 
   Menu, X, ShieldCheck, Zap, Monitor 
 } from "lucide-react";
 
@@ -260,7 +260,7 @@ export default function LandingPage() {
 
           <div className="pt-12 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-6">
              <p className="text-white/20 text-[10px] font-bold tracking-widest uppercase text-center md:text-left">
-               © 2026 College of Computer Studies. All Rights Reserved.
+               © 2026 BISU Clarin Campus. All Rights Reserved.
              </p>
              <div className="flex gap-10">
                <Link href="#" className="text-white/20 hover:text-white text-[10px] uppercase font-black tracking-tighter transition-colors">Privacy</Link>

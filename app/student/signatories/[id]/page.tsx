@@ -1,10 +1,9 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { signatories } from "@/lib/mock-data/signatories"; 
-import { ArrowLeft, CheckCircle2, BookOpen, Info, AlertCircle, XCircle, Clock, Send } from "lucide-react";
-import { useState, useEffect } from "react";
-import { Rnd } from "react-rnd";
+import { signatories } from "@/lib/mock-data/id/signatories"; 
+import { ArrowLeft, CheckCircle2, BookOpen,  Info, AlertCircle, XCircle, Clock, Send, Upload, X } from "lucide-react";
+import { useState } from "react";
 
 export default function SignatoryDetails() {
   const params = useParams();
@@ -14,36 +13,6 @@ export default function SignatoryDetails() {
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeRequirement, setActiveRequirement] = useState<string | null>(null);
-
-  const [windowSize, setWindowSize] = useState<{ width: number; height: number } | null>(null);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-
-  useEffect(() => {
-    const handleResize = () => {
-      const width = window.innerWidth;
-      const height = window.innerHeight;
-      setWindowSize({ width, height });
-
-      const modalW = Math.min(420, width * 0.95);
-      setPosition({
-        x: (width / 2) - (modalW / 2),
-        y: (height / 2) - 200,
-      });
-    };
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setActiveRequirement(null);
-    };
-
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    window.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      window.removeEventListener("resize", handleResize);
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, []);
 
   if (!signatory) return <NotFound router={router} />;
 
@@ -55,10 +24,10 @@ export default function SignatoryDetails() {
   const isRejected = status === 'Pending' && subStatus === 'Rejected';
 
   const getStatusUI = () => {
-    if (isApproved) return { color: 'green', label: 'Approved', icon: CheckCircle2, bg: 'bg-green-500' };
-    if (isPending) return { color: 'amber', label: 'In Queue', icon: Clock, bg: 'bg-amber-500' };
-    if (isRejected) return { color: 'red', label: 'Rejected', icon: XCircle, bg: 'bg-red-500' };
-    return { color: 'slate', label: 'Not Submitted', icon: Info, bg: 'bg-slate-400' };
+    if (isApproved) return { label: 'Approved', icon: CheckCircle2, bg: 'bg-green-500' };
+    if (isPending) return { label: 'In Queue', icon: Clock, bg: 'bg-amber-500' };
+    if (isRejected) return { label: 'Rejected', icon: XCircle, bg: 'bg-red-500' };
+    return { label: 'Not Submitted', icon: Info, bg: 'bg-slate-400' };
   };
   const ui = getStatusUI();
 
@@ -77,7 +46,7 @@ export default function SignatoryDetails() {
   };
 
   return (
-    <div className="min-h-screen bg-white relative">
+    <div className="min-h-screen bg-white">
       {/* NAVIGATION */}
       <nav className="sticky top-0 border-b border-gray-100 bg-white/80 backdrop-blur-md px-4 sm:px-6 py-4 flex items-center z-20">
         <button 
@@ -89,12 +58,11 @@ export default function SignatoryDetails() {
         </button>
       </nav>
         
-      {/* MAIN CONTENT */}
-      <main className="w-full px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
-          {/* LEFT COLUMN: Single Signatory Profile */}
-          <div className="lg:col-span-4 space-y-6">
+          {/* LEFT COLUMN: Profile Info */}
+          <div className="lg:col-span-4 space-y-6 lg:sticky lg:top-24">
             <div className="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm">
               <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider mb-6 ${ui.bg} text-white shadow-sm`}>
                 <ui.icon size={12} />
@@ -104,164 +72,151 @@ export default function SignatoryDetails() {
               <h1 className="text-2xl font-bold text-gray-900 leading-tight">{signatory.role}</h1>
               <p className="text-sm text-gray-500 mt-2 leading-relaxed">{signatory.description}</p>
               
-              {/* --- SINGLE PROFILE SECTION --- */}
               <div className="mt-8 pt-8 border-t border-gray-100">
                 <div className="flex items-center gap-5">
                   <div className="relative shrink-0">
                     {signatory.person.avatar ? (
-                      <img 
-                        src={signatory.person.avatar} 
-                        alt={signatory.person.name}
-                        className="w-20 h-20 rounded-full object-cover border-2 border-white shadow-lg ring-1 ring-gray-100"
-                      />
+                      <img src={signatory.person.avatar} alt="" className="w-16 h-16 rounded-full object-cover border-2 border-white shadow-md" />
                     ) : (
-                      <div className="w-20 h-20 rounded-full bg-indigo-600 border-2 border-white flex items-center justify-center text-white font-bold text-2xl shadow-lg ring-1 ring-gray-100">
-                        {signatory.person.name.charAt(0)}
-                      </div>
+                      <div className="w-16 h-16 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-xl">{signatory.person.name.charAt(0)}</div>
                     )}
-                    {/* Pulsing Online Indicator */}
-                    <span className="absolute bottom-1 right-1 block h-5 w-5 rounded-full bg-green-500 ring-4 ring-white" />
+                    <span className="absolute bottom-0 right-0 block h-4 w-4 rounded-full bg-green-500 ring-2 ring-white" />
                   </div>
-
                   <div>
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1.5">
-                      Authorized Signatory
-                    </p>
-                    <p className="text-xl font-bold text-gray-900 leading-tight">
-                      {signatory.person.name}
-                    </p>
-                    <div className="flex items-center gap-1.5 mt-2">
-                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                      <span className="text-[11px] font-black text-gray-600 uppercase tracking-tight">Available Now</span>
-                    </div>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Authorized Signatory</p>
+                    <p className="text-lg font-bold text-gray-900">{signatory.person.name}</p>
                   </div>
-                </div>
-
-                {/* Additional Info Card */}
-                <div className="mt-8 space-y-3">
-                    <div className="px-4 py-3 bg-gray-50/50 rounded-xl border border-gray-100 flex justify-between items-center">
-                        <span className="text-[10px] text-gray-400 font-bold uppercase">Official Email</span>
-                        <span className="text-xs font-bold text-gray-700">{signatory.person.email || "dept@bisu.edu.ph"}</span>
-                    </div>
-                    <div className="px-4 py-3 bg-gray-50/50 rounded-xl border border-gray-100 flex justify-between items-center">
-                        <span className="text-[10px] text-gray-400 font-bold uppercase">Response Time</span>
-                        <span className="text-xs font-bold text-indigo-600">~1 Hour</span>
-                    </div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* RIGHT COLUMN: Requirements List */}
+          {/* RIGHT COLUMN: Action Area */}
           <div className="lg:col-span-8 space-y-6">
+            
+            {/* 1. If Rejected, show comment */}
             {isRejected && (
-              <div className="bg-red-50 border-l-4 border-red-500 p-5 rounded-r-xl flex gap-4 animate-in fade-in slide-in-from-left-2">
+              <div className="bg-red-50 border-l-4 border-red-500 p-5 rounded-r-xl flex gap-4">
                 <AlertCircle className="text-red-500 shrink-0" />
                 <div>
                   <h4 className="text-sm font-bold text-red-900">Correction Required</h4>
-                  <p className="text-sm text-red-700 mt-1 italic font-medium">
-                    "{signatory.rejectionComment || "Uploaded file is incorrect. Please re-check."}"
-                  </p>
+                  <p className="text-sm text-red-700 mt-1 italic">"{signatory.rejectionComment || "Uploaded file is incorrect."}"</p>
                 </div>
               </div>
             )}
 
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-              <div className="px-6 py-5 border-b border-gray-50 bg-gray-50/30 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-indigo-600 rounded-lg text-white shadow-lg shadow-indigo-100">
-                    <BookOpen size={18} />
-                  </div>
-                  <h3 className="font-bold text-gray-900">Submission Requirements</h3>
-                </div>
-                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider bg-white px-3 py-1 rounded-full border border-gray-100 shadow-sm">
-                  {signatory.requirements?.length} Documents
-                </span>
-              </div>
-
-              <div className="p-6">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {signatory.requirements?.map((req, i) => (
-                    <div 
-                      key={i} 
-                      onClick={() => !isApproved && setActiveRequirement(req)}
-                      className={`flex items-center gap-4 p-6 rounded-2xl border transition-all ${
-                        isApproved 
-                          ? 'bg-green-50/30 border-green-100 cursor-default' 
-                          : 'bg-white border-gray-100 hover:border-indigo-300 hover:shadow-md cursor-pointer group'
-                      }`}
-                    >
-                      {isApproved ? (
-                        <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center text-white">
-                          <CheckCircle2 size={14} />
-                        </div>
-                      ) : (
-                        <div className="w-6 h-6 rounded-full border-2 border-gray-200 group-hover:border-indigo-500 transition-colors" />
-                      )}
-                      <span className="text-sm font-bold text-gray-700 group-hover:text-indigo-700 transition-colors">{req}</span>
+            {/* 2. REQUIREMENT PICKER OR UPLOAD SECTION */}
+            {!activeRequirement ? (
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="px-6 py-5 border-b border-gray-50 bg-gray-50/30 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-indigo-600 rounded-lg text-white shadow-lg shadow-indigo-100">
+                      <BookOpen size={18} />
                     </div>
-                  ))}
+                    <h3 className="font-bold text-gray-900">Requirements List</h3>
+                  </div>
+                  <span className="text-xs font-bold text-gray-400">{signatory.requirements?.length} Documents</span>
+                </div>
+
+                <div className="p-6">
+                  <p className="text-sm text-gray-500 mb-6 font-medium">Select a document type below to start your submission:</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {signatory.requirements?.map((req, i) => (
+                      <button 
+                        key={i} 
+                        disabled={isApproved}
+                        onClick={() => setActiveRequirement(req)}
+                        className={`flex items-center text-left gap-4 p-6 rounded-2xl border transition-all ${
+                          isApproved 
+                            ? 'bg-green-50/30 border-green-100 opacity-60 cursor-default' 
+                            : 'bg-white border-gray-100 hover:border-indigo-400 hover:bg-indigo-50/30 group'
+                        }`}
+                      >
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${isApproved ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400 group-hover:bg-indigo-600 group-hover:text-white'}`}>
+                           {isApproved ? <CheckCircle2 size={20} /> : <Upload size={20} />}
+                        </div>
+                        <span className="text-sm font-bold text-gray-700">{req}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
+            ) : (
+              /* THE UPLOAD INTERFACE (Centered in column, no modal) */
+              <div className="bg-white rounded-3xl border-2 border-indigo-100 shadow-xl overflow-hidden animate-in zoom-in-95 duration-300">
+                <div className="bg-indigo-50/50 px-8 py-4 border-b border-indigo-100 flex justify-between items-center">
+                   <div className="flex items-center gap-2">
+                     <Upload size={18} className="text-indigo-600" />
+                     <span className="font-bold text-indigo-900">Document Upload</span>
+                   </div>
+                   <button 
+                    onClick={() => setActiveRequirement(null)}
+                    className="p-2 hover:bg-indigo-100 text-indigo-400 rounded-full transition-colors"
+                   >
+                     <X size={20} />
+                   </button>
+                </div>
+
+                <div className="p-8 max-w-xl mx-auto text-center">
+                  <div className="mb-8">
+                    <h2 className="text-xl font-black text-gray-900 leading-tight">
+                      Submit {activeRequirement}
+                    </h2>
+                    <p className="text-sm text-gray-500 mt-2 font-medium">
+                      Make sure your file is clear and readable before submitting.
+                    </p>
+                  </div>
+
+                  <div className="border-2 border-dashed border-gray-200 rounded-3xl p-10 hover:border-indigo-400 transition-colors bg-gray-50 group mb-6">
+                    <input type="file" multiple onChange={handleFileChange} className="hidden" id="file-upload" />
+                    <label htmlFor="file-upload" className="cursor-pointer flex flex-col items-center">
+                      <div className="w-16 h-16 bg-white rounded-2xl shadow-sm border border-gray-100 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <Send size={28} className="text-indigo-500 rotate-[-45deg]" />
+                      </div>
+                      <span className="text-base font-bold text-gray-900">Drag & Drop or Click to browse</span>
+                      <span className="text-[11px] text-gray-400 mt-2 font-bold uppercase tracking-widest">Supports PDF, JPG, PNG (Max 10MB)</span>
+                    </label>
+                  </div>
+
+                  {selectedFiles && (
+                    <div className="bg-indigo-600 text-white px-5 py-3 rounded-2xl flex items-center justify-between mb-8 animate-in slide-in-from-top-2">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 size={16} />
+                        <span className="text-xs font-bold">{selectedFiles.length} file(s) selected</span>
+                      </div>
+                      <button onClick={() => setSelectedFiles(null)} className="text-[10px] font-black uppercase hover:underline">Remove</button>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <button 
+                      onClick={() => setActiveRequirement(null)}
+                      className="px-6 py-4 bg-gray-100 text-gray-600 font-bold rounded-2xl hover:bg-gray-200 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleSubmit}
+                      disabled={!selectedFiles || isSubmitting}
+                      className="flex items-center justify-center gap-2 px-6 py-4 bg-indigo-600 text-white font-black rounded-2xl shadow-lg shadow-indigo-200 hover:bg-indigo-700 disabled:opacity-50 transition-all active:scale-95"
+                    >
+                      {isSubmitting ? "Uploading..." : "Submit File"}
+                      {!isSubmitting && <Send size={18} />}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="bg-indigo-50 rounded-2xl p-6 flex gap-4">
+              <Info className="text-indigo-500 shrink-0" size={20} />
+              <p className="text-xs text-indigo-700 leading-relaxed font-medium">
+                Files submitted are reviewed by the signatory in the order they are received. You will be notified via the portal dashboard once your status is updated.
+              </p>
             </div>
           </div>
         </div>
       </main>
-      
-      {/* DRAGGABLE UPLOAD MODAL */}
-      {activeRequirement && windowSize && (
-        <>
-          <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm z-40" onClick={() => setActiveRequirement(null)} />
-          <Rnd
-            size={{ width: Math.min(420, windowSize.width * 0.95), height: "auto" }}
-            position={position}
-            onDragStop={(e, d) => setPosition({ x: d.x, y: d.y })}
-            bounds="window"
-            dragHandleClassName="handle"
-            style={{ zIndex: 50, position: "fixed" }}
-          >
-            <div className="bg-white rounded-3xl shadow-2xl w-full flex flex-col overflow-hidden border border-gray-200">
-              <div className="handle bg-gray-50 border-b border-gray-100 px-6 py-4 flex justify-between items-center cursor-move select-none">
-                <span className="font-bold text-gray-900">Upload Document</span>
-                <button onClick={() => setActiveRequirement(null)} className="p-2 hover:bg-gray-200 rounded-full transition-colors">✕</button>
-              </div>
-
-              <div className="p-8 space-y-6">
-                <p className="text-sm text-gray-600">
-                  Submit documents for <span className="font-bold text-gray-900 italic">"{activeRequirement}"</span>.
-                </p>
-
-                <div className="border-2 border-dashed border-gray-200 rounded-2xl p-8 text-center hover:border-indigo-400 transition-colors bg-gray-50/50">
-                  <input type="file" multiple onChange={handleFileChange} className="hidden" id="file-upload" />
-                  <label htmlFor="file-upload" className="cursor-pointer flex flex-col items-center">
-                    <div className="w-12 h-12 bg-white rounded-full shadow-sm border border-gray-100 flex items-center justify-center mb-3">
-                      <Send size={20} className="text-indigo-500 rotate-[-45deg]" />
-                    </div>
-                    <span className="text-sm font-bold text-gray-900">Click to browse files</span>
-                    <span className="text-[10px] text-gray-400 mt-1 font-bold uppercase tracking-widest">Max 10MB per file</span>
-                  </label>
-                </div>
-
-                {selectedFiles && (
-                  <div className="bg-indigo-50 px-4 py-3 rounded-xl border border-indigo-100 flex items-center justify-between animate-in fade-in zoom-in-95">
-                    <span className="text-xs font-bold text-indigo-700">{selectedFiles.length} file(s) ready</span>
-                    <button onClick={() => setSelectedFiles(null)} className="text-[10px] font-bold uppercase text-indigo-400 hover:text-indigo-600">Clear</button>
-                  </div>
-                )}
-
-                <button
-                  onClick={handleSubmit}
-                  disabled={!selectedFiles || isSubmitting}
-                  className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-indigo-600 text-white font-black rounded-2xl shadow-lg shadow-indigo-100 hover:bg-indigo-700 disabled:opacity-50 transition-all active:scale-95"
-                >
-                  {isSubmitting ? "Uploading..." : "Submit to Signatory"}
-                  <Send size={18} />
-                </button>
-              </div>
-            </div>
-          </Rnd>
-        </>
-      )}
     </div>
   );
 }
@@ -270,9 +225,8 @@ function NotFound({ router }: { router: any }) {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="text-center">
-        <h1 className="text-4xl font-black text-gray-200">404</h1>
-        <p className="text-gray-500 mt-2 font-medium">Record Missing</p>
-        <button onClick={() => router.back()} className="mt-6 text-indigo-600 font-bold underline decoration-2 underline-offset-4">Go Back</button>
+        <h1 className="text-4xl font-black text-gray-200 uppercase tracking-tighter">Not Found</h1>
+        <button onClick={() => router.back()} className="mt-6 text-indigo-600 font-bold hover:underline">Return to Portal</button>
       </div>
     </div>
   );

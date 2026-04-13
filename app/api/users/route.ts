@@ -1,6 +1,5 @@
-import { NextRequest, NextResponse} from "next/server";
-import { createConnection } from "@/lib/db.js";
-import bcrypt from "bcryptjs";
+import { NextRequest, NextResponse} from "next/server"
+import { createConnection } from "@/lib/db.js"
 
 // Kuhahon ang mga user gaw
 export async function GET() {
