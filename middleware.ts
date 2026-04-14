@@ -26,7 +26,8 @@ export async function middleware(request: NextRequest) {
     }
 
     const requiredRole = PROTECTED[matchedBase as keyof typeof PROTECTED];
-    if (user.role !== requiredRole) {
+
+    if (user.role.toLowerCase() !== requiredRole.toLowerCase()) {
         return NextResponse.redirect(new URL("/unauthorized", request.url));
     }
 

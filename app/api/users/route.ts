@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse} from "next/server"
 import { createConnection } from "@/lib/db.js"
-
+import bcrypt from "bcryptjs";
 // Kuhahon ang mga user gaw
 export async function GET() {
     let db = await createConnection();
