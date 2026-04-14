@@ -31,7 +31,7 @@ export default function StudentLayout({
     <div className="flex flex-col h-screen overflow-hidden">
       {/* HEADER */}
       <Header
-        role="student"
+        role="admin"
         activePage={activePage}
         onPageClick={handlePageClick}
       />
