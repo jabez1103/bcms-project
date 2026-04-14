@@ -5,15 +5,11 @@ import { useState } from "react";
 import Link from "next/link";
 import { 
   Bell, 
-  CheckCircle2, 
-  Clock, 
-  FileText, 
-  CheckCheck, 
   Search, 
-  X, 
   ChevronDown,
   Settings as SettingsIcon,
-  LogOut
+  LogOut,
+  User as UserIcon
 } from "lucide-react";
 import { PageType, UserRole } from "@/types/index";
 import { SettingsModal } from "./SettingsModal";
@@ -33,11 +29,6 @@ interface NotificationItem {
   type: "request" | "approval" | "reminder";
 }
 
-const user = {
-  avatar: "/monique.png",
-  name: "Monique Cantaronamm",
-};
-
 export function Header({ role, activePage, onPageClick }: HeaderProps) {
   const [isDropdownOpen, setDropdownOpen] = useState(false);
   const [isNotifOpen, setNotifOpen] = useState(false);
@@ -55,24 +46,14 @@ export function Header({ role, activePage, onPageClick }: HeaderProps) {
     { id: 3, title: "Reminder", content: "Complete your pending approvals.", read: true, type: "reminder" },
   ]);
 
+  const { user, loading } = useCurrentUser();
+
   const unreadCount = notifications.filter(n => !n.read).length;
-
-  const handleClickNotification = (id: number) => {
-    setNotifications(prev => prev.map(n => (n.id === id ? { ...n, read: true } : n)));
-  };
-
-  const markAllAsRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-  };
-
-  const displayedNotifications = notifications.filter(n => notifTab === "All" ? true : !n.read);
-
-  const { user, loading } = useCurrentUser(); // current user data/info
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-slate-400 text-sm">Loading profile...</p>
+        <p className="text-slate-400 text-sm animate-pulse">Loading profile...</p>
       </div>
     );
   }
@@ -80,10 +61,13 @@ export function Header({ role, activePage, onPageClick }: HeaderProps) {
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-red-400 text-sm">Not logged in.</p>
+        <p className="text-red-400 text-sm font-medium">Not logged in.</p>
       </div>
     );
   }
+
+  // Placeholder avatar if user.avatar is missing
+  const userAvatar = (user as any).avatar || "/monique.png";
 
   return (
     <>
@@ -105,7 +89,7 @@ export function Header({ role, activePage, onPageClick }: HeaderProps) {
         {/* RIGHT SIDE: ACTIONS */}
         <div className="flex items-center space-x-2 md:space-x-6">
           
-          {/* SEARCH BAR */}
+          {/* SEARCH BAR (Desktop Only) */}
           <div className="relative hidden lg:block">
             <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
@@ -130,7 +114,7 @@ export function Header({ role, activePage, onPageClick }: HeaderProps) {
                 </span>
               )}
             </button>
-            {/* ... Notification Dropdown logic remains same ... */}
+            {/* Notification Dropdown (Optional: Add logic here if needed) */}
           </div>
 
           {/* PROFILE DROPDOWN */}
@@ -140,23 +124,61 @@ export function Header({ role, activePage, onPageClick }: HeaderProps) {
               onClick={() => setDropdownOpen(!isDropdownOpen)}
             >
               <div className="relative">
-                <img src={user.avatar} alt="Profile" className="w-9 h-9 md:w-11 md:h-11 rounded-xl object-cover border-2 border-transparent group-hover:border-purple-200 transition-all" />
+                <img 
+                  src={userAvatar} 
+                  alt="Profile" 
+                  className="w-9 h-9 md:w-11 md:h-11 rounded-xl object-cover border-2 border-transparent group-hover:border-purple-200 transition-all" 
+                />
                 <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-white rounded-full" />
               </div>
+              
+              {/* Desktop Name/Role */}
               <div className="hidden md:block text-left">
-                <p className="text-sm font-bold text-slate-800 line-clamp-1 group-hover:text-purple-600 transition-colors">{user.full_name as string}</p>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{user.role as string}</p>
+                <p className="text-sm font-bold text-slate-800 line-clamp-1 group-hover:text-purple-600 transition-colors">
+                  {user.full_name as string}
+                </p>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                  {user.role as string}
+                </p>
               </div>
+              
               <ChevronDown size={18} className={`text-gray-400 transition-transform duration-300 ${isDropdownOpen ? "rotate-180 text-purple-600" : ""}`} />
             </button>
 
             {isDropdownOpen && (
-              <div className="absolute right-0 top-full mt-3 w-56 bg-white border border-gray-100 rounded-2xl shadow-2xl z-50 py-2 animate-in fade-in slide-in-from-top-2">
+              <div className="absolute right-0 top-full mt-3 w-64 md:w-56 bg-white border border-gray-100 rounded-2xl shadow-2xl z-50 py-2 animate-in fade-in slide-in-from-top-2">
+                
+                {/* MOBILE HEADER: Only shows when screen is small */}
+                <div className="md:hidden px-4 py-4 flex flex-col items-center border-b border-gray-50 mb-2">
+                  <img 
+                    src={userAvatar} 
+                    alt="Profile" 
+                    className="w-14 h-14 rounded-2xl object-cover mb-2 border-2 border-purple-100 shadow-sm" 
+                  />
+                  <p className="text-sm font-bold text-slate-800 text-center leading-tight">
+                    {user.full_name as string}
+                  </p>
+                  <p className="text-[10px] font-bold text-purple-500 uppercase tracking-widest mb-3">
+                    {user.role as string}
+                  </p>
+                  
+                  <Link
+                    href={`/${user.role as string}/profile`}
+                    onClick={() => setDropdownOpen(false)}
+                    className="w-full flex items-center justify-center gap-2 py-2 bg-slate-50 hover:bg-purple-50 text-purple-600 text-xs font-bold rounded-lg transition-colors border border-purple-100"
+                  >
+                    <UserIcon size={14} />
+                    View Profile
+                  </Link>
+                </div>
+
+                {/* DESKTOP PROFILE LINK: Hidden on mobile since it's in the header above */}
                 <Link
                   href={`/${user.role as string}/profile`}
                   onClick={() => setDropdownOpen(false)}
-                  className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-purple-50 hover:text-purple-600 transition-colors"
+                  className="hidden md:flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-purple-50 hover:text-purple-600 transition-colors"
                 >
+                  <UserIcon size={16} />
                   Profile
                 </Link>
 
