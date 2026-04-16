@@ -11,7 +11,7 @@ import {
   ClipboardCheck, 
   ClipboardList, 
   History, 
-  HelpCircle, // Added for Support
+  HelpCircle, 
   ChevronRight, 
   ChevronLeft,
   ChevronDown,
@@ -88,13 +88,15 @@ export function Sidebar({ role, activePage, onPageClick }: SidebarProps) {
         transition-all duration-300 relative shrink-0 z-30
       `}
     >
+      {/* Collapse Toggle Button */}
       <button
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="absolute -right-3 top-8 bg-white border border-slate-200 w-6 h-6 rounded-md flex items-center justify-center hover:bg-slate-50 hover:border-purple-300 transition-all shadow-sm z-50"
+        className="absolute -right-3 top-8 bg-white border border-slate-200 w-6 h-6 rounded-md flex items-center justify-center hover:border-purple-600 transition-all shadow-sm z-50"
       >
         {isCollapsed ? <ChevronRight size={14} className="text-purple-600" /> : <ChevronLeft size={14} className="text-purple-600" />}
       </button>
 
+      {/* Main Navigation */}
       <div className="flex flex-col overflow-y-auto px-4 space-y-2 h-full py-8 custom-scrollbar">
         {getLinksByRole().map((item) => {
           const isSignatories = item.label === "Signatories";
@@ -105,35 +107,41 @@ export function Sidebar({ role, activePage, onPageClick }: SidebarProps) {
           return (
             <div key={item.label} className="flex flex-col">
               {item.hasDropdown ? (
+                /* Dropdown Parent Button */
                 <button
                   onClick={() => {
                     if (isSignatories) setSignatoriesOpen(!signatoriesOpen);
                     if (isActivityLogs) setActivityLogsOpen(!activityLogsOpen);
                   }}
                   className={`
-                    flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all w-full
-                    ${isOpen ? "bg-slate-50 text-purple-600" : "hover:bg-slate-50 text-slate-500"}
+                    flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all w-full group
+                    ${isOpen ? "bg-purple-600 text-white" : "hover:bg-purple-50 text-slate-500"}
                   `}
                 >
-                  <span className={isOpen ? "text-purple-600" : "text-slate-400"}>{item.icon}</span>
+                  <span className={`${isOpen ? "text-white" : "text-slate-400 group-hover:text-purple-600"}`}>
+                    {item.icon}
+                  </span>
                   {!isCollapsed && (
                     <>
-                      <span className={`flex-1 text-sm font-bold text-left ${isOpen ? "text-slate-900" : ""}`}>
+                      <span className={`flex-1 text-sm font-bold text-left ${isOpen ? "text-white" : "group-hover:text-purple-600"}`}>
                         {item.label}
                       </span>
-                      <ChevronDown size={14} className={`transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`} />
+                      <ChevronDown size={14} className={`transition-transform duration-300 ${isOpen ? "rotate-180 text-white" : "group-hover:text-purple-600"}`} />
                     </>
                   )}
                 </button>
               ) : (
+                /* Standard Link */
                 <Link href={linkToRoute(item.label)}>
                   <div className={`
-                    flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all cursor-pointer
-                    ${isActive ? "bg-purple-50 text-purple-600" : "hover:bg-slate-50 text-slate-500"}
+                    flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all cursor-pointer group
+                    ${isActive ? "bg-purple-50 text-purple-600" : "hover:bg-purple-600 hover:text-white text-slate-500"}
                   `}>
-                    <span className={isActive ? "text-purple-600" : "text-slate-400"}>{item.icon}</span>
+                    <span className={`${isActive ? "text-purple-600" : "text-slate-400 group-hover:text-white"}`}>
+                      {item.icon}
+                    </span>
                     {!isCollapsed && (
-                      <span className={`text-sm font-bold ${isActive ? "text-slate-900" : ""}`}>
+                      <span className="text-sm font-bold">
                         {item.label}
                       </span>
                     )}
@@ -141,11 +149,12 @@ export function Sidebar({ role, activePage, onPageClick }: SidebarProps) {
                 </Link>
               )}
 
+              {/* Sub-menu Items (Dropdown Content) */}
               {isOpen && !isCollapsed && (
                 <div className="ml-9 mt-1 space-y-1 border-l-2 border-slate-100 pl-3">
                   {isSignatories && signatories.map((sig) => (
                     <Link key={sig.id} href={`/${role}/signatories/${sig.id}`} className="block py-2 group">
-                      <p className="text-[11px] font-black text-slate-800 uppercase tracking-tighter leading-none group-hover:text-purple-600 transition-colors">
+                      <p className="text-[11px] font-black text-slate-800 uppercase tracking-tight group-hover:text-purple-600 transition-colors">
                         {sig.role}
                       </p>
                       <p className="text-[10px] text-slate-400 truncate group-hover:text-slate-600">
@@ -171,17 +180,17 @@ export function Sidebar({ role, activePage, onPageClick }: SidebarProps) {
         })}
       </div>
 
-    
+      {/* Footer Support Section */}
       <div className="px-4 py-6 border-t border-slate-100 mt-auto">
         <Link 
-          href={`/${role}/support`}
-          className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-slate-500 hover:bg-purple-50 hover:text-purple-600 transition-all group"
+          href="/helpandsupport"
+          className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-slate-500 hover:bg-purple-600 hover:text-white transition-all group"
         >
-          <HelpCircle size={20} className="text-slate-400 group-hover:text-purple-500" />
+          <HelpCircle size={20} className="text-slate-400 group-hover:text-white shrink-0" />
           {!isCollapsed && (
             <div className="flex flex-col items-start leading-tight">
               <span className="text-sm font-bold">Help & Support</span>
-              <span className="text-[10px] text-slate-400">Documentation</span>
+              <span className="text-[10px] text-slate-400 group-hover:text-purple-100">Documentation</span>
             </div>
           )}
         </Link>
