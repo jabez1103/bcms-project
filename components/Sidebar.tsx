@@ -18,7 +18,15 @@ import {
   UserCheck
 } from "lucide-react";
 import { PageType, UserRole } from "@/types/index";
-import { signatories } from "@/lib/mock-data/id/signatories";
+//import { signatories } from "@/lib/mock-data/id/signatories";
+
+
+type Signatory = {
+  id: number;
+  role: string;
+  name: string;
+  status: string;
+}
 
 interface SidebarProps {
   role: UserRole;
@@ -31,6 +39,7 @@ export function Sidebar({ role, activePage, onPageClick }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState<boolean | null>(null);
   const [signatoriesOpen, setSignatoriesOpen] = useState(false);
   const [activityLogsOpen, setActivityLogsOpen] = useState(false);
+  const [signatories, setSignatories] = useState<Signatory[]>([]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -41,6 +50,20 @@ export function Sidebar({ role, activePage, onPageClick }: SidebarProps) {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  useEffect(() => {
+    if (role !== "student") return;
+    const fetchSignatories = async () => {
+      try {
+        const res = await fetch("/api/student/clearance-status");
+        const data = await res.json();
+        if (data.success) setSignatories(data.signatories);
+      } catch (err) {
+        console.error("Failed to fetch signatories", err);
+      }
+    };
+    fetchSignatories();
+  }, [role]);
 
   if (isCollapsed === null) return null;
 
@@ -79,9 +102,18 @@ export function Sidebar({ role, activePage, onPageClick }: SidebarProps) {
     return `/${role}/${slug}`;
   };
 
+  
+  const getStatusDot = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case 'approved': return 'bg-emerald-400';
+      case 'pending': return 'bg-amber-400';
+      case 'rejected': return 'bg-red-400';
+      default: return 'bg-slate-300';
+    }
+  };
+
   return (
-    <aside
-      className={`
+    <aside className={`
         ${isCollapsed ? "w-20" : "w-64"}
         bg-white border-r border-slate-200
         h-full flex flex-col text-slate-600
@@ -93,7 +125,8 @@ export function Sidebar({ role, activePage, onPageClick }: SidebarProps) {
         onClick={() => setIsCollapsed(!isCollapsed)}
         className="absolute -right-3 top-8 bg-white border border-slate-200 w-6 h-6 rounded-md flex items-center justify-center hover:border-purple-600 transition-all shadow-sm z-50"
       >
-        {isCollapsed ? <ChevronRight size={14} className="text-purple-600" /> : <ChevronLeft size={14} className="text-purple-600" />}
+        {isCollapsed ? <ChevronRight size={14} className="text-purple-600" />
+        : <ChevronLeft size={14} className="text-purple-600" />}
       </button>
 
       {/* Main Navigation */}
@@ -152,16 +185,23 @@ export function Sidebar({ role, activePage, onPageClick }: SidebarProps) {
               {/* Sub-menu Items (Dropdown Content) */}
               {isOpen && !isCollapsed && (
                 <div className="ml-9 mt-1 space-y-1 border-l-2 border-slate-100 pl-3">
-                  {isSignatories && signatories.map((sig) => (
-                    <Link key={sig.id} href={`/${role}/signatories/${sig.id}`} className="block py-2 group">
-                      <p className="text-[11px] font-black text-slate-800 uppercase tracking-tight group-hover:text-purple-600 transition-colors">
-                        {sig.role}
-                      </p>
-                      <p className="text-[10px] text-slate-400 truncate group-hover:text-slate-600">
-                        {sig.person.name}
-                      </p>
-                    </Link>
-                  ))}
+                  {isSignatories && (signatories.length === 0 ? (
+                    <p className="text-[10px] text-slate-400 py-2">No requirements found.</p>
+                  ) : ( signatories.map((sig) => (
+                          <Link key={sig.id} href={`/${role}/signatories/${sig.id}`} className="block py-2 group">
+                            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${getStatusDot(sig.status)}`} />
+                            <div>
+                              <p className="text-[11px] font-black text-slate-800 uppercase tracking-tighter leading-none group-hover:text-purple-600 transition-colors">
+                                {sig.role}
+                              </p>
+                              <p className="text-[10px] text-slate-400 truncate group-hover:text-slate-600">
+                                {sig.name}
+                              </p>
+                            </div>
+                          </Link>
+                        ))
+                      )
+                    )}
 
                   {isActivityLogs && (
                     <>

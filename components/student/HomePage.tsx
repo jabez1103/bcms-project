@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { Info, CheckCircle2, Clock, AlertCircle, ArrowRight } from 'lucide-react';
 import { useRouter } from "next/navigation";
 
+
+/*
 const signatories = [
   { id: 1, role: 'Cashier', name: 'Rebecca C. Remulta', status: 'Approved', description: 'Responsible for verifying tuition and miscellaneous payments and stamping cash clearance.' },
   { id: 2, role: 'Librarian', name: 'Carmella C. Sarabello', status: 'Pending', description: 'Oversees book returns, overdue fines, and issuance of library clearance slips.' },
@@ -12,14 +14,35 @@ const signatories = [
   { id: 3, role: 'Director, SAS', name: 'Patricio S. Doroy, PhD', status: 'Approved', description: 'Leads Student Affairs Services review.' },
   { id: 4, role: 'Dean', name: 'Rey Anthony G. Godmalin', status: 'Pending', description: 'Responsible for endorsing graduation eligibility.' },
 ];
+*/
+
+type Signatory = {
+  id: number;
+  role: string;
+  name: string;
+  description: string;
+  status: string;
+}
 
 export default function HomePage() {
   const [activeFilter, setActiveFilter] = useState('All Statuses');
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
+  const [signatories, setSignatories] = useState<Signatory[]>([]);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   const filters = ['All Statuses', 'Approved', 'Pending', 'Not Submitted'];
+
+  useEffect(() => {
+    const fetchStatus = async () => {
+      const res = await fetch("/api/student/clearance-status");
+      const data = await res.json();
+      if (data.success) setSignatories(data.signatories);
+      setLoading(false);
+    };
+    fetchStatus();
+  }, []);
 
   useEffect(() => {
     const controlHeader = () => {
@@ -36,9 +59,19 @@ export default function HomePage() {
     return () => window.removeEventListener('scroll', controlHeader);
   }, [lastScrollY]);
 
-  const filteredData = signatories.filter(item =>
-    activeFilter === 'All Statuses' ? true : item.status.trim() === activeFilter
+  const filteredData = signatories.filter(item => {
+    if (activeFilter === 'All Statuses') return true;
+    const normalized = normalizedStatus(item.status);
+    return normalized === activeFilter;
+  });
+    //activeFilter === 'All Statuses' ? true : item.status.trim() === activeFilter
+
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center">
+      <p className="text-slate-400 text-sm">Loading clearance status...</p>
+    </div>
   );
+
 
   return (
     <div className="bg-[#F8FAFC] min-h-screen min-w-full relative font-sans">
@@ -50,7 +83,7 @@ export default function HomePage() {
       >
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4 relative">
           <div>
-            <h2 className="text-xl font-bold text-slate-900 tracking-tight">Signatories Dashboard</h2>
+            <h2 className="text-xl font-bold text-slate-900 tracking-tight">Clerance Statuses</h2>
             <p className="text-[11px] text-slate-500 font-medium">Clearance Progress 2026</p>
           </div>
 
@@ -77,20 +110,35 @@ export default function HomePage() {
 
       <div className="p-6 md:p-10">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredData.map((person) => (
-              <SignatoryCard key={person.id} person={person} />
-            ))}
-          </div>
+          {filteredData.length === 0 ? (
+            <p>No results found.</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {filteredData.map((person) => (
+                <SignatoryCard key={person.id} person={person} />
+              ))}
+            </div>           
+          )}
         </div>
       </div>
     </div>
   );
 }
 
-function SignatoryCard({ person }: { person: any }) {
+
+function normalizedStatus(status: string): string {
+  switch (status?.toLowerCase()) {
+    case 'approved': return 'Approved';
+    case 'pending': return 'Pending';
+    case 'rejected': return 'Rejected';
+    case 'not_submitted': return 'Not Submitted';
+    default: return 'Not Submitted';
+  }
+}
+
+function SignatoryCard({ person }: { person: Signatory }) {
   const router = useRouter();
-  const currentStatus = person.status?.trim();
+  const currentStatus = normalizedStatus(person.status); //person.status?.trim();
   const isApproved = currentStatus === 'Approved';
   const isPending = currentStatus === 'Pending';
   const isNotSubmitted = currentStatus === 'Not Submitted';
@@ -120,7 +168,7 @@ function SignatoryCard({ person }: { person: any }) {
             src={`https://api.dicebear.com/7.x/initials/svg?seed=${person.name}&backgroundColor=f8fafc`}
             alt="avatar"
             className="w-full h-full object-cover"
-          />
+          />1
         </div>
       </div>
 
