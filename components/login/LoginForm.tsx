@@ -11,6 +11,7 @@ interface LoginFormProps {
 export default function LoginForm({ mobile = false }: LoginFormProps) {
   const router = useRouter();
 
+  
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false); // New state

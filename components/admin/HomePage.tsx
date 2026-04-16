@@ -67,6 +67,18 @@ export default function HomeContent() {
   const [itemsPerPage] = useState(5);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
 
+  // --- ADDED FIX FOR WINDOW IS NOT DEFINED ---
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    // Only runs in the browser
+    const checkMobile = () => setIsMobile(window.innerWidth < 640);
+    checkMobile(); // Check on mount
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+  // --------------------------------------------
+
   const globalFilteredData = useMemo(() => {
     return globalLevelFilter === "All" 
       ? students 
@@ -173,8 +185,9 @@ export default function HomeContent() {
                 />
                 <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 700, fill: '#94a3b8'}} />
                 <Tooltip cursor={{fill: '#f8fafc'}} contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'}} />
-                <Bar dataKey="cleared" fill="#6366f1" radius={[4, 4, 0, 0]} barSize={window?.innerWidth < 640 ? 12 : 24} />
-                <Bar dataKey="notCleared" fill="#fb923c" radius={[4, 4, 0, 0]} barSize={window?.innerWidth < 640 ? 12 : 24} />
+                {/* barSize now uses the safe state variable */}
+                <Bar dataKey="cleared" fill="#6366f1" radius={[4, 4, 0, 0]} barSize={isMobile ? 12 : 24} />
+                <Bar dataKey="notCleared" fill="#fb923c" radius={[4, 4, 0, 0]} barSize={isMobile ? 12 : 24} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -231,7 +244,7 @@ export default function HomeContent() {
           </div>
         </div>
 
-        {/* MOBILE CARDS VIEW (Visible only on small screens) */}
+        {/* MOBILE CARDS VIEW */}
         <div className="block md:hidden divide-y divide-slate-50">
            {paginatedStudents.map((s) => (
                <div key={s.id} className="p-5 space-y-4">
@@ -253,7 +266,7 @@ export default function HomeContent() {
            ))}
         </div>
 
-        {/* DESKTOP TABLE VIEW (Hidden on small screens) */}
+        {/* DESKTOP TABLE VIEW */}
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left">
             <thead>
@@ -341,7 +354,9 @@ export default function HomeContent() {
               <ChevronRight size={18} />
             </button>
           </div>
+          
         </div>
+        
       </div>
     </div>
   );

@@ -138,6 +138,17 @@ export default function UserAccounts() {
     fetchUsers();
   };
 
+  // NEW: Quick Deactivation Toggle (Retains historical records, blocks login)
+  const toggleStatus = async (user: User) => {
+    const newStatus = user.account_status === "active" ? "inactive" : "active";
+    const res = await fetch(`/api/users/${user.user_id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...user, account_status: newStatus }),
+    });
+    if (res.ok) fetchUsers();
+  };
+
   const deleteUser = async (user_id: number) => {
     if (!confirm("Are you sure? This action cannot be undone.")) return;
     await fetch(`/api/users/${user_id}`, { method: "DELETE" });
@@ -155,7 +166,7 @@ export default function UserAccounts() {
               User Management
             </h1>
             <p className="text-slate-500 mt-2 text-base md:text-lg">
-              Manage system access for students and staff.
+              Manage student and staff roles, credentials, and system access.
             </p>
           </div>
           <button
@@ -193,7 +204,7 @@ export default function UserAccounts() {
         {/* DATA CONTAINER */}
         <div className="bg-white rounded-2xl md:rounded-[2rem] border border-slate-200 shadow-xl shadow-slate-200/40 overflow-hidden">
           
-          {/* MOBILE LIST VIEW (Visible only on small screens) */}
+          {/* MOBILE LIST VIEW */}
           <div className="block md:hidden divide-y divide-slate-100">
             {loading ? (
                 <div className="p-10 text-center text-slate-400 italic">Loading directory...</div>
@@ -201,7 +212,7 @@ export default function UserAccounts() {
                 <div className="p-10 text-center text-slate-400">No users found.</div>
             ) : (
                 paginatedUsers.map((u) => (
-                    <div key={u.user_id} className="p-5 space-y-4">
+                    <div key={u.user_id} className={`p-5 space-y-4 ${u.account_status === 'inactive' ? 'opacity-60 grayscale-[0.5]' : ''}`}>
                         <div className="flex items-center gap-4">
                             <div className="w-12 h-12 rounded-full bg-indigo-50 flex items-center justify-center font-bold text-indigo-600 border border-indigo-100 shrink-0">
                                 {u.first_name[0]}{u.last_name[0]}
@@ -223,8 +234,8 @@ export default function UserAccounts() {
                                 </span>
                             </div>
                             <div className="flex gap-4">
+                                <button onClick={() => toggleStatus(u)} className="text-slate-600 font-bold text-xs uppercase">{u.account_status === 'active' ? 'Deactivate' : 'Activate'}</button>
                                 <button onClick={() => handleOpenModal(u)} className="text-indigo-600 font-bold text-xs uppercase">Edit</button>
-                                <button onClick={() => deleteUser(u.user_id)} className="text-rose-500 font-bold text-xs uppercase">Delete</button>
                             </div>
                         </div>
                     </div>
@@ -232,27 +243,27 @@ export default function UserAccounts() {
             )}
           </div>
 
-          {/* DESKTOP TABLE VIEW (Hidden on small screens) */}
+          {/* DESKTOP TABLE VIEW */}
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead className="bg-slate-50 border-b border-slate-100">
                 <tr>
-                  <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest">Identify</th>
+                  <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest">User Table Data</th>
                   <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest">Role</th>
-                  <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest">Status</th>
+                  <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest">Login Access</th>
                   <th className="px-8 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
                 {!loading && paginatedUsers.map((u) => (
-                  <tr key={u.user_id} className="hover:bg-slate-50 transition-colors group">
+                  <tr key={u.user_id} className={`hover:bg-slate-50 transition-colors group ${u.account_status === 'inactive' ? 'bg-slate-50/50' : ''}`}>
                     <td className="px-8 py-5">
                       <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center font-bold text-indigo-600 text-xs border border-indigo-100">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs border transition-all ${u.account_status === 'active' ? 'bg-indigo-50 text-indigo-600 border-indigo-100' : 'bg-slate-200 text-slate-500 border-slate-300'}`}>
                           {u.first_name[0]}{u.last_name[0]}
                         </div>
                         <div>
-                          <div className="font-bold text-slate-800 text-sm">
+                          <div className={`font-bold text-sm ${u.account_status === 'active' ? 'text-slate-800' : 'text-slate-400 italic'}`}>
                             {u.first_name} {u.middle_name} {u.last_name}
                           </div>
                           <div className="text-xs text-slate-400 font-medium mt-0.5">{u.email}</div>
@@ -265,14 +276,17 @@ export default function UserAccounts() {
                       </span>
                     </td>
                     <td className="px-8 py-5">
-                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${u.account_status === 'active' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
+                      <button 
+                        onClick={() => toggleStatus(u)}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${u.account_status === 'active' ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100' : 'bg-rose-50 text-rose-600 hover:bg-rose-100'}`}
+                      >
                         <span className={`w-1.5 h-1.5 rounded-full ${u.account_status === 'active' ? 'bg-emerald-500' : 'bg-rose-500'}`}></span>
-                        {u.account_status}
-                      </span>
+                        {u.account_status === 'active' ? 'Enabled' : 'Deactivated'}
+                      </button>
                     </td>
                     <td className="px-8 py-5 text-right space-x-3">
-                      <button onClick={() => handleOpenModal(u)} className="text-indigo-600 font-bold text-xs hover:underline uppercase tracking-wider">Edit</button>
-                      <button onClick={() => deleteUser(u.user_id)} className="text-rose-500 font-bold text-xs hover:underline uppercase tracking-wider">Delete</button>
+                      <button onClick={() => handleOpenModal(u)} className="text-indigo-600 font-bold text-xs hover:underline uppercase tracking-wider">Modify</button>
+                      <button onClick={() => deleteUser(u.user_id)} className="text-rose-300 hover:text-rose-500 font-bold text-xs hover:underline uppercase tracking-wider">Remove</button>
                     </td>
                   </tr>
                 ))}
@@ -325,12 +339,12 @@ export default function UserAccounts() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 <div className="md:col-span-2">
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">ID Number</label>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Student / Staff ID</label>
                   <input
                     type="number"
                     disabled={!!editingId}
                     value={form.user_id}
-                    placeholder="e.g. 20241001"
+                    placeholder="Initial ID number"
                     onChange={(e) => updateFormFields("user_id", e.target.value)}
                     className="w-full bg-slate-50 border-slate-200 border-2 rounded-xl md:rounded-2xl p-3 md:p-3.5 text-sm font-bold focus:border-indigo-500 outline-none transition-all disabled:opacity-60"
                   />
@@ -367,7 +381,7 @@ export default function UserAccounts() {
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Email (Institutional)</label>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Institutional Email</label>
                   <input
                     type="email"
                     value={form.email}
@@ -379,7 +393,7 @@ export default function UserAccounts() {
 
                 <div className="grid grid-cols-2 md:col-span-2 gap-4">
                     <div>
-                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Role</label>
+                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">User Role</label>
                         <select
                             value={form.role}
                             onChange={(e) => setForm({ ...form, role: e.target.value })}
@@ -387,18 +401,18 @@ export default function UserAccounts() {
                         >
                             <option value="student">Student</option>
                             <option value="signatory">Signatory</option>
-                            <option value="admin">Admin</option>
+                            <option value="admin">Administrator</option>
                         </select>
                     </div>
                     <div>
-                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Status</label>
+                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Initial Status</label>
                         <select
                             value={form.account_status}
                             onChange={(e) => setForm({ ...form, account_status: e.target.value })}
                             className="w-full border-slate-200 border-2 rounded-xl md:rounded-2xl p-3 md:p-3.5 text-sm font-bold focus:border-indigo-500 outline-none bg-white"
                         >
                             <option value="active">Active</option>
-                            <option value="inactive">Inactive</option>
+                            <option value="inactive">Deactivated</option>
                         </select>
                     </div>
                 </div>
@@ -410,13 +424,13 @@ export default function UserAccounts() {
                 onClick={() => setShowModal(false)}
                 className="order-2 sm:order-1 px-6 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-slate-600 transition-colors"
               >
-                Cancel
+                Go Back
               </button>
               <button
                 onClick={modifyUser}
                 className="order-1 sm:order-2 bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3.5 rounded-xl md:rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-indigo-100 transition-all active:scale-95"
               >
-                {editingId ? "Save Changes" : "Confirm Creation"}
+                {editingId ? "Update Info" : "Register Account"}
               </button>
             </div>
           </div>

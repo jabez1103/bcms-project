@@ -184,6 +184,7 @@ export function Sidebar({ role, activePage, onPageClick }: SidebarProps) {
       <div className="px-4 py-6 border-t border-slate-100 mt-auto">
         <Link 
           href="/helpandsupport"
+          target="_blank"
           className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-slate-500 hover:bg-purple-600 hover:text-white transition-all group"
         >
           <HelpCircle size={20} className="text-slate-400 group-hover:text-white shrink-0" />
