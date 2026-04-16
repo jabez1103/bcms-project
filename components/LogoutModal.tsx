@@ -55,7 +55,6 @@ export function LogoutModal({ onClose, isOpen }: LogoutModalProps) {
 
   const handleLogout = async () => {
     setIsExiting(true);
-    // Simulate a brief delay for a smoother "signing out" feel
     setTimeout(() => {
       localStorage.removeItem("token");
       sessionStorage.removeItem("user");
