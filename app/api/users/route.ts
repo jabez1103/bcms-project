@@ -12,7 +12,7 @@ export async function GET() {
 export async function POST(request: Request) {
     const {user_id, first_name, middle_name, last_name, email, password, role, profile_picture } = await request.json();
 
-    if (!user_id || !first_name || !last_name || !email || !password || !role) {
+    if (!first_name || !last_name || !email || !password || !role) {
         return NextResponse.json({error: "All fields are required!"}, {status: 400});
     }
     
