@@ -7,9 +7,6 @@ import {
   Search,
   X,
   ShieldCheck,
-  BookOpen,
-  Wallet,
-  FlaskConical,
   Eye,
   ChevronLeft,
   ChevronRight,
@@ -66,18 +63,14 @@ export default function HomeContent() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(5);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
-
-  // --- ADDED FIX FOR WINDOW IS NOT DEFINED ---
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    // Only runs in the browser
     const checkMobile = () => setIsMobile(window.innerWidth < 640);
-    checkMobile(); // Check on mount
+    checkMobile();
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
-  // --------------------------------------------
 
   const globalFilteredData = useMemo(() => {
     return globalLevelFilter === "All" 
@@ -150,7 +143,7 @@ export default function HomeContent() {
 
       {/* ================= GLOBAL ANALYTICS SECTION ================= */}
       <div className="grid grid-cols-12 gap-4 sm:gap-6 mb-6 sm:mb-10">
-        <div className="col-span-12 lg:col-span-9 bg-white p-5 sm:p-8 rounded-2xl sm:rounded-[2rem] border border-slate-200/60 shadow-sm">
+        <div className="col-span-12 lg:col-span-8 bg-white p-5 sm:p-8 rounded-2xl sm:rounded-[2rem] border border-slate-200/60 shadow-sm">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
             <div>
                <h3 className="font-black uppercase text-[10px] sm:text-xs tracking-widest text-slate-400">Institutional Overview</h3>
@@ -185,7 +178,6 @@ export default function HomeContent() {
                 />
                 <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 700, fill: '#94a3b8'}} />
                 <Tooltip cursor={{fill: '#f8fafc'}} contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'}} />
-                {/* barSize now uses the safe state variable */}
                 <Bar dataKey="cleared" fill="#6366f1" radius={[4, 4, 0, 0]} barSize={isMobile ? 12 : 24} />
                 <Bar dataKey="notCleared" fill="#fb923c" radius={[4, 4, 0, 0]} barSize={isMobile ? 12 : 24} />
               </BarChart>
@@ -193,23 +185,31 @@ export default function HomeContent() {
           </div>
         </div>
 
-        <div className="col-span-12 lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
+        <div className="col-span-12 lg:col-span-4 grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-4">
           <div className="bg-white p-6 sm:p-8 rounded-2xl sm:rounded-[2rem] border border-slate-200/60 shadow-sm">
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Population</p>
-            <h2 className="text-3xl sm:text-5xl font-black text-slate-800 tracking-tighter">{globalFilteredData.length}</h2>
+            <h2 className="text-3xl sm:text-4xl font-black text-slate-800 tracking-tighter">{globalFilteredData.length}</h2>
           </div>
 
-          <div className="bg-indigo-600 p-6 sm:p-8 rounded-2xl sm:rounded-[2rem] text-white shadow-xl shadow-indigo-100 relative overflow-hidden group">
-            <ShieldCheck className="absolute -right-2 -bottom-2 opacity-10" size={80} />
+          <div className="bg-indigo-600 p-6 sm:p-8 rounded-2xl sm:rounded-[2rem] text-white shadow-xl shadow-indigo-100 relative overflow-hidden">
+            <ShieldCheck className="absolute -right-2 -bottom-2 opacity-10" size={70} />
             <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-1">Cleared</p>
-            <h2 className="text-3xl sm:text-5xl font-black tracking-tighter">
+            <h2 className="text-3xl sm:text-4xl font-black tracking-tighter">
               {globalFilteredData.filter(s => s.status === "Cleared").length}
+            </h2>
+          </div>
+
+          <div className="bg-white p-6 sm:p-8 rounded-2xl sm:rounded-[2rem] border border-orange-100 shadow-sm relative overflow-hidden">
+            <AlertCircle className="absolute -right-2 -bottom-2 text-orange-500 opacity-10" size={70} />
+            <p className="text-[10px] font-black text-orange-400 uppercase tracking-widest mb-1">Not Cleared</p>
+            <h2 className="text-3xl sm:text-4xl font-black text-orange-600 tracking-tighter">
+              {globalFilteredData.filter(s => s.status === "Not Cleared").length}
             </h2>
           </div>
         </div>
       </div>
 
-      {/* ================= INDEPENDENT STUDENT DIRECTORY ================= */}
+      {/* ================= STUDENT DIRECTORY ================= */}
       <div className="bg-white rounded-2xl sm:rounded-[2rem] border border-slate-200/60 shadow-sm overflow-hidden flex flex-col">
         <div className="p-5 sm:p-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-b border-slate-100">
           <div>
@@ -317,7 +317,7 @@ export default function HomeContent() {
             <div className="py-20 text-center font-black text-slate-300 uppercase tracking-widest">No results found</div>
         )}
 
-        {/* ================= PAGINATION ================= */}
+        {/* PAGINATION */}
         <div className="p-6 sm:p-8 bg-slate-50/50 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4">
           <p className="text-[9px] sm:text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">
             {tableResults.length} filtered entries
@@ -354,9 +354,7 @@ export default function HomeContent() {
               <ChevronRight size={18} />
             </button>
           </div>
-          
         </div>
-        
       </div>
     </div>
   );
