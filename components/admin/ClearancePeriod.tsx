@@ -1,87 +1,191 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { SkeletonPeriodForm, SkeletonPeriodRow} from "@/components/ui/Skeleton";
 
-export default function ClearancePeriodS() {
-  const [periods, setPeriods] = useState([
-    { id: 1, term: "First Semester 2026", start: "2026-04-01", end: "2026-05-15" },
-    { id: 2, term: "Summer Term 2026", start: "2026-06-10", end: "2026-07-20" },
-  ]);
+type Period = {
+  period_id: number;
+  academic_year: string;
+  semester: string | null;
+  start_date: string;
+  end_date: string;
+  period_status: string;
+  set_by: string;
+};
 
-  const [formData, setFormData] = useState({
-    term: "First Semester 2026",
-    start: "",
-    end: ""
-  });
+const ACADEMIC_YEARS = ["2024-2025", "2025-2026", "2026-2027", "2027-2028"];
+const SEMESTERS = [
+  { value: "1st",    label: "1st Semester" },
+  { value: "2nd",    label: "2nd Semester" },
+  { value: "Summer", label: "Summer Term" },
+  { value: "",       label: "Not Applicable" },
+];
 
-  // New state to track if we are editing an existing record
+const emptyForm = {
+  academic_year: "2025-2026",
+  semester: "1st",
+  start_date: "",
+  end_date: "",
+};
+
+const STATUS_STYLES: Record<string, string> = {
+  live:      "bg-emerald-100 text-emerald-700 border-emerald-200",
+  scheduled: "bg-blue-100 text-blue-700 border-blue-200",
+  ended:     "bg-rose-100 text-rose-700 border-rose-200",
+  disabled:  "bg-slate-100 text-slate-500 border-slate-200",
+};
+
+export default function ClearancePeriodPage() {
+  const [periods, setPeriods] = useState<Period[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [formData, setFormData] = useState(emptyForm);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-  const getStatus = (start: string, end: string) => {
-    const now = new Date().toISOString().split('T')[0];
-    if (now < start) return { label: "Scheduled", color: "blue" };
-    if (now > end) return { label: "Closed", color: "slate" };
-    return { label: "Live", color: "emerald" };
+  /* ── FETCH ── */
+  const fetchPeriods = async () => {
+    setLoading(true);
+    const res = await fetch("/api/admin/clearance-periods");
+    const data = await res.json();
+    if (data.success) setPeriods(data.periods);
+    setLoading(false);
   };
 
-  // Load data into form for editing
-  const handleEditClick = (period: any) => {
-    setEditingId(period.id);
-    setFormData({
-      term: period.term,
-      start: period.start,
-      end: period.end
-    });
-    // Scroll to form on mobile for better UX
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  useEffect(() => { fetchPeriods(); }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  /* ── SUBMIT ── */
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!formData.start || !formData.end) return alert("Please select both dates.");
-    if (formData.end < formData.start) return alert("End date cannot be before start date.");
+    setError("");
 
-    if (editingId) {
-      // UPDATE LOGIC
-      setPeriods(periods.map(p => 
-        p.id === editingId ? { ...p, ...formData } : p
-      ));
-      setEditingId(null);
-    } else {
-      // CREATE LOGIC
-      const newPeriod = { id: Date.now(), ...formData };
-      setPeriods([newPeriod, ...periods]);
+    if (!formData.start_date || !formData.end_date) {
+      setError("Please select both dates."); return;
+    }
+    if (formData.end_date <= formData.start_date) {
+      setError("End date must be after start date."); return;
     }
 
-    setFormData({ ...formData, start: "", end: "" });
+    setSubmitting(true);
+    const url = editingId
+      ? `/api/admin/clearance-periods/${editingId}`
+      : "/api/admin/clearance-periods";
+    const method = editingId ? "PUT" : "POST";
+
+    const res = await fetch(url, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(formData),
+    });
+
+    const data = await res.json();
+    if (!res.ok) { setError(data.error || "Something went wrong"); setSubmitting(false); return; }
+
+    setFormData(emptyForm);
+    setEditingId(null);
+    setSubmitting(false);
+    fetchPeriods();
+  };
+
+  /* ── EDIT ── */
+
+  const normalizeSemester = (sem: string | null) => {
+    if (sem === "1") return "1st";
+    if (sem === "2") return "2nd";
+    return sem || "";
+  };
+
+  const handleEdit = (p: Period) => {
+    setEditingId(p.period_id);
+    setFormData({
+      academic_year: p.academic_year,
+      semester: normalizeSemester(p.semester), // p.semester || "",
+      start_date: p.start_date.split("T")[0],
+      end_date: p.end_date.split("T")[0],
+    });
+    setError("");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  /* ── DELETE ── */
+  const handleDelete = async (id: number) => {
+    if (!confirm("Delete this clearance period?")) return;
+    await fetch(`/api/admin/clearance-periods/${id}`, { method: "DELETE" });
+    fetchPeriods();
   };
 
   const cancelEdit = () => {
     setEditingId(null);
-    setFormData({ ...formData, start: "", end: "" });
+    setFormData(emptyForm);
+    setError("");
   };
+
+  if (loading) return (
+    <div className="min-h-screen bg-slate-50 p-4 md:p-10">
+      <div className="max-w-6xl mx-auto">
+
+        {/* Header skeleton */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-12 animate-pulse">
+          <div className="space-y-3">
+            <div className="h-8 w-64 bg-slate-200 rounded-xl" />
+            <div className="h-4 w-80 bg-slate-200 rounded-xl" />
+          </div>
+          <div className="h-10 w-56 bg-slate-200 rounded-2xl" />
+        </div>
+
+        <main className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+
+          {/* Form panel skeleton */}
+          <section className="lg:col-span-4">
+            <SkeletonPeriodForm />
+          </section>
+
+          {/* Table skeleton */}
+          <section className="lg:col-span-8">
+            <div className="bg-white rounded-3xl border border-slate-100 overflow-hidden shadow-xl">
+
+              {/* Table header */}
+              <div className="px-8 py-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/30 animate-pulse">
+                <div className="h-5 w-40 bg-slate-200 rounded" />
+                <div className="h-4 w-20 bg-slate-200 rounded" />
+              </div>
+
+              <table className="w-full">
+                <tbody>
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <SkeletonPeriodRow key={i} />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-900 p-4 md:p-10">
       <div className="max-w-6xl mx-auto">
-        
+
+        {/* HEADER */}
         <header className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-12">
           <div>
             <h1 className="text-3xl font-black tracking-tight text-slate-800">Clearance Management</h1>
             <p className="text-slate-500 mt-1 text-lg">Define and enforce submission timelines.</p>
           </div>
           <div className="flex items-center gap-3 px-4 py-2 bg-white border border-slate-200 rounded-2xl shadow-sm">
-             <div className="flex -space-x-1">
-                <span className="h-3 w-3 rounded-full bg-emerald-500 border-2 border-white"></span>
-                <span className="h-3 w-3 rounded-full bg-blue-500 border-2 border-white"></span>
-             </div>
-            <span className="text-sm font-bold text-slate-600 uppercase tracking-wider">Automated Enforcement Active</span>
+            <div className="flex -space-x-1">
+              <span className="h-3 w-3 rounded-full bg-emerald-500 border-2 border-white"></span>
+              <span className="h-3 w-3 rounded-full bg-blue-500 border-2 border-white"></span>
+            </div>
+            <span className="text-sm font-bold text-slate-600 uppercase tracking-wider">Auto-Status Active</span>
           </div>
         </header>
 
         <main className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-          
+
+          {/* FORM */}
           <section className="lg:col-span-4 space-y-6">
             <div className={`rounded-3xl shadow-xl shadow-slate-200/50 border p-8 transition-all duration-300 ${editingId ? 'bg-indigo-50 border-indigo-200 ring-2 ring-indigo-500/20' : 'bg-white border-slate-100'}`}>
               <div className="flex justify-between items-center mb-6">
@@ -90,108 +194,145 @@ export default function ClearancePeriodS() {
                 </h2>
                 {editingId && (
                   <button onClick={cancelEdit} className="text-xs font-bold text-indigo-600 hover:text-indigo-800 underline">
-                    Cancel Edit
+                    Cancel
                   </button>
                 )}
               </div>
-              
+
+              {error && (
+                <div className="mb-4 bg-rose-50 border border-rose-100 text-rose-600 p-3 rounded-xl text-xs font-bold">
+                  {error}
+                </div>
+              )}
+
               <form className="space-y-5" onSubmit={handleSubmit}>
+
+                {/* ACADEMIC YEAR */}
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-400 uppercase ml-1">Academic Term</label>
-                  <select 
-                    value={formData.term}
-                    onChange={(e) => setFormData({...formData, term: e.target.value})}
-                    className="w-full bg-white border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 p-4 text-slate-700 font-medium appearance-none outline-none shadow-sm"
+                  <label className="text-xs font-bold text-slate-400 uppercase ml-1">Academic Year</label>
+                  <select
+                    value={formData.academic_year}
+                    onChange={(e) => setFormData({ ...formData, academic_year: e.target.value })}
+                    className="w-full bg-white border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 p-4 text-slate-700 font-medium outline-none shadow-sm"
                   >
-                    <option>First Semester 2026</option>
-                    <option>Second Semester 2026</option>
-                    <option>Summer Term 2026</option>
+                    {ACADEMIC_YEARS.map(y => (
+                      <option key={y} value={y}>{y}</option>
+                    ))}
                   </select>
                 </div>
 
+                {/* SEMESTER */}
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-400 uppercase ml-1">Semester / Term</label>
+                  <select
+                    value={formData.semester}
+                    onChange={(e) => setFormData({ ...formData, semester: e.target.value })}
+                    className="w-full bg-white border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 p-4 text-slate-700 font-medium outline-none shadow-sm"
+                  >
+                    {SEMESTERS.map(s => (
+                      <option key={s.value} value={s.value}>{s.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* DATES */}
                 <div className="grid grid-cols-1 gap-5">
                   <div className="space-y-2">
                     <label className="text-xs font-bold text-slate-400 uppercase ml-1">Start Date</label>
-                    <input 
-                      type="date" 
-                      value={formData.start}
-                      onChange={(e) => setFormData({...formData, start: e.target.value})}
-                      className="w-full bg-white border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 p-4 text-slate-700 outline-none shadow-sm" 
+                    <input
+                      type="date"
+                      value={formData.start_date}
+                      onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                      className="w-full bg-white border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 p-4 text-slate-700 outline-none shadow-sm"
                     />
                   </div>
                   <div className="space-y-2">
                     <label className="text-xs font-bold text-slate-400 uppercase ml-1">End Date</label>
-                    <input 
-                      type="date" 
-                      value={formData.end}
-                      onChange={(e) => setFormData({...formData, end: e.target.value})}
-                      className="w-full bg-white border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 p-4 text-slate-700 outline-none shadow-sm" 
+                    <input
+                      type="date"
+                      value={formData.end_date}
+                      min={formData.start_date} // Prevents selecting end before start
+                      onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+                      className="w-full bg-white border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 p-4 text-slate-700 outline-none shadow-sm"
                     />
                   </div>
                 </div>
 
-                <button 
+                <button
                   type="submit"
-                  className={`w-full text-white font-extrabold py-4 rounded-2xl shadow-lg transition-all hover:-translate-y-0.5 active:scale-95 ${editingId ? 'bg-indigo-600 shadow-indigo-200 hover:bg-indigo-700' : 'bg-slate-800 shadow-slate-200 hover:bg-slate-900'}`}
+                  disabled={submitting}
+                  className={`w-full text-white font-extrabold py-4 rounded-2xl shadow-lg transition-all hover:-translate-y-0.5 active:scale-95 disabled:opacity-60 ${editingId ? 'bg-indigo-600 shadow-indigo-200 hover:bg-indigo-700' : 'bg-slate-800 shadow-slate-200 hover:bg-slate-900'}`}
                 >
-                  {editingId ? 'Update Timeline' : 'Set Timeline'}
+                  {submitting ? "Saving..." : editingId ? "Update Timeline" : "Set Timeline"}
                 </button>
               </form>
             </div>
           </section>
 
+          {/* TABLE */}
           <section className="lg:col-span-8">
             <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
               <div className="px-8 py-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/30">
                 <h2 className="text-xl font-bold text-slate-800">History & Status</h2>
+                <span className="text-xs font-black text-slate-400 uppercase tracking-widest">{periods.length} Periods</span>
               </div>
 
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-slate-50/50">
-                      <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Academic Term</th>
+                      <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Academic Year</th>
                       <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Timeline</th>
                       <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Status</th>
-                      <th className="px-8 py-4 text-right">Actions</th>
+                      <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Set By</th>
+                      <th className="px-8 py-4 text-right"></th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50">
-                    {periods.map((item) => {
-                      const status = getStatus(item.start, item.end);
-                      const isCurrentlyEditing = editingId === item.id;
+                    {loading ? (
+                      <tr><td colSpan={5} className="px-8 py-10 text-center text-slate-400 italic">Loading periods...</td></tr>
+                    ) : periods.length === 0 ? (
+                      <tr><td colSpan={5} className="px-8 py-10 text-center text-slate-400">No clearance periods found.</td></tr>
+                    ) : periods.map((item) => {
+                      const isEditing = editingId === item.period_id;
+                      const statusStyle = STATUS_STYLES[item.period_status] ?? STATUS_STYLES.disabled;
 
                       return (
-                        <tr key={item.id} className={`group transition-colors ${isCurrentlyEditing ? 'bg-indigo-50/50' : 'hover:bg-slate-50/80'}`}>
+                        <tr key={item.period_id} className={`group transition-colors ${isEditing ? 'bg-indigo-50/50' : 'hover:bg-slate-50/80'}`}>
                           <td className="px-8 py-6">
-                            <p className="font-bold text-slate-700">{item.term}</p>
+                            <p className="font-bold text-slate-700">{item.academic_year}</p>
+                            <p className="text-xs text-slate-400 mt-0.5">{item.semester ? item.semester + " Semester" : "No semester"}</p>
                           </td>
                           <td className="px-8 py-6 text-sm font-semibold text-slate-500">
-                            {item.start} — {item.end}
+                            {item.start_date?.split("T")[0]} — {item.end_date?.split("T")[0]}
                           </td>
                           <td className="px-8 py-6">
-                            <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-${status.color}-100 text-${status.color}-700 border border-${status.color}-200/50`}>
-                              {status.label}
+                            <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${statusStyle}`}>
+                              {item.period_status}
                             </span>
+                          </td>
+                          <td className="px-8 py-6 text-xs text-slate-400 font-medium">
+                            {item.set_by || "—"}
                           </td>
                           <td className="px-8 py-6 text-right">
                             <div className="flex justify-end gap-2">
-                                {/* EDIT BUTTON */}
-                                <button 
-                                  onClick={() => handleEditClick(item)}
-                                  className={`p-2 rounded-xl transition-all ${isCurrentlyEditing ? 'text-indigo-600 bg-white shadow-sm ring-1 ring-indigo-200' : 'text-slate-400 hover:text-indigo-600 hover:bg-white hover:shadow-sm'}`}
-                                  title="Extend or Shorten Time"
+                              {/*  Disable edit if ended */}
+                              {item.period_status !== "ended" && (
+                                <button
+                                  onClick={() => handleEdit(item)}
+                                  className={`p-2 rounded-xl transition-all ${isEditing ? 'text-indigo-600 bg-white shadow-sm ring-1 ring-indigo-200' : 'text-slate-400 hover:text-indigo-600 hover:bg-white hover:shadow-sm'}`}
+                                  title="Edit Period"
                                 >
                                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                                 </button>
-
-                                {/* DELETE BUTTON */}
-                                <button 
-                                  onClick={() => setPeriods(periods.filter(p => p.id !== item.id))}
-                                  className="p-2 text-slate-300 hover:text-rose-500 transition-colors"
-                                >
-                                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                                </button>
+                              )}
+                              <button
+                                onClick={() => handleDelete(item.period_id)}
+                                className="p-2 text-slate-300 hover:text-rose-500 transition-colors"
+                                title="Delete Period"
+                              >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                              </button>
                             </div>
                           </td>
                         </tr>

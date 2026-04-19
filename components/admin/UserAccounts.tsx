@@ -1,5 +1,7 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
+import { SkeletonUserHeader, SkeletonUserRow } from "@/components/ui/Skeleton";
+
 
 type User = {
   user_id: number;
@@ -11,10 +13,13 @@ type User = {
   role: string;
   account_status: string;
   profile_picture: string;
+  program: string;
+  year_level: string;
+  department: string;
 };
 
 const emptyForm = {
-  user_id: "",
+  user_id: 0,
   first_name: "",
   middle_name: "",
   last_name: "",
@@ -22,7 +27,10 @@ const emptyForm = {
   password: "",
   role: "student",
   account_status: "active",
-  profile_picture: "/avatars/defaultAvatar.jpg",
+  profile_picture: "",
+  program: "BSCS",
+  year_level: "1",
+  department: "Registrar",
 };
 
 /* ================= HELPERS ================= */
@@ -30,11 +38,40 @@ const emptyForm = {
 function capitalizeWords(str: string) {
   return str.replace(/\b\w/g, (c) => c.toUpperCase());
 }
-
+/*
 function isBisuEmail(email: string) {
-  return email.toLowerCase().endsWith("@bisu.edu.ph");
+  return email.toLowerCase().endsWith("@bisu.edu.ph"); // need to change into auto generated email (e.g., James Kyle Degnamo -> jameskyle.degamo@bisu.edu.ph)
+} */
+
+function defaultPassword(lastName: string, userId: string) {
+  if (!lastName || !userId) return "";
+  const setDefaultPaswword = lastName.replaceAll(" ", "");
+  return `${lastName}${userId}`
 }
 
+const PROGRAMS: Record<string, { label: string; years: number }> = {
+  BSIT:     { label: "BS Information Technology", years: 4 },
+  BSCS:     { label: "BS Computer Science",        years: 4 },
+  BSES:     { label: "BS Environmental Science",   years: 4 },
+  BEED:     { label: "Bachelor of Elementary Ed",  years: 4 },
+  BEEDMATH: { label: "BEED Major in Math",          years: 4 },
+  BTLED:    { label: "Bachelor of Tech-Livelihood", years: 4 },
+  HM:       { label: "Hotel Management",            years: 2 },
+};
+
+
+const DEPARTMENTS = [
+  "Registrar",
+  "Library",
+  "Cashier",
+  "Guidance",
+  "Clinic",
+  "Sports Office",
+  "Student Affairs",
+  "Dean Office",
+];
+
+const program = Object.keys(PROGRAMS);
 /* ================= COMPONENT ================= */
 
 export default function UserAccounts() {
@@ -48,6 +85,19 @@ export default function UserAccounts() {
   const [roleFilter, setRoleFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
+  const years = PROGRAMS[form.program]?.years ?? 4;
+
+  useEffect(() => {
+    const maxYears = PROGRAMS[form.program]?.years ?? 4;
+
+    if (Number(form.year_level) > maxYears) {
+      setForm((prev: any) => ({
+        ...prev,
+        year_level: "1"
+      }));
+    }
+  }, [form.program]);
+
 
   /* ================= FETCH ================= */
 
@@ -102,31 +152,47 @@ export default function UserAccounts() {
 
   const updateFormFields = (key: string, value: string) => {
     let newForm = { ...form, [key]: value };
+
     if (["first_name", "middle_name", "last_name"].includes(key)) {
       newForm[key] = capitalizeWords(value);
     }
-    if (key === "email") {
-      if (value && !isBisuEmail(value)) {
-        setError("Email must end with @bisu.edu.ph");
-      } else {
-        setError("");
-      }
+    
+    if (["first_name", "last_name", "user_id"].includes(key)) {
+      // const firstName = (key === "first_name" ? value : form.first_name).trim().toLowerCase().replace(/\s+/g, "");
+      // const lastName  = (key === "last_name"  ? value : form.last_name ).trim().toLowerCase().replace(/\s+/g, "");
+      const cleanName = (str: string) => str.trim().toLowerCase().replace(/\s+/g, "");
+      const firstName = key === "first_name" ? value: form.first_name;
+      const lastName = key === "last_name" ? value: form.last_name;
+      const userId = key === "user_id" ? value: form.user_id; 
+
+      newForm.email = `${cleanName( firstName )}.${cleanName( lastName )}@bisu.edu.ph`;
+      newForm.password = defaultPassword( lastName, userId );
+      // newForm.profile_picture = `/avatars/${firstName}${lastName}.jpg`.toLowerCase();
+      newForm.profile_picture = `/avatars/defaultAvatar.jpg`;
+
     }
+    
     setForm(newForm);
   };
 
   const modifyUser = async () => {
-    if (!isBisuEmail(form.email)) {
-      setError("Only BISU institutional email is allowed.");
-      return;
-    }
+
     const url = editingId ? `/api/users/${editingId}` : "/api/users";
     const method = editingId ? "PUT" : "POST";
 
+    const payload: any = { ...form };
+    if (form.role != "student") {
+      delete payload.program;
+      delete payload.year_level;
+    }
+    if (form.role != "signatory") {
+      delete payload.department;
+    }
+    
     const res = await fetch(url, {
       method,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
+      body: JSON.stringify(payload),
     });
 
     if (!res.ok) {
@@ -154,6 +220,71 @@ export default function UserAccounts() {
     await fetch(`/api/users/${user_id}`, { method: "DELETE" });
     fetchUsers();
   };
+
+  if (loading) return (
+    <div className="min-h-screen bg-[#F8FAFC] p-4 sm:p-6 md:p-12 font-sans">
+      <div className="max-w-6xl mx-auto">
+
+        {/*  Header + filter bar skeleton */}
+        <SkeletonUserHeader />
+
+        {/* Table container skeleton */}
+        <div className="bg-white rounded-2xl md:rounded-[2rem] border border-slate-200 shadow-xl overflow-hidden">
+
+          {/* Mobile skeleton */}
+          <div className="block md:hidden divide-y divide-slate-100">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="p-5 space-y-4 animate-pulse">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-slate-200 shrink-0" />
+                  <div className="space-y-2 flex-1">
+                    <div className="h-4 bg-slate-200 rounded w-36" />
+                    <div className="h-3 bg-slate-200 rounded w-48" />
+                  </div>
+                </div>
+                <div className="flex justify-between items-center">
+                  <div className="flex gap-2">
+                    <div className="h-5 w-16 bg-slate-200 rounded" />
+                    <div className="h-5 w-16 bg-slate-200 rounded" />
+                  </div>
+                  <div className="h-5 w-24 bg-slate-200 rounded" />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop table skeleton */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead className="bg-slate-50 border-b border-slate-100">
+                <tr>
+                  {["User Table Data", "Role", "Login Access", "Actions"].map(h => (
+                    <th key={h} className="px-8 py-5">
+                      <div className="h-3 w-24 bg-slate-200 rounded animate-pulse" />
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <SkeletonUserRow key={i} />
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination footer skeleton */}
+          <div className="px-6 md:px-8 py-4 md:py-6 bg-slate-50 border-t border-slate-100 flex justify-between items-center animate-pulse">
+            <div className="h-3 w-24 bg-slate-200 rounded" />
+            <div className="flex gap-2">
+              <div className="h-9 w-20 bg-slate-200 rounded-xl" />
+              <div className="h-9 w-20 bg-slate-200 rounded-xl" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] p-4 sm:p-6 md:p-12 font-sans text-slate-900">
@@ -207,9 +338,24 @@ export default function UserAccounts() {
           {/* MOBILE LIST VIEW */}
           <div className="block md:hidden divide-y divide-slate-100">
             {loading ? (
-                <div className="p-10 text-center text-slate-400 italic">Loading directory...</div>
-            ) : paginatedUsers.length === 0 ? (
-                <div className="p-10 text-center text-slate-400">No users found.</div>
+              Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="p-5 space-y-4 animate-pulse">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-slate-200 shrink-0" />
+                    <div className="space-y-2 flex-1">
+                      <div className="h-4 bg-slate-200 rounded w-36" />
+                      <div className="h-3 bg-slate-200 rounded w-48" />
+                    </div>
+                  </div>
+                  <div className="flex justify-between">
+                    <div className="flex gap-2">
+                      <div className="h-5 w-16 bg-slate-200 rounded" />
+                      <div className="h-5 w-16 bg-slate-200 rounded" />
+                    </div>
+                    <div className="h-5 w-20 bg-slate-200 rounded" />
+                  </div>
+                </div>
+              ))
             ) : (
                 paginatedUsers.map((u) => (
                     <div key={u.user_id} className={`p-5 space-y-4 ${u.account_status === 'inactive' ? 'opacity-60 grayscale-[0.5]' : ''}`}>
@@ -255,7 +401,7 @@ export default function UserAccounts() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {!loading && paginatedUsers.map((u) => (
+                {loading ? Array.from({ length: 6 }).map((_, i) => <SkeletonUserRow key={i} />) : paginatedUsers.map((u) => (
                   <tr key={u.user_id} className={`hover:bg-slate-50 transition-colors group ${u.account_status === 'inactive' ? 'bg-slate-50/50' : ''}`}>
                     <td className="px-8 py-5">
                       <div className="flex items-center gap-4">
@@ -338,18 +484,21 @@ export default function UserAccounts() {
               )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+
+                {/* USER ID */}
                 <div className="md:col-span-2">
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Student / Staff ID</label>
                   <input
                     type="number"
                     disabled={!!editingId}
-                    value={form.user_id}
+                    value={ form.user_id || "" }
                     placeholder="Initial ID number"
                     onChange={(e) => updateFormFields("user_id", e.target.value)}
                     className="w-full bg-slate-50 border-slate-200 border-2 rounded-xl md:rounded-2xl p-3 md:p-3.5 text-sm font-bold focus:border-indigo-500 outline-none transition-all disabled:opacity-60"
                   />
                 </div>
 
+                {/* FIRST NAME */}
                 <div>
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">First Name</label>
                   <input
@@ -360,6 +509,7 @@ export default function UserAccounts() {
                   />
                 </div>
 
+                {/* MIDDLE NAME */}
                 <div>
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Middle Name</label>
                   <input
@@ -370,6 +520,7 @@ export default function UserAccounts() {
                   />
                 </div>
 
+                {/* LAST NAME */}
                 <div className="md:col-span-2">
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Last Name</label>
                   <input
@@ -380,42 +531,114 @@ export default function UserAccounts() {
                   />
                 </div>
 
+                {/* EMAIL — auto generated, readonly */}
                 <div className="md:col-span-2">
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Institutional Email</label>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">
+                    Institutional Email <span className="text-indigo-400 normal-case font-medium">(auto-generated)</span>
+                  </label>
                   <input
                     type="email"
                     value={form.email}
-                    placeholder="name@bisu.edu.ph"
-                    onChange={(e) => updateFormFields("email", e.target.value)}
-                    className="w-full border-slate-200 border-2 rounded-xl md:rounded-2xl p-3 md:p-3.5 text-sm font-bold focus:border-indigo-500 outline-none transition-all"
+                    readOnly
+                    className="w-full bg-slate-50 border-slate-200 border-2 rounded-xl md:rounded-2xl p-3 md:p-3.5 text-sm font-bold text-slate-400 outline-none cursor-not-allowed"
                   />
                 </div>
 
-                <div className="grid grid-cols-2 md:col-span-2 gap-4">
-                    <div>
-                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">User Role</label>
-                        <select
-                            value={form.role}
-                            onChange={(e) => setForm({ ...form, role: e.target.value })}
-                            className="w-full border-slate-200 border-2 rounded-xl md:rounded-2xl p-3 md:p-3.5 text-sm font-bold focus:border-indigo-500 outline-none bg-white"
-                        >
-                            <option value="student">Student</option>
-                            <option value="signatory">Signatory</option>
-                            <option value="admin">Administrator</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Initial Status</label>
-                        <select
-                            value={form.account_status}
-                            onChange={(e) => setForm({ ...form, account_status: e.target.value })}
-                            className="w-full border-slate-200 border-2 rounded-xl md:rounded-2xl p-3 md:p-3.5 text-sm font-bold focus:border-indigo-500 outline-none bg-white"
-                        >
-                            <option value="active">Active</option>
-                            <option value="inactive">Deactivated</option>
-                        </select>
-                    </div>
+                {/* DEFAULT PASSWORD — auto generated, readonly */}
+                <div className="md:col-span-2">
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">
+                    Default Password <span className="text-indigo-400 normal-case font-medium">(LastName + ID)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={form.password}
+                    readOnly
+                    className="w-full bg-slate-50 border-slate-200 border-2 rounded-xl md:rounded-2xl p-3 md:p-3.5 text-sm font-bold text-slate-400 outline-none cursor-not-allowed"
+                  />
                 </div>
+
+                {/* ROLE & STATUS */}
+                <div className="grid grid-cols-2 md:col-span-2 gap-4">
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">User Role</label>
+                    <select
+                      value={form.role}
+                      onChange={(e) => {
+                        setForm({ ...form, role: e.target.value });
+                        setError("");
+                      }}
+                      className="w-full border-slate-200 border-2 rounded-xl md:rounded-2xl p-3 md:p-3.5 text-sm font-bold focus:border-indigo-500 outline-none bg-white"
+                    >
+                      <option value="student">Student</option>
+                      <option value="signatory">Signatory</option>
+                      <option value="admin">Administrator</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Initial Status</label>
+                    <select
+                      value={form.account_status}
+                      onChange={(e) => setForm({ ...form, account_status: e.target.value })}
+                      className="w-full border-slate-200 border-2 rounded-xl md:rounded-2xl p-3 md:p-3.5 text-sm font-bold focus:border-indigo-500 outline-none bg-white"
+                    >
+                      <option value="active">Active</option>
+                      <option value="inactive">Deactivated</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* STUDENT FIELDS — show only when role is student */}
+                {form.role === "student" && (
+                  <>
+                    <div className="md:col-span-2">
+                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Program</label>
+                      <select
+                        value={form.program}
+                        onChange={(e) => updateFormFields("program", e.target.value)}
+                        className="w-full border-slate-200 border-2 rounded-xl md:rounded-2xl p-3 md:p-3.5 text-sm font-bold focus:border-indigo-500 outline-none bg-white"
+                      >
+                        {Object.entries(PROGRAMS).map(([key, val]) => (
+                          <option key={key} value={key}>{key} — {val.label}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Year Level</label>
+                      <select
+                        value={form.year_level}
+                        onChange={(e) => setForm({ ...form, year_level: e.target.value })}
+                        className="w-full border-slate-200 border-2 rounded-xl md:rounded-2xl p-3 md:p-3.5 text-sm font-bold focus:border-indigo-500 outline-none bg-white"
+                      >
+                        {Array.from({ length: years }, (_, i) => {
+                          const value = String(i + 1);
+                          return (
+                          <option key={i + 1} value={String(i + 1)}>
+                            {["1st", "2nd", "3rd", "4th"][i]} Year
+                          </option>
+                        );
+                      })}
+                      </select>
+                    </div>
+                  </>
+                )}
+
+                {/* SIGNATORY FIELDS — show only when role is signatory */}
+                {form.role === "signatory" && (
+                  <div className="md:col-span-2">
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Department</label>
+                    <select
+                      value={form.department}
+                      onChange={(e) => setForm({ ...form, department: e.target.value })}
+                      className="w-full border-slate-200 border-2 rounded-xl md:rounded-2xl p-3 md:p-3.5 text-sm font-bold focus:border-indigo-500 outline-none bg-white"
+                    >
+                      {DEPARTMENTS.map((dept) => (
+                        <option key={dept} value={dept}>{dept}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
               </div>
             </div>
 

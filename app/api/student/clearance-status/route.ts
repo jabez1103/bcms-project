@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
             ON s.requirement_id = r.requirement_id AND s.student_id = ?
         LEFT JOIN approvals a
             ON a.submission_id = s.submission_id
-        WHERE cp.period_status = 'enabled'
+        WHERE cp.period_status = 'live'
         ORDER BY r.requirement_id ASC
         `, [student_id]);
 
