@@ -9,6 +9,11 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer,
 } from "recharts";
+import {
+  SkeletonStatCard,
+  SkeletonChart,
+  SkeletonDashboardRow
+} from "@/components/ui/Skeleton";
 
 /* ================= TYPES ================= */
 type StudentStatus = "Cleared" | "Not Cleared";
@@ -135,9 +140,44 @@ export default function AdminHomePage() {
   const totalPages = Math.ceil(tableResults.length / itemsPerPage);
   const paginated = tableResults.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
+
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
-      <p className="text-slate-400 text-sm">Loading dashboard...</p>
+    <div className="p-4 sm:p-6 lg:p-10 bg-[#F8FAFC] min-h-screen font-sans">
+
+      {/* Stat cards skeleton */}
+      <div className="grid grid-cols-12 gap-4 sm:gap-6 mb-6 sm:mb-10">
+        <div className="col-span-12 lg:col-span-8 bg-white p-5 sm:p-8 rounded-2xl sm:rounded-[2rem] border border-slate-200/60 shadow-sm">
+          <div className="flex justify-between items-center mb-8">
+            <div className="space-y-2">
+              <div className="h-3 w-32 bg-slate-200 rounded animate-pulse" />
+              <div className="h-3 w-48 bg-slate-200 rounded animate-pulse" />
+            </div>
+            <div className="h-9 w-32 bg-slate-200 rounded-xl animate-pulse" />
+          </div>
+          <SkeletonChart />
+        </div>
+
+        <div className="col-span-12 lg:col-span-4 grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <SkeletonStatCard key={i} />
+          ))}
+        </div>
+      </div>
+
+      {/* Table skeleton */}
+      <div className="bg-white rounded-2xl sm:rounded-[2rem] border border-slate-200/60 shadow-sm overflow-hidden">
+        <div className="p-5 sm:p-8 border-b border-slate-100">
+          <div className="h-5 w-40 bg-slate-200 rounded animate-pulse mb-2" />
+          <div className="h-3 w-24 bg-slate-200 rounded animate-pulse" />
+        </div>
+        <table className="w-full">
+          <tbody>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <SkeletonDashboardRow key={i} />
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { SkeletonStatCard, SkeletonProgressRow } from "@/components/ui/Skeleton";
 
 /* ================= TYPES ================= */
 
@@ -91,8 +92,40 @@ export default function ClearanceProgress() {
   );
 
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50">
-      <p className="text-slate-400 text-sm font-bold">Loading clearance progress...</p>
+    <div className="min-h-screen bg-slate-50 p-4 md:p-10">
+      <div className="max-w-6xl mx-auto space-y-10">
+
+        {/* Header skeleton */}
+        <div className="space-y-2 animate-pulse">
+          <div className="h-8 w-64 bg-slate-200 rounded-xl" />
+          <div className="h-4 w-80 bg-slate-200 rounded-xl" />
+        </div>
+
+        {/* Stat cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <SkeletonStatCard key={i} />
+          ))}
+        </div>
+
+        {/* Filter bar skeleton */}
+        <div className="bg-white rounded-3xl border border-slate-100 p-6 animate-pulse flex gap-4">
+          <div className="h-10 flex-1 bg-slate-200 rounded-xl" />
+          <div className="h-10 flex-1 bg-slate-200 rounded-xl" />
+          <div className="h-10 w-36 bg-slate-200 rounded-xl" />
+        </div>
+
+        {/* Table skeleton */}
+        <div className="bg-white rounded-3xl border border-slate-100 overflow-hidden">
+          <table className="w-full">
+            <tbody>
+              {Array.from({ length: 8 }).map((_, i) => (
+                <SkeletonProgressRow key={i} />
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 

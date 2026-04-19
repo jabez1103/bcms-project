@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { SkeletonPeriodForm, SkeletonPeriodRow} from "@/components/ui/Skeleton";
 
 type Period = {
   period_id: number;
@@ -118,6 +119,50 @@ export default function ClearancePeriodPage() {
     setFormData(emptyForm);
     setError("");
   };
+
+  if (loading) return (
+    <div className="min-h-screen bg-slate-50 p-4 md:p-10">
+      <div className="max-w-6xl mx-auto">
+
+        {/* Header skeleton */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-12 animate-pulse">
+          <div className="space-y-3">
+            <div className="h-8 w-64 bg-slate-200 rounded-xl" />
+            <div className="h-4 w-80 bg-slate-200 rounded-xl" />
+          </div>
+          <div className="h-10 w-56 bg-slate-200 rounded-2xl" />
+        </div>
+
+        <main className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+
+          {/* Form panel skeleton */}
+          <section className="lg:col-span-4">
+            <SkeletonPeriodForm />
+          </section>
+
+          {/* Table skeleton */}
+          <section className="lg:col-span-8">
+            <div className="bg-white rounded-3xl border border-slate-100 overflow-hidden shadow-xl">
+
+              {/* Table header */}
+              <div className="px-8 py-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/30 animate-pulse">
+                <div className="h-5 w-40 bg-slate-200 rounded" />
+                <div className="h-4 w-20 bg-slate-200 rounded" />
+              </div>
+
+              <table className="w-full">
+                <tbody>
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <SkeletonPeriodRow key={i} />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-900 p-4 md:p-10">

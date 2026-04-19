@@ -1,5 +1,7 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
+import { SkeletonUserHeader, SkeletonUserRow } from "@/components/ui/Skeleton";
+
 
 type User = {
   user_id: number;
@@ -219,6 +221,71 @@ export default function UserAccounts() {
     fetchUsers();
   };
 
+  if (loading) return (
+    <div className="min-h-screen bg-[#F8FAFC] p-4 sm:p-6 md:p-12 font-sans">
+      <div className="max-w-6xl mx-auto">
+
+        {/*  Header + filter bar skeleton */}
+        <SkeletonUserHeader />
+
+        {/* Table container skeleton */}
+        <div className="bg-white rounded-2xl md:rounded-[2rem] border border-slate-200 shadow-xl overflow-hidden">
+
+          {/* Mobile skeleton */}
+          <div className="block md:hidden divide-y divide-slate-100">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="p-5 space-y-4 animate-pulse">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-slate-200 shrink-0" />
+                  <div className="space-y-2 flex-1">
+                    <div className="h-4 bg-slate-200 rounded w-36" />
+                    <div className="h-3 bg-slate-200 rounded w-48" />
+                  </div>
+                </div>
+                <div className="flex justify-between items-center">
+                  <div className="flex gap-2">
+                    <div className="h-5 w-16 bg-slate-200 rounded" />
+                    <div className="h-5 w-16 bg-slate-200 rounded" />
+                  </div>
+                  <div className="h-5 w-24 bg-slate-200 rounded" />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop table skeleton */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead className="bg-slate-50 border-b border-slate-100">
+                <tr>
+                  {["User Table Data", "Role", "Login Access", "Actions"].map(h => (
+                    <th key={h} className="px-8 py-5">
+                      <div className="h-3 w-24 bg-slate-200 rounded animate-pulse" />
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <SkeletonUserRow key={i} />
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination footer skeleton */}
+          <div className="px-6 md:px-8 py-4 md:py-6 bg-slate-50 border-t border-slate-100 flex justify-between items-center animate-pulse">
+            <div className="h-3 w-24 bg-slate-200 rounded" />
+            <div className="flex gap-2">
+              <div className="h-9 w-20 bg-slate-200 rounded-xl" />
+              <div className="h-9 w-20 bg-slate-200 rounded-xl" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-[#F8FAFC] p-4 sm:p-6 md:p-12 font-sans text-slate-900">
       <div className="max-w-6xl mx-auto">
@@ -271,9 +338,24 @@ export default function UserAccounts() {
           {/* MOBILE LIST VIEW */}
           <div className="block md:hidden divide-y divide-slate-100">
             {loading ? (
-                <div className="p-10 text-center text-slate-400 italic">Loading directory...</div>
-            ) : paginatedUsers.length === 0 ? (
-                <div className="p-10 text-center text-slate-400">No users found.</div>
+              Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="p-5 space-y-4 animate-pulse">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-slate-200 shrink-0" />
+                    <div className="space-y-2 flex-1">
+                      <div className="h-4 bg-slate-200 rounded w-36" />
+                      <div className="h-3 bg-slate-200 rounded w-48" />
+                    </div>
+                  </div>
+                  <div className="flex justify-between">
+                    <div className="flex gap-2">
+                      <div className="h-5 w-16 bg-slate-200 rounded" />
+                      <div className="h-5 w-16 bg-slate-200 rounded" />
+                    </div>
+                    <div className="h-5 w-20 bg-slate-200 rounded" />
+                  </div>
+                </div>
+              ))
             ) : (
                 paginatedUsers.map((u) => (
                     <div key={u.user_id} className={`p-5 space-y-4 ${u.account_status === 'inactive' ? 'opacity-60 grayscale-[0.5]' : ''}`}>
@@ -319,7 +401,7 @@ export default function UserAccounts() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {!loading && paginatedUsers.map((u) => (
+                {loading ? Array.from({ length: 6 }).map((_, i) => <SkeletonUserRow key={i} />) : paginatedUsers.map((u) => (
                   <tr key={u.user_id} className={`hover:bg-slate-50 transition-colors group ${u.account_status === 'inactive' ? 'bg-slate-50/50' : ''}`}>
                     <td className="px-8 py-5">
                       <div className="flex items-center gap-4">
