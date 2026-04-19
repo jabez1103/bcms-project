@@ -2,7 +2,7 @@
 
 import { Header } from "@/components/Header";
 import { LogoutModal } from "@/components/LogoutModal";
-import { SettingsModal } from "@/components/SettingsModal";
+import  SettingsModal  from "@/components/settings/page";
 import { Sidebar } from "@/components/Sidebar";
 import { PageType } from "@/types/index";
 import { useState } from "react";
