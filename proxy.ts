@@ -7,7 +7,7 @@ const PROTECTED = {
     "/student": "student",
 };
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
     const token = request.cookies.get("token")?.value;
     const path = request.nextUrl.pathname;
 

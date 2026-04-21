@@ -1,5 +1,6 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
 import { Rnd } from "react-rnd";
 import { User, Shield, Bell, Palette, X, ArrowLeft, ChevronRight } from "lucide-react";
 
@@ -9,6 +10,8 @@ import SecurityTab from "./tabs/security";
 import NotificationTab from "./tabs/notification";
 import AppearanceTab from "./tabs/appearance";
 
+import Link from "next/link";
+
 interface SettingsModalProps {
   onClose: () => void;
   isOpen: boolean;
@@ -17,6 +20,9 @@ interface SettingsModalProps {
 
 export default function SettingsModal({ onClose, isOpen, defaultTab }: SettingsModalProps) {
   // Initialize with defaultTab or "Account"
+  const pathname = usePathname();
+  const previousUrl = useRef(pathname);
+  
   const [activeTab, setActiveTab] = useState("Account");
   const [isMobile, setIsMobile] = useState(false);
   const [showMobileContent, setShowMobileContent] = useState(false);
@@ -39,6 +45,14 @@ export default function SettingsModal({ onClose, isOpen, defaultTab }: SettingsM
       }
     }
   }, [isOpen, defaultTab]);
+
+  // Track the original URL
+  useEffect(() => {
+    if (!isOpen) {
+      previousUrl.current = pathname;
+    }
+  }, [isOpen, pathname]);
+
 
   useEffect(() => {
     const handleResize = () => {
@@ -78,19 +92,19 @@ export default function SettingsModal({ onClose, isOpen, defaultTab }: SettingsM
   // --- MOBILE VIEW ---
   if (isMobile) {
     return (
-      <div className="fixed inset-0 bg-white z-[60] flex flex-col font-sans">
-        <header className="p-4 border-b flex items-center justify-between bg-white sticky top-0">
+      <div className="fixed inset-0 bg-white dark:bg-slate-950 z-[80] flex flex-col font-sans">
+        <header className="p-4 border-b dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-950 sticky top-0">
           <div className="flex items-center gap-3">
             {showMobileContent && (
               <button onClick={() => setShowMobileContent(false)} className="p-1">
                 <ArrowLeft size={20} />
               </button>
             )}
-            <h2 className="font-bold text-gray-900">
+            <h2 className="font-bold text-gray-900 dark:text-white">
               {showMobileContent ? menuItems.find((i) => i.id === activeTab)?.label : "Settings"}
             </h2>
           </div>
-          <button onClick={onClose} className="px-4 py-2 bg-gray-100 text-gray-700 font-bold text-xs uppercase rounded-full">
+          <button onClick={onClose} className="px-4 py-2 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 font-bold text-xs uppercase rounded-full">
             Back
           </button>
         </header>
@@ -102,11 +116,11 @@ export default function SettingsModal({ onClose, isOpen, defaultTab }: SettingsM
                 <button
                   key={item.id}
                   onClick={() => handleTabClick(item.id)}
-                  className="w-full flex items-center justify-between p-4 bg-gray-50 rounded-xl active:bg-gray-100"
+                  className="w-full flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-900 rounded-xl active:bg-gray-100 dark:active:bg-slate-800"
                 >
                   <div className="flex items-center gap-3">
-                    <span className="text-purple-600">{item.icon}</span>
-                    <span className="font-semibold text-gray-700">{item.label}</span>
+                    <span className="text-purple-600 dark:text-purple-400">{item.icon}</span>
+                    <span className="font-semibold text-gray-700 dark:text-slate-200">{item.label}</span>
                   </div>
                   <ChevronRight size={18} className="text-gray-400" />
                 </button>
@@ -125,7 +139,7 @@ export default function SettingsModal({ onClose, isOpen, defaultTab }: SettingsM
   // --- DESKTOP VIEW ---
   return (
     <>
-      <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40" onClick={onClose} />
+      <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-80" onClick={onClose} />
       <Rnd
         size={{ width: 720, height: 560 }}
         position={position}
@@ -133,12 +147,12 @@ export default function SettingsModal({ onClose, isOpen, defaultTab }: SettingsM
         bounds="window"
         enableResizing={false}
         dragHandleClassName="drag-handle"
-        className="z-50"
+        className="z-90"
       >
-        <div className="w-full h-full bg-white rounded-2xl shadow-2xl flex overflow-hidden border border-gray-200">
-          <aside className="w-64 bg-gray-50 border-r border-gray-100 flex flex-col">
+        <div className="w-full h-full bg-white dark:bg-slate-900 rounded-2xl shadow-2xl flex overflow-hidden border border-gray-200 dark:border-slate-800">
+          <aside className="w-64 bg-gray-50 dark:bg-slate-950 border-r border-gray-100 dark:border-slate-800 flex flex-col">
             <div className="drag-handle p-6 cursor-move">
-              <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest">BCMS Dashboard</h2>
+              <h2 className="text-xs font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest">BCMS Dashboard</h2>
             </div>
             <nav className="flex-1 px-4 space-y-1">
               {menuItems.map((item) => (
@@ -147,8 +161,8 @@ export default function SettingsModal({ onClose, isOpen, defaultTab }: SettingsM
                   onClick={() => setActiveTab(item.id)}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${
                     activeTab === item.id
-                      ? "bg-purple-600 text-white shadow-lg shadow-purple-200"
-                      : "text-gray-500 hover:bg-gray-200"
+                      ? "bg-purple-600 text-white shadow-lg shadow-purple-200 dark:shadow-purple-900/20"
+                      : "text-gray-500 dark:text-slate-400 hover:bg-gray-200 dark:hover:bg-slate-800"
                   }`}
                 >
                   {item.icon}
@@ -158,12 +172,13 @@ export default function SettingsModal({ onClose, isOpen, defaultTab }: SettingsM
             </nav>
           </aside>
 
-          <main className="flex-1 flex flex-col bg-white">
-            <header className="px-8 py-5 flex justify-between items-center border-b border-gray-50">
-              <h3 className="text-xl font-bold text-gray-900">
+          <main className="flex-1 flex flex-col bg-white dark:bg-slate-900">
+            <header className="px-8 py-5 flex justify-between items-center border-b border-gray-50 dark:border-slate-800">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">
                 {menuItems.find((i) => i.id === activeTab)?.label}
               </h3>
-              <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full text-gray-400">
+              
+              <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full text-gray-400 dark:text-slate-400">
                 <X size={20} />
               </button>
             </header>

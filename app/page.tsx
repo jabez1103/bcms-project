@@ -5,12 +5,20 @@ import Image from "next/image";
 import Link from "next/link";
 import { 
   ArrowRight, 
-  Menu, X, ShieldCheck, Zap, Monitor 
-} from "lucide-react";
+  Menu, X, ShieldCheck,
+  Zap, Monitor, Moon, Sun 
+  } from "lucide-react";
+import { useTheme } from "next-themes";
 
 export default function LandingPage() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Handle Navbar Background Change on Scroll
   useEffect(() => {
@@ -36,7 +44,7 @@ export default function LandingPage() {
   ];
 
   return (
-    <div className="relative min-h-screen bg-white font-body selection:bg-purple-600 selection:text-white scroll-smooth">
+    <div className="relative min-h-screen bg-white dark:bg-slate-950 font-body selection:bg-purple-600 selection:text-white scroll-smooth transition-colors duration-300">
       
       {/* --- MOBILE MENU OVERLAY (The Fix) --- */}
       <div className={`fixed inset-0 z-[150] lg:hidden transition-all duration-500 ${
@@ -77,6 +85,19 @@ export default function LandingPage() {
             >
               Sign in to Portal <ArrowRight />
             </Link>
+
+            {mounted && (
+              <button
+                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                className="mt-8 self-start inline-flex items-center gap-3 px-6 py-3 rounded-2xl bg-white/10 text-white font-bold text-xl hover:bg-white/20 transition-all active:scale-95"
+              >
+                {theme === 'dark' ? (
+                  <><Sun size={24} /> Light Mode</>
+                ) : (
+                  <><Moon size={24} /> Dark Mode</>
+                )}
+              </button>
+            )}
           </nav>
 
           <div className="pt-8 border-t border-white/10">
@@ -91,7 +112,7 @@ export default function LandingPage() {
       <header 
         className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-500 px-6 ${
           isScrolled 
-            ? "py-3 bg-white/70 backdrop-blur-xl border-b border-purple-100 shadow-sm" 
+            ? "py-3 bg-white/70 dark:bg-slate-950/80 backdrop-blur-xl border-b border-purple-100 dark:border-slate-800 shadow-sm" 
             : "py-6 bg-transparent"
         }`}
       >
@@ -101,7 +122,7 @@ export default function LandingPage() {
               <Image src="/logo.png" alt="BISU Logo" fill className="object-contain" />
             </div>
             <div className="flex flex-col">
-              <h1 className={`text-sm font-black tracking-tighter leading-none transition-colors ${isScrolled ? "text-gray-900" : "text-white"}`}>
+              <h1 className={`text-sm font-black tracking-tighter leading-none transition-colors ${isScrolled ? "text-gray-900 dark:text-white" : "text-white"}`}>
                 BISU CLEARANCE
               </h1>
               <p className={`text-[10px] font-bold tracking-[0.25em] transition-colors ${isScrolled ? "text-purple-600" : "text-white/70"}`}>
@@ -117,7 +138,7 @@ export default function LandingPage() {
                 key={idx} 
                 href={item.href} 
                 className={`group relative text-[11px] font-bold uppercase tracking-widest transition-colors ${
-                  isScrolled ? "text-gray-600 hover:text-purple-600" : "text-white/80 hover:text-white"
+                  isScrolled ? "text-gray-600 dark:text-slate-300 hover:text-purple-600 dark:hover:text-purple-400" : "text-white/80 hover:text-white"
                 }`}
               >
                 {item.title}
@@ -127,6 +148,20 @@ export default function LandingPage() {
           </nav>
 
           <div className="flex items-center gap-4">
+            {mounted && (
+              <button
+                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                className={`p-2.5 rounded-xl transition-colors hidden sm:flex items-center justify-center ${
+                  isScrolled 
+                  ? "text-gray-600 dark:text-slate-300 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700" 
+                  : "text-white bg-white/10 hover:bg-white/20"
+                }`}
+                aria-label="Toggle Theme"
+              >
+                {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+              </button>
+            )}
+
             <Link 
               href="/login" 
               className="hidden sm:flex items-center gap-2 rounded-2xl bg-purple-600 px-7 py-3 text-xs font-bold uppercase tracking-widest text-white shadow-xl shadow-purple-500/20 transition-all hover:bg-purple-700 hover:-translate-y-1 active:translate-y-0"
@@ -137,7 +172,7 @@ export default function LandingPage() {
 
             {/* Mobile Menu Toggle Button */}
             <button 
-              className={`lg:hidden p-2 rounded-xl transition-colors ${isScrolled ? "text-gray-900 bg-gray-100" : "text-white bg-white/10"}`}
+              className={`lg:hidden p-2 rounded-xl transition-colors ${isScrolled ? "text-gray-900 bg-gray-100 dark:text-white dark:bg-slate-800" : "text-white bg-white/10"}`}
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
               {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -179,7 +214,7 @@ export default function LandingPage() {
           </p>
 
           <div className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-6">
-            <Link href="/login" className="group h-18 px-12 py-5 flex items-center justify-center rounded-[2rem] bg-white text-purple-900 font-bold text-xl shadow-2xl transition-all hover:scale-105 hover:bg-purple-50">
+            <Link href="/login" className="group h-18 px-12 py-5 flex items-center justify-center rounded-[2rem] bg-white dark:bg-slate-900 text-purple-900 dark:text-purple-100 font-bold text-xl shadow-2xl transition-all hover:scale-105 hover:bg-purple-50 dark:hover:bg-slate-800">
               Launch Portal
               <ArrowRight className="ml-2 group-hover:translate-x-2 transition-transform" />
             </Link>
@@ -191,16 +226,16 @@ export default function LandingPage() {
       </section>
 
       {/* --- THE PROCESS --- */}
-      <section id="how-it-works" className="py-32 px-6 bg-[#FDFCFE]">
+      <section id="how-it-works" className="py-32 px-6 bg-[#FDFCFE] dark:bg-slate-950 transition-colors duration-300">
         <div className="mx-auto max-w-7xl">
           <div className="flex flex-col md:flex-row items-end justify-between mb-20 gap-8">
             <div className="max-w-2xl">
-              <h3 className="text-sm font-black text-purple-600 uppercase tracking-[0.4em] mb-4">Workflow</h3>
-              <h4 className="text-4xl md:text-6xl font-black text-gray-900 tracking-tight leading-none">
+              <h3 className="text-sm font-black text-purple-600 dark:text-purple-400 uppercase tracking-[0.4em] mb-4">Workflow</h3>
+              <h4 className="text-4xl md:text-6xl font-black text-gray-900 dark:text-white tracking-tight leading-none">
                 Get cleared in three <br /> simple steps.
               </h4>
             </div>
-            <p className="text-gray-500 max-w-xs text-sm font-medium leading-relaxed">
+            <p className="text-gray-500 dark:text-slate-400 max-w-xs text-sm font-medium leading-relaxed">
               We've redesigned the clearance logic to eliminate bottlenecks and physical signatures.
             </p>
           </div>
@@ -226,12 +261,12 @@ export default function LandingPage() {
                 color: "bg-emerald-500"
               }
             ].map((step, i) => (
-              <div key={i} className="group relative p-12 rounded-[3.5rem] bg-white border border-gray-100 transition-all duration-500 hover:shadow-[0_40px_80px_-15px_rgba(0,0,0,0.08)] hover:-translate-y-4">
+              <div key={i} className="group relative p-12 rounded-[3.5rem] bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 transition-all duration-500 hover:shadow-[0_40px_80px_-15px_rgba(0,0,0,0.08)] dark:hover:shadow-none hover:-translate-y-4">
                 <div className={`mb-8 inline-flex p-4 rounded-3xl text-white ${step.color} shadow-lg shadow-inherit transition-transform group-hover:rotate-12`}>
                   {step.icon}
                 </div>
-                <h5 className="text-2xl font-black text-gray-900 mb-4">{step.title}</h5>
-                <p className="text-gray-500 leading-relaxed font-medium">{step.desc}</p>
+                <h5 className="text-2xl font-black text-gray-900 dark:text-white mb-4">{step.title}</h5>
+                <p className="text-gray-500 dark:text-slate-400 leading-relaxed font-medium">{step.desc}</p>
               </div>
             ))}
           </div>
@@ -239,7 +274,7 @@ export default function LandingPage() {
       </section>
 
       {/* --- FOOTER --- */}
-      <footer className="bg-gray-950 py-24 px-6 overflow-hidden relative">
+      <footer className="bg-gray-950 dark:bg-slate-950 py-24 px-6 overflow-hidden relative">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-px bg-gradient-to-r from-transparent via-purple-500/50 to-transparent" />
         <div className="mx-auto max-w-7xl text-center relative z-10">
           <div className="relative h-16 w-16 mx-auto mb-8 opacity-50 grayscale hover:grayscale-0 transition-all duration-500">

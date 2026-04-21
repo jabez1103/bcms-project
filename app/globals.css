@@ -1,4 +1,7 @@
 @import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
 /* ===== Your custom theme ===== */
 
 :root {

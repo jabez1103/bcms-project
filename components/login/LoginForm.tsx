@@ -61,22 +61,22 @@ export default function LoginForm({ mobile = false }: LoginFormProps) {
   onSubmit={handleLogin}
   className={`
     flex flex-col items-center font-body z-10 transition-all duration-500
-    rounded-2xl border border-purple-100 bg-white 
+    rounded-2xl border border-purple-100 dark:border-slate-800 bg-white dark:bg-slate-900 
     p-6 sm:p-10 shadow-2xl          
     w-[92%] sm:w-full max-w-[440px] mx-auto  
     ${mobile ? "my-6" : "relative"}
   `}
 >
   {/* Branding Logo */}
-  <div className="mb-4 flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-2xl bg-purple-50 p-3">
+  <div className="mb-4 flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-2xl bg-purple-50 dark:bg-purple-900/30 p-3">
     <img src="/logo.png" className="h-full w-full object-contain" alt="BCMS Logo" />
   </div>
 
-  <h2 className="font-heading text-[clamp(1.5rem,3vw,1.875rem)] font-bold tracking-tight text-gray-900 text-center">
+  <h2 className="font-heading text-[clamp(1.5rem,3vw,1.875rem)] font-bold tracking-tight text-gray-900 dark:text-white text-center">
     Welcome Back
   </h2>
   
-  <p className="mt-2 px-2 text-center text-[clamp(0.75rem,2vw,0.875rem)] text-gray-500">
+  <p className="mt-2 px-2 text-center text-[clamp(0.75rem,2vw,0.875rem)] text-gray-500 dark:text-slate-400">
     Enter your credentials to access the Clearance System
   </p>
 
@@ -84,14 +84,14 @@ export default function LoginForm({ mobile = false }: LoginFormProps) {
   <div className="mt-6 sm:mt-8 w-full space-y-4 sm:space-y-5">
     {/* Email */}
     <div className="flex flex-col gap-1.5">
-      <label className="text-[clamp(10px,1.5vw,11px)] font-bold uppercase tracking-widest text-gray-400">
+      <label className="text-[clamp(10px,1.5vw,11px)] font-bold uppercase tracking-widest text-gray-400 dark:text-slate-500">
         Email Address
       </label>
       <input
         type="email"
         required
-        placeholder="name@bisu.edu.ph"
-        className="h-11 sm:h-12 w-full rounded-xl border border-gray-200 px-4 text-sm sm:text-base text-gray-900 outline-none transition focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
+        placeholder="firstname.lastname@bisu.edu.ph"
+        className="h-11 sm:h-12 w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 text-sm sm:text-base text-gray-900 dark:text-white outline-none transition focus:border-purple-500 focus:ring-2 focus:ring-purple-100 dark:focus:ring-purple-500/20"
         value={email}
         onChange={(e) => {
           setEmail(e.target.value);
@@ -102,7 +102,7 @@ export default function LoginForm({ mobile = false }: LoginFormProps) {
 
     {/* Password */}
     <div className="flex flex-col gap-1.5">
-      <label className="text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-gray-400">
+      <label className="text-[10px] sm:text-[11px] font-bold uppercase tracking-widest text-gray-400 dark:text-slate-500">
         Password
       </label>
       <div className="relative group">
@@ -110,7 +110,7 @@ export default function LoginForm({ mobile = false }: LoginFormProps) {
           type={showPassword ? "text" : "password"} 
           required
           placeholder="•••••••••••••"
-          className="h-11 sm:h-12 w-full rounded-xl border border-gray-200 px-4 pr-12 text-sm sm:text-base text-gray-900 outline-none transition focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
+          className="h-11 sm:h-12 w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 pr-12 text-sm sm:text-base text-gray-900 dark:text-white outline-none transition focus:border-purple-500 focus:ring-2 focus:ring-purple-100 dark:focus:ring-purple-500/20"
           value={password}
           onChange={(e) => {
             setPassword(e.target.value);
@@ -120,7 +120,7 @@ export default function LoginForm({ mobile = false }: LoginFormProps) {
         <button
           type="button"
           onClick={() => setShowPassword(!showPassword)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-gray-400 hover:text-purple-600 transition-colors"
+          className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-gray-400 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
           aria-label={showPassword ? "Hide password" : "Show password"}
         >
           {showPassword ? (
@@ -138,15 +138,15 @@ export default function LoginForm({ mobile = false }: LoginFormProps) {
     <label className="group flex cursor-pointer items-center gap-2">
       <input
         type="checkbox"
-        className="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+        className="h-4 w-4 rounded border-gray-300 dark:border-slate-600 text-purple-600 focus:ring-purple-500"
       />
-      <span className="text-[11px] sm:text-xs font-medium text-gray-500 transition-colors group-hover:text-gray-800">
+      <span className="text-[11px] sm:text-xs font-medium text-gray-500 dark:text-slate-400 transition-colors group-hover:text-gray-800 dark:group-hover:text-white">
         Remember me
       </span>
     </label>
     <button
       type="button"
-      className="text-[11px] sm:text-xs font-semibold text-purple-600 transition-colors hover:text-purple-800 hover:underline"
+      className="text-[11px] sm:text-xs font-semibold text-purple-600 dark:text-purple-400 transition-colors hover:text-purple-800 dark:hover:text-purple-300 hover:underline"
     >
       Forgot Password?
     </button>

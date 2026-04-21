@@ -83,9 +83,9 @@ export function LogoutModal({ onClose, isOpen }: LogoutModalProps) {
         dragHandleClassName="handle"
         style={{ zIndex: 210, position: "fixed" }}
       >
-        <div className="bg-white border-0 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.1)] w-full h-full flex flex-col overflow-hidden ring-1 ring-black/5">
+        <div className="bg-white dark:bg-slate-900 border-0 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.1)] w-full h-full flex flex-col overflow-hidden ring-1 ring-black/5 dark:ring-white/10">
           {/* Draggable Header */}
-          <div className="handle bg-gray-50/50 px-6 py-4 flex text-gray-400 justify-between items-center cursor-move select-none border-b border-gray-100">
+          <div className="handle bg-gray-50/50 dark:bg-slate-800/50 px-6 py-4 flex text-gray-400 dark:text-slate-500 justify-between items-center cursor-move select-none border-b border-gray-100 dark:border-slate-800">
             <div className="flex items-center gap-2">
               <div className="h-2 w-2 rounded-full bg-purple-500 animate-pulse" />
               <span className="font-bold text-[10px] uppercase tracking-[0.2em]">
@@ -94,7 +94,7 @@ export function LogoutModal({ onClose, isOpen }: LogoutModalProps) {
             </div>
             <button
               onClick={onClose}
-              className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-gray-200/50 text-gray-400 hover:text-gray-900 transition-colors"
+              className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-gray-200/50 dark:hover:bg-slate-700/50 text-gray-400 dark:text-slate-500 hover:text-gray-900 dark:hover:text-white transition-colors"
             >
               ✕
             </button>
@@ -102,24 +102,24 @@ export function LogoutModal({ onClose, isOpen }: LogoutModalProps) {
 
           {/* Body Content */}
           <div className="p-8 flex-1 flex flex-col items-center text-center">
-            <div className="mb-6 h-16 w-16 rounded-3xl bg-red-50 text-red-500 flex items-center justify-center shadow-inner">
+            <div className="mb-6 h-16 w-16 rounded-3xl bg-red-50 dark:bg-red-500/10 text-red-500 flex items-center justify-center shadow-inner">
               <LogOut size={32} />
             </div>
 
-            <h3 className="text-xl font-black text-gray-900 tracking-tight mb-2">
+            <h3 className="text-xl font-black text-gray-900 dark:text-white tracking-tight mb-2">
               Confirm Sign Out
             </h3>
-            <p className="text-sm text-gray-500 font-medium leading-relaxed max-w-[240px]">
+            <p className="text-sm text-gray-500 dark:text-slate-400 font-medium leading-relaxed max-w-[240px]">
               Are you sure you want to end your current session?
             </p>
           </div>
 
           {/* Actions */}
-          <div className="p-6 bg-gray-50/50 flex gap-3">
+          <div className="p-6 bg-gray-50/50 dark:bg-slate-800/50 flex gap-3">
             <button
               onClick={onClose}
               disabled={isExiting}
-              className="flex-1 px-4 py-3.5 bg-white border border-gray-200 rounded-2xl text-xs font-bold uppercase tracking-widest text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition-all disabled:opacity-50"
+              className="flex-1 px-4 py-3.5 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl text-xs font-bold uppercase tracking-widest text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-gray-900 dark:hover:text-white transition-all disabled:opacity-50"
             >
               Cancel
             </button>

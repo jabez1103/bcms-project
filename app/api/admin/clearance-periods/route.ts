@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyToken } from "@/lib/auth";
 import { createConnection } from "@/lib/db";
+import { createNotificationBulk } from "@/lib/notifications";
 
 // Auto-update status based on dates
 function computeStatus(start: string, end: string): string {
@@ -73,6 +74,29 @@ export async function POST(request: NextRequest) {
      VALUES (?, ?, ?, ?, ?, ?)`,
     [academic_year, semester || null, start_date, end_date, period_status, admin_id]
   );
+
+  // --- Notify all students and signatories ---
+  try {
+    const [studentUsers]: any = await db.query(
+      `SELECT u.user_id FROM students st JOIN users u ON st.user_id = u.user_id`
+    );
+    const [signatoryUsers]: any = await db.query(
+      `SELECT u.user_id FROM signatories sg JOIN users u ON sg.user_id = u.user_id`
+    );
+
+    const periodLabel = `${academic_year}${semester ? " — " + semester : ""}`;
+    const title = "🎓 Clearance Period Started";
+    const message = `A new clearance period (${periodLabel}) has been opened. Submit your requirements now.`;
+
+    const recipients = [
+      ...studentUsers.map((u: any) => ({ userId: u.user_id, role: "student" as const })),
+      ...signatoryUsers.map((u: any) => ({ userId: u.user_id, role: "signatory" as const })),
+    ];
+
+    await createNotificationBulk(db, recipients, "period_opened", title, message);
+  } catch (_) {
+    // Non-critical
+  }
 
   return NextResponse.json({ success: true, message: "Period created!" });
 }

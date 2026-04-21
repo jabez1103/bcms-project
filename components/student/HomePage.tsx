@@ -1,7 +1,8 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { Info, CheckCircle2, Clock, AlertCircle, ArrowRight } from 'lucide-react';
+import { Info, CheckCircle2, Clock, AlertCircle, ArrowRight, LayoutGrid, List } from 'lucide-react';
 import { useRouter } from "next/navigation";
+import { SkeletonSignatoryCard } from "@/components/ui/Skeleton";
 
 
 /*
@@ -22,17 +23,19 @@ type Signatory = {
   name: string;
   description: string;
   status: string;
+  title?: string;
 }
 
 export default function HomePage() {
   const [activeFilter, setActiveFilter] = useState('All Statuses');
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
+  const [viewMode, setViewMode] = useState<'table' | 'cards'>('cards');
   const [signatories, setSignatories] = useState<Signatory[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  const filters = ['All Statuses', 'Approved', 'Pending', 'Not Submitted'];
+  const filters = ['All Statuses', 'Approved', 'Pending', 'Rejected', 'Not Submitted'];
 
   useEffect(() => {
     const fetchStatus = async () => {
@@ -67,43 +70,70 @@ export default function HomePage() {
     //activeFilter === 'All Statuses' ? true : item.status.trim() === activeFilter
 
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center">
-      <p className="text-slate-400 text-sm">Loading clearance status...</p>
+    <div className="bg-[#F8FAFC] dark:bg-slate-950 min-h-screen min-w-full relative font-sans">
+      <div className="p-6 md:p-10 pt-28">
+        <div className="max-w-7xl mx-auto">
+          <div className="animate-pulse space-y-4">
+            <div className="h-16 bg-slate-200 dark:bg-slate-800 rounded-2xl w-full"></div>
+            <div className="h-16 bg-slate-200 dark:bg-slate-800 rounded-2xl w-full"></div>
+            <div className="h-16 bg-slate-200 dark:bg-slate-800 rounded-2xl w-full"></div>
+            <div className="h-16 bg-slate-200 dark:bg-slate-800 rounded-2xl w-full"></div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 
-
   return (
-    <div className="bg-[#F8FAFC] min-h-screen min-w-full relative font-sans">
+    <div className="bg-[#F8FAFC] dark:bg-slate-950 min-h-screen min-w-full relative font-sans">
       {/* --- STICKY HEADER --- */}
       <div
-        className={`sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-slate-200 px-6 md:px-10 py-4 transition-all duration-500 ease-in-out ${
+        className={`sticky top-0 z-20 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 px-6 md:px-10 py-4 transition-all duration-500 ease-in-out ${
           isVisible ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
         }`}
       >
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4 relative">
           <div>
-            <h2 className="text-xl font-bold text-slate-900 tracking-tight">Clerance Statuses</h2>
-            <p className="text-[11px] text-slate-500 font-medium">Clearance Progress 2026</p>
+            <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">Clearance Status</h2>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">My Clearance Progress</p>
           </div>
 
-          <div className="flex flex-wrap gap-2 p-1 bg-slate-100 rounded-2xl w-fit">
-            {filters.map((filter) => {
-              const isActive = activeFilter === filter;
-              return (
-                <button
-                  key={filter}
-                  onClick={() => setActiveFilter(filter)}
-                  className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all duration-300 ${
-                    isActive
-                      ? 'bg-white text-purple-600 shadow-sm scale-105'
-                      : 'text-slate-500 hover:text-slate-800 hover:bg-white/50'
-                  }`}
-                >
-                  {filter}
-                </button>
-              );
-            })}
+          <div className="flex flex-wrap gap-4 items-center">
+            <div className="hidden sm:flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+              <button 
+                onClick={() => setViewMode('cards')} 
+                className={`p-1.5 rounded-lg transition-all ${viewMode === 'cards' ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}
+                title="Cards View"
+              >
+                <LayoutGrid size={16} />
+              </button>
+              <button 
+                onClick={() => setViewMode('table')} 
+                className={`p-1.5 rounded-lg transition-all ${viewMode === 'table' ? 'bg-white dark:bg-slate-700 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}
+                title="Table View"
+              >
+                <List size={16} />
+              </button>
+            </div>
+
+            <div className="flex flex-wrap gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl w-fit">
+              {filters.map((filter) => {
+                const isActive = activeFilter === filter;
+                return (
+                  <button
+                    key={filter}
+                    onClick={() => setActiveFilter(filter)}
+                    className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all duration-300 ${
+                      isActive
+                        ? 'bg-white dark:bg-slate-700 text-purple-600 dark:text-purple-400 shadow-sm scale-105'
+                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-white/50 dark:hover:bg-slate-700/50'
+                    }`}
+                  >
+                    {filter}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
@@ -111,20 +141,41 @@ export default function HomePage() {
       <div className="p-6 md:p-10">
         <div className="max-w-7xl mx-auto">
           {filteredData.length === 0 ? (
-            <p>No results found.</p>
+            <div className="text-center py-20 bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm">
+              <p className="text-slate-400 font-bold uppercase tracking-widest text-sm">No requirements found.</p>
+            </div>
+          ) : viewMode === 'table' ? (
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] overflow-hidden shadow-sm">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse min-w-[800px]">
+                  <thead>
+                    <tr className="bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
+                      <th className="px-8 py-5 text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-widest">Requirement</th>
+                      <th className="px-8 py-5 text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-widest">Office / Department</th>
+                      <th className="px-8 py-5 text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-widest text-center">Status</th>
+                      <th className="px-8 py-5 text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-widest text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
+                    {filteredData.map((req) => (
+                      <RequirementRow key={req.id} requirement={req} />
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {filteredData.map((person) => (
-                <SignatoryCard key={person.id} person={person} />
+              {filteredData.map((req) => (
+                <SignatoryCard key={req.id} person={req} />
               ))}
-            </div>           
+            </div>
           )}
         </div>
       </div>
     </div>
   );
 }
-
 
 function normalizedStatus(status: string): string {
   switch (status?.toLowerCase()) {
@@ -136,51 +187,103 @@ function normalizedStatus(status: string): string {
   }
 }
 
+function RequirementRow({ requirement }: { requirement: Signatory }) {
+  const router = useRouter();
+  const currentStatus = normalizedStatus(requirement.status);
+
+  const getTheme = () => {
+    if (currentStatus === 'Approved') return "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20";
+    if (currentStatus === 'Pending') return "bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-500/20";
+    if (currentStatus === 'Rejected') return "bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-500/20";
+    return "bg-slate-50 dark:bg-slate-500/10 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700";
+  };
+
+  const getIndicator = () => {
+    if (currentStatus === 'Approved') return "bg-emerald-500";
+    if (currentStatus === 'Pending') return "bg-amber-500 animate-pulse";
+    if (currentStatus === 'Rejected') return "bg-rose-500";
+    return "bg-slate-400";
+  };
+
+  return (
+    <tr className="group hover:bg-slate-50/80 dark:hover:bg-slate-800/80 transition-all">
+      <td className="px-8 py-5">
+        <p className="font-bold text-slate-800 dark:text-slate-200 text-sm group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+          {requirement.title || requirement.description}
+        </p>
+      </td>
+      <td className="px-8 py-5">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-black text-[10px] border border-indigo-100 dark:border-indigo-500/20">
+            {(requirement.role || "U").charAt(0)}
+          </div>
+          <p className="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">{requirement.role || "Unknown Office"}</p>
+        </div>
+      </td>
+      <td className="px-8 py-5 text-center">
+        <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest border ${getTheme()}`}>
+          <span className={`w-1.5 h-1.5 rounded-full ${getIndicator()}`} />
+          {currentStatus === 'Not Submitted' ? 'NOT SUBMITTED' : currentStatus}
+        </div>
+      </td>
+      <td className="px-8 py-5 text-right">
+        <button 
+          onClick={() => router.push(`/student/signatories/${requirement.id}`)}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-[10px] font-bold text-slate-700 dark:text-slate-200 hover:text-indigo-600 dark:hover:text-indigo-400 hover:border-indigo-200 dark:hover:border-indigo-500/50 hover:shadow-sm transition-all active:scale-95 group/btn"
+        >
+          VIEW DETAILS
+          <ArrowRight size={14} className="transition-transform group-hover/btn:translate-x-1" />
+        </button>
+      </td>
+    </tr>
+  );
+}
+
 function SignatoryCard({ person }: { person: Signatory }) {
   const router = useRouter();
-  const currentStatus = normalizedStatus(person.status); //person.status?.trim();
+  const currentStatus = normalizedStatus(person.status);
   const isApproved = currentStatus === 'Approved';
   const isPending = currentStatus === 'Pending';
+  const isRejected = currentStatus === 'Rejected';
   const isNotSubmitted = currentStatus === 'Not Submitted';
 
   const getTheme = () => {
-    if (isApproved) return { color: 'bg-emerald-500', light: 'bg-emerald-50', text: 'text-emerald-600', icon: <CheckCircle2 size={12}/> };
-    if (isPending) return { color: 'bg-amber-500', light: 'bg-amber-50', text: 'text-amber-600', icon: <Clock size={12}/> };
-    if (isNotSubmitted) return { color: 'bg-rose-500', light: 'bg-rose-50', text: 'text-rose-600', icon: <AlertCircle size={12}/> };
-    return { color: 'bg-slate-400', light: 'bg-slate-50', text: 'text-slate-500', icon: null };
+    if (isApproved) return { color: 'bg-emerald-500', light: 'bg-emerald-50 dark:bg-emerald-900/30', text: 'text-emerald-600 dark:text-emerald-400', icon: <CheckCircle2 size={12}/> };
+    if (isPending) return { color: 'bg-amber-500', light: 'bg-amber-50 dark:bg-amber-900/30', text: 'text-amber-600 dark:text-amber-400', icon: <Clock size={12}/> };
+    if (isRejected) return { color: 'bg-rose-500', light: 'bg-rose-50 dark:bg-rose-900/30', text: 'text-rose-600 dark:text-rose-400', icon: <AlertCircle size={12}/> };
+    if (isNotSubmitted) return { color: 'bg-rose-500', light: 'bg-rose-50 dark:bg-rose-900/30', text: 'text-rose-600 dark:text-rose-400', icon: <AlertCircle size={12}/> };
+    return { color: 'bg-slate-400 dark:bg-slate-600', light: 'bg-slate-50 dark:bg-slate-800', text: 'text-slate-500 dark:text-slate-400', icon: null };
   };
 
   const theme = getTheme();
+  const fallbackRole = person.role || "Unknown Office";
 
   return (
-    <div className="bg-white rounded-2xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07)] border border-slate-100 flex flex-col overflow-hidden transition-all duration-300 hover:shadow-[0_20px_25px_-5px_rgba(0,0,0,0.1)] hover:-translate-y-1 group">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07)] border border-slate-100 dark:border-slate-800 flex flex-col overflow-hidden transition-all duration-300 hover:shadow-[0_20px_25px_-5px_rgba(0,0,0,0.1)] hover:-translate-y-1 group">
       {/* --- HEADER --- */}
       <div className={`${theme.color} p-5 flex justify-between items-center text-white`}>
         <div className="flex-1 pr-3">
           <div className="flex items-center gap-1.5 mb-0.5">
-            <h3 className="font-bold text-[14px] tracking-tight leading-tight uppercase">{person.role}</h3>
+            <h3 className="font-bold text-[14px] tracking-tight leading-tight uppercase">{fallbackRole}</h3>
             <Info size={14} className="opacity-60" />
           </div>
-          <p className="text-[12px] font-medium opacity-80 truncate">{person.name}</p>
+          <p className="text-[12px] font-medium opacity-80 truncate">{person.name || "N/A"}</p>
         </div>
-        <div className="w-11 h-11 rounded-xl border-2 border-white/30 bg-white/20 backdrop-blur-sm overflow-hidden shrink-0 transform group-hover:scale-110 transition-transform duration-500">
-          <img
-            src={`https://api.dicebear.com/7.x/initials/svg?seed=${person.name}&backgroundColor=f8fafc`}
-            alt="avatar"
-            className="w-full h-full object-cover"
-          />1
+        <div className="w-11 h-11 rounded-xl border-2 border-white/30 bg-white/20 backdrop-blur-sm overflow-hidden shrink-0 flex items-center justify-center font-black text-lg shadow-inner">
+          {(person.name || fallbackRole).charAt(0)}
         </div>
       </div>
 
       {/* --- BODY --- */}
       <div className="p-6 flex-1 min-h-[110px]">
-        <p className="text-slate-500 text-xs leading-relaxed font-medium line-clamp-3">
+        {person.title && <h4 className="text-slate-800 dark:text-slate-100 font-bold text-sm mb-2">{person.title}</h4>}
+        <p className="text-slate-500 dark:text-slate-400 text-xs leading-relaxed font-medium line-clamp-3">
           {person.description}
         </p>
       </div>
 
       {/* --- FOOTER --- */}
-      <div className="px-5 py-4 bg-slate-50/50 border-t border-slate-100 flex justify-between items-center">
+      <div className="px-5 py-4 bg-slate-50/50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center">
         <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full ${theme.light} ${theme.text} font-bold text-[10px] tracking-wider uppercase`}>
           {theme.icon}
           {currentStatus === 'Not Submitted' ? 'NOT SUBMITTED' : currentStatus}
@@ -188,7 +291,7 @@ function SignatoryCard({ person }: { person: Signatory }) {
 
         <button 
           onClick={() => router.push(`/student/signatories/${person.id}`)}
-          className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-[11px] font-bold text-slate-700 hover:text-purple-600 hover:border-purple-200 hover:shadow-sm transition-all active:scale-95 group/btn"
+          className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-[11px] font-bold text-slate-700 dark:text-slate-200 hover:text-purple-600 dark:hover:text-purple-400 hover:border-purple-200 dark:hover:border-purple-500/50 hover:shadow-sm transition-all active:scale-95 group/btn"
         >
           DETAILS
           <ArrowRight size={14} className="transition-transform group-hover/btn:translate-x-1" />

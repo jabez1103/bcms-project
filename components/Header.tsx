@@ -1,8 +1,9 @@
 "use client";
 
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Bell,
   Search,
@@ -14,6 +15,7 @@ import {
   X,
   User as UserIcon,
   Settings2,
+  Menu,
 } from "lucide-react";
 
 import { PageType, UserRole } from "@/types/index";
@@ -24,9 +26,10 @@ interface HeaderProps {
   role: UserRole;
   activePage: PageType;
   onPageClick: (page: PageType) => void;
+  onMobileMenuToggle?: () => void;
 }
 
-export function Header({ role, activePage, onPageClick }: HeaderProps) {
+export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: HeaderProps) {
   const [isDropdownOpen, setDropdownOpen] = useState(false);
   const [isNotifOpen, setNotifOpen] = useState(false);
   const [isNotifMenuOpen, setMenuOpen] = useState(false);
@@ -39,30 +42,114 @@ export function Header({ role, activePage, onPageClick }: HeaderProps) {
   const [searchValue, setSearchValue] = useState("");
   const [activeTab, setActiveTab] = useState<"all" | "unread">("unread");
 
-  const [notifications, setNotifications] = useState([
-    { id: 1, title: "New Student Registered", desc: "James Kyle completed enrollment.", time: "2m ago", isRead: false },
-    { id: 2, title: "File Upload Success", desc: "Transcript_Final.pdf processed.", time: "1h ago", isRead: false },
-    { id: 3, title: "System Update", desc: "Dashboard v2.0 is now live.", time: "Yesterday", isRead: true },
-  ]);
+  interface Notification {
+    id: number;
+    type: string;
+    title: string;
+    message: string;
+    isRead: boolean;
+    createdAt: string;
+    targetId?: number | null;
+  }
+
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [notifLoading, setNotifLoading] = useState(false);
 
   const { user, loading } = useCurrentUser();
+  const router = useRouter();
 
-  // Derived data
-  const unreadCount = notifications.filter((n) => !n.isRead).length;
+  // --- Helpers ---
+  const relativeTime = (iso: string) => {
+    const diff = Date.now() - new Date(iso).getTime();
+    const m = Math.floor(diff / 60000);
+    if (m < 1) return "Just now";
+    if (m < 60) return `${m}m ago`;
+    const h = Math.floor(m / 60);
+    if (h < 24) return `${h}h ago`;
+    return `${Math.floor(h / 24)}d ago`;
+  };
+
+  // --- Fetch unread count (runs on mount + every 60s) ---
+  const fetchUnreadCount = useCallback(async () => {
+    try {
+      const res = await fetch("/api/notifications/unread-count");
+      const data = await res.json();
+      if (data.success) setUnreadCount(data.count);
+    } catch (_) {}
+  }, []);
+
+  useEffect(() => {
+    fetchUnreadCount();
+    const interval = setInterval(fetchUnreadCount, 60000);
+    return () => clearInterval(interval);
+  }, [fetchUnreadCount]);
+
+  // --- Fetch full list when panel opens ---
+  useEffect(() => {
+    if (!isNotifOpen) return;
+    setNotifLoading(true);
+    fetch("/api/notifications")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.success) setNotifications(data.notifications);
+      })
+      .catch(() => {})
+      .finally(() => setNotifLoading(false));
+  }, [isNotifOpen]);
+
+  // Derived
   const filteredNotifs = notifications.filter((n) =>
     activeTab === "all" ? true : !n.isRead
   );
   const userAvatar = user?.avatar || "/default-avatar.png";
 
-  const markAsRead = (id: number) => {
+  const markAsRead = async (id: number) => {
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
     );
+    setUnreadCount((c) => Math.max(0, c - 1));
+    try {
+      await fetch("/api/notifications/read", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ notificationId: id }),
+      });
+    } catch (_) {}
   };
 
-  const markAllAsRead = () => {
+  const markAllAsRead = async () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    setUnreadCount(0);
     setMenuOpen(false);
+    try {
+      await fetch("/api/notifications/read", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ all: true }),
+      });
+    } catch (_) {}
+  };
+
+  /** Navigate based on notification type + role */
+  const handleNotifClick = async (notif: Notification) => {
+    await markAsRead(notif.id);
+    setNotifOpen(false);
+
+    if (role === "student" && notif.targetId) {
+      if (notif.type === "submission_rejected" || notif.type === "submission_approved") {
+        router.push(`/student/signatories/${notif.targetId}`);
+        return;
+      }
+      if (notif.type === "period_opened") {
+        router.push("/student/home");
+        return;
+      }
+    }
+
+    if (role === "signatory" && notif.type === "submission_received") {
+      router.push("/signatory/home");
+    }
   };
 
   if (loading) {
@@ -77,15 +164,24 @@ export function Header({ role, activePage, onPageClick }: HeaderProps) {
 
   return (
     <>
-      <header className="flex justify-between items-center px-4 md:px-8 h-[10vh] bg-white border-b border-slate-100 sticky top-0 z-40">
+      <header className="flex justify-between items-center px-4 md:px-8 h-[10vh] bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 sticky top-0 z-40 transition-colors duration-300">
         {/* LEFT SIDE: BRANDING */}
         <div className="flex items-center gap-3">
+          {/* HAMBURGER MENU (MOBILE ONLY) */}
+          <button 
+            onClick={onMobileMenuToggle}
+            className="md:hidden p-2 -ml-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+            aria-label="Open sidebar"
+          >
+            <Menu size={20} />
+          </button>
+
           <img src="/logo.png" alt="BISU Logo" className="w-10 h-10 object-contain" />
           <div className="flex flex-col">
-            <h1 className="text-xs md:text-sm font-black tracking-tighter text-slate-800 uppercase leading-none">
+            <h1 className="text-xs md:text-sm font-black tracking-tighter text-slate-800 dark:text-slate-100 uppercase leading-none">
               BISU CLEARANCE
             </h1>
-            <p className="text-[8px] md:text-[9px] font-bold tracking-[0.2em] text-slate-400 uppercase">
+            <p className="text-[8px] md:text-[9px] font-bold tracking-[0.2em] text-slate-400 dark:text-slate-500 uppercase">
               Management System
             </p>
           </div>
@@ -95,13 +191,13 @@ export function Header({ role, activePage, onPageClick }: HeaderProps) {
         <div className="flex items-center gap-2 md:gap-6">
           {/* SEARCH BAR */}
           <div className="relative hidden sm:block">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
             <input
               type="text"
               placeholder="Search..."
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
-              className="w-48 lg:w-72 bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-8 py-2 text-sm text-black focus:bg-white focus:ring-4 focus:ring-indigo-500/5 transition-all outline-none"
+              className="w-48 lg:w-72 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-8 py-2 text-sm text-black dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-indigo-500/5 dark:focus:ring-indigo-400/10 transition-all outline-none"
             />
             {searchValue && (
               <button onClick={() => setSearchValue("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
@@ -115,7 +211,7 @@ export function Header({ role, activePage, onPageClick }: HeaderProps) {
             <button
               onClick={() => setNotifOpen(!isNotifOpen)}
               className={`p-2.5 rounded-xl transition-all relative ${
-                isNotifOpen ? "bg-indigo-50 text-indigo-600" : "text-slate-500 hover:bg-slate-50"
+                isNotifOpen ? "bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400" : "text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"
               }`}
             >
               <Bell size={20} fill={isNotifOpen ? "currentColor" : "none"} className={isNotifOpen ? "opacity-20" : ""} />
@@ -132,22 +228,22 @@ export function Header({ role, activePage, onPageClick }: HeaderProps) {
             {isNotifOpen && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => { setNotifOpen(false); setMenuOpen(false); }} />
-                <div className="absolute right-0 mt-3 w-80 md:w-96 bg-white border border-slate-200 rounded-2xl shadow-2xl z-20 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                  <div className="p-4 border-b border-slate-50 flex items-center justify-between">
-                    <h3 className="font-bold text-slate-900">Notifications</h3>
+                <div className="absolute right-0 mt-3 w-80 md:w-96 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-20 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                  <div className="p-4 border-b border-slate-50 dark:border-slate-800 flex items-center justify-between">
+                    <h3 className="font-bold text-slate-900 dark:text-slate-100">Notifications</h3>
                     <div className="relative">
                       <button onClick={() => setMenuOpen(!isNotifMenuOpen)} className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors">
                         <MoreHorizontal size={18} className="text-slate-500" />
                       </button>
                       
                       {isNotifMenuOpen && (
-                        <div className="absolute right-0 mt-2 w-52 bg-white border border-slate-100 shadow-xl rounded-xl p-1.5 z-30">
-                          <button onClick={markAllAsRead} className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 rounded-lg transition-colors">
+                        <div className="absolute right-0 mt-2 w-52 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-xl rounded-xl p-1.5 z-30">
+                          <button onClick={markAllAsRead} className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors">
                             <Check size={14} className="text-emerald-500" /> Mark all as read
                           </button>
                           <button 
                             onClick={() => { setSettingsOpen(true); setMenuOpen(false); setNotifOpen(false); }} 
-                            className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 rounded-lg transition-colors text-left"
+                            className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors text-left"
                           >
                             <Settings2 size={14} className="text-indigo-500" /> Notification Settings
                           </button>
@@ -156,13 +252,13 @@ export function Header({ role, activePage, onPageClick }: HeaderProps) {
                     </div>
                   </div>
 
-                  <div className="flex gap-2 p-2 bg-slate-50/50">
+                  <div className="flex gap-2 p-2 bg-slate-50/50 dark:bg-slate-800/50">
                     {["all", "unread"].map((tab) => (
                       <button
                         key={tab}
                         onClick={() => setActiveTab(tab as any)}
                         className={`flex-1 py-1.5 rounded-lg text-xs font-bold capitalize transition-all ${
-                          activeTab === tab ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500 hover:text-slate-700"
+                          activeTab === tab ? "bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
                         }`}
                       >
                         {tab}
@@ -171,20 +267,25 @@ export function Header({ role, activePage, onPageClick }: HeaderProps) {
                   </div>
 
                   <div className="max-h-[400px] overflow-y-auto">
-                    {filteredNotifs.length > 0 ? (
+                    {notifLoading ? (
+                      <div className="flex items-center justify-center py-12 gap-3">
+                        <div className="w-5 h-5 border-2 border-indigo-200 border-t-indigo-500 rounded-full animate-spin" />
+                        <p className="text-xs text-slate-400">Loading...</p>
+                      </div>
+                    ) : filteredNotifs.length > 0 ? (
                       filteredNotifs.map((notif) => (
                         <div
                           key={notif.id}
-                          onClick={() => markAsRead(notif.id)}
-                          className="p-4 flex gap-3 hover:bg-slate-50 cursor-pointer transition-colors border-b border-slate-50 last:border-0 relative"
+                          onClick={() => handleNotifClick(notif)}
+                          className="p-4 flex gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors border-b border-slate-50 dark:border-slate-800/50 last:border-0 relative"
                         >
                           <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${notif.isRead ? "bg-transparent" : "bg-indigo-500"}`} />
                           <div className="flex-1">
-                            <p className={`text-sm leading-snug ${notif.isRead ? "text-slate-500" : "text-slate-900 font-semibold"}`}>
+                            <p className={`text-sm leading-snug ${notif.isRead ? "text-slate-500 dark:text-slate-400" : "text-slate-900 dark:text-slate-100 font-semibold"}`}>
                               {notif.title}
                             </p>
-                            <p className="text-xs text-slate-400 mt-0.5">{notif.desc}</p>
-                            <p className="text-[10px] text-indigo-500 font-bold mt-2 uppercase">{notif.time}</p>
+                            <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{notif.message}</p>
+                            <p className="text-[10px] text-indigo-500 dark:text-indigo-400 font-bold mt-2 uppercase">{relativeTime(notif.createdAt)}</p>
                           </div>
                         </div>
                       ))
@@ -211,31 +312,61 @@ export function Header({ role, activePage, onPageClick }: HeaderProps) {
                 <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full" />
               </div>
               <div className="hidden md:block text-left">
-                <p className="text-sm font-bold text-slate-800 leading-none">{user.full_name}</p>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">{user.role}</p>
+                <p className="text-sm font-bold text-slate-800 dark:text-slate-200 leading-none">{user.full_name}</p>
+                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1">{user.role}</p>
               </div>
               <ChevronDown size={16} className={`text-slate-400 transition-transform ${isDropdownOpen ? "rotate-180" : ""}`} />
             </button>
 
+            
             {isDropdownOpen && (
               <>
-                <div className="fixed inset-0 z-10" onClick={() => setDropdownOpen(false)} />
-                <div className="absolute right-0 mt-3 w-64 bg-white border border-slate-100 rounded-2xl shadow-2xl z-50 py-2 animate-in fade-in slide-in-from-top-2">
-                  <Link href={`/${user.role}/profile`} className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 transition-colors">
-                    <UserIcon size={16} /> Profile
+                <div className="fixed inset-0 z-40" onClick={() => setDropdownOpen(false)} />
+                <div className="absolute right-0 top-full mt-3 w-64 bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
+                  
+                  {/* MOBILE-ONLY PROFILE HEADER */}
+                  <div className="md:hidden px-4 py-5 bg-slate-50/50 dark:bg-slate-800/50 border-b border-gray-100 dark:border-slate-800 flex flex-col items-center gap-2">
+                    <img 
+                      src={user.avatar} 
+                      alt="Profile" 
+                      className="w-16 h-16 rounded-xl object-cover border border-purple-100 shadow-sm" 
+                    />
+                    <div className="text-center mb-1">
+                      <p className="text-sm font-bold text-slate-800 dark:text-slate-200">{user.name}</p>
+                      <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">{role}</p>
+                    </div>
+                    {/* Centered See Profile Button - Sized to match width constraints */}
+                    <Link
+                      href={`/${role}/profile`}
+                      onClick={() => setDropdownOpen(false)}
+                      className="w-full max-w-[140px] py-2 bg-white dark:bg-slate-900 border border-purple-200 dark:border-purple-800/30 text-purple-600 dark:text-purple-400 text-[11px] font-bold rounded-lg hover:bg-purple-50 dark:hover:bg-slate-800 transition-all text-center flex items-center justify-center gap-2"
+                    >
+                      <UserIcon size={12} />
+                      See Profile
+                    </Link>
+                  </div>
+
+                  {/* DESKTOP-ONLY PROFILE LINK */}
+                  <Link
+                    href={`/${role}/profile`}
+                    onClick={() => setDropdownOpen(false)}
+                    className="hidden md:flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-purple-50 dark:hover:bg-slate-800 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+                  >
+                    <UserIcon size={16} />
+                    Profile
                   </Link>
                   <button 
                     onClick={() => { setSettingsOpen(true); setDropdownOpen(false); }} 
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-left"
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-indigo-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors text-left"
                   >
                  
                     <SettingsIcon size={16} /> Settings
                     
                   </button>
-                  <div className="h-px bg-slate-50 my-1" />
+                  <div className="h-px bg-slate-50 dark:bg-slate-800 my-1" />
                   <button 
                     onClick={() => { setLogoutOpen(true); setDropdownOpen(false); }} 
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-rose-500 hover:bg-rose-50 transition-colors text-left"
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors text-left"
                   >
                     <LogOut size={16} /> Logout
                   </button>

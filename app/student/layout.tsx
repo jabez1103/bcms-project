@@ -17,6 +17,7 @@ export default function StudentLayout({
   const [overlayPage, setOverlayPage] = useState<
     "Settings" | "Log out" | null
   >(null);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   const handlePageClick = (page: PageType) => {
     if (page === "Settings" || page === "Log out") {
@@ -34,19 +35,22 @@ export default function StudentLayout({
         role="student"
         activePage={activePage}
         onPageClick={handlePageClick}
+        onMobileMenuToggle={() => setIsMobileSidebarOpen(true)}
       />
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden relative">
         {/* SIDEBAR */}
         <Sidebar
           role="student"
           onPageClick={handlePageClick}
           activePage={activePage}
+          isMobileOpen={isMobileSidebarOpen}
+          onMobileClose={() => setIsMobileSidebarOpen(false)}
         />
 
         {/* MAIN WRAPPER */}
-        <div className="flex-1 flex flex-col min-w-0 bg-[#f4f6f9] overflow-y-auto">
-          <main className="flex-1 p-4 bg-white">{children}</main>
+        <div className="flex-1 flex flex-col min-w-0 bg-[#f4f6f9] dark:bg-slate-950 overflow-y-auto">
+          <main className="flex-1 p-4 bg-transparent">{children}</main>
 
           <Footer />
         </div>

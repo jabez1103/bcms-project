@@ -26,7 +26,8 @@ export async function GET(request: NextRequest) {
     const [rows]: any = await db.query(`
         SELECT
             r.requirement_id AS id,
-            r.requirement_name AS role,
+            sg.department AS role,
+            r.requirement_name AS title,
             r.description,
             CONCAT(u.first_name, ' ', u.last_name) AS name,
             COALESCE(a.decision_status,

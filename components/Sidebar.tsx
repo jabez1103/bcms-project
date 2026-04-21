@@ -15,11 +15,10 @@ import {
   ChevronRight, 
   ChevronLeft,
   ChevronDown,
-  UserCheck
+  UserCheck,
+  X
 } from "lucide-react";
 import { PageType, UserRole } from "@/types/index";
-//import { signatories } from "@/lib/mock-data/id/signatories";
-
 
 type Signatory = {
   id: number;
@@ -32,9 +31,11 @@ interface SidebarProps {
   role: UserRole;
   activePage: PageType;
   onPageClick: (page: PageType) => void;
+  isMobileOpen?: boolean;
+  onMobileClose?: () => void;
 }
 
-export function Sidebar({ role, activePage, onPageClick }: SidebarProps) {
+export function Sidebar({ role, activePage, onPageClick, isMobileOpen, onMobileClose }: SidebarProps) {
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState<boolean | null>(null);
   const [signatoriesOpen, setSignatoriesOpen] = useState(false);
@@ -43,13 +44,22 @@ export function Sidebar({ role, activePage, onPageClick }: SidebarProps) {
 
   useEffect(() => {
     const handleResize = () => {
-      const mobile = window.innerWidth < 768;
-      setIsCollapsed(mobile);
+      // For desktop, we can default to not collapsed, or respect previous state
+      setIsCollapsed(false);
     };
     handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  useEffect(() => {
+    if (isMobileOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => { document.body.style.overflow = "unset"; };
+  }, [isMobileOpen]);
 
   useEffect(() => {
     if (role !== "student") return;
@@ -102,7 +112,6 @@ export function Sidebar({ role, activePage, onPageClick }: SidebarProps) {
     return `/${role}/${slug}`;
   };
 
-  
   const getStatusDot = (status: string) => {
     switch (status?.toLowerCase()) {
       case 'approved': return 'bg-emerald-400';
@@ -113,129 +122,159 @@ export function Sidebar({ role, activePage, onPageClick }: SidebarProps) {
   };
 
   return (
-    <aside className={`
-        ${isCollapsed ? "w-20" : "w-64"}
-        bg-white border-r border-slate-200
-        h-full flex flex-col text-slate-600
-        transition-all duration-300 relative shrink-0 z-30
-      `}
-    >
-      {/* Collapse Toggle Button */}
-      <button
-        onClick={() => setIsCollapsed(!isCollapsed)}
-        className="absolute -right-3 top-8 bg-white border border-slate-200 w-6 h-6 rounded-md flex items-center justify-center hover:border-purple-600 transition-all shadow-sm z-50"
-      >
-        {isCollapsed ? <ChevronRight size={14} className="text-purple-600" />
-        : <ChevronLeft size={14} className="text-purple-600" />}
-      </button>
+    <>
+      {/* Mobile Backdrop */}
+      {isMobileOpen && (
+        <div 
+          className="md:hidden fixed inset-0 bg-slate-900/50 dark:bg-slate-900/80 backdrop-blur-sm z-40 transition-opacity"
+          onClick={onMobileClose}
+        />
+      )}
 
-      {/* Main Navigation */}
-      <div className="flex flex-col overflow-y-auto px-4 space-y-2 h-full py-8 custom-scrollbar">
-        {getLinksByRole().map((item) => {
-          const isSignatories = item.label === "Signatories";
-          const isActivityLogs = item.label === "Activity Logs";
-          const isOpen = isSignatories ? signatoriesOpen : isActivityLogs ? activityLogsOpen : false;
-          const isActive = pathname.startsWith(linkToRoute(item.label));
+      <aside className={`
+        fixed md:relative top-0 left-0 z-50 h-full flex flex-col shrink-0 
+        bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 
+        text-slate-600 dark:text-slate-300 transition-transform duration-300 ease-in-out
+        ${isMobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
+        ${isCollapsed ? "md:w-20" : "md:w-64"}
+        w-[80vw] sm:w-80 md:w-auto
+      `}>
+        
+        {/* Mobile Header with Logo and Close Button */}
+        <div className="md:hidden flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800 shrink-0">
+          <div className="flex items-center gap-3">
+            <img src="/logo.png" alt="BISU Logo" className="w-8 h-8 object-contain" />
+            <div className="flex flex-col">
+              <h1 className="text-xs font-black tracking-tighter text-slate-800 dark:text-slate-100 uppercase leading-none">
+                BISU CLEARANCE
+              </h1>
+            </div>
+          </div>
+          <button 
+            onClick={onMobileClose}
+            className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+          >
+            <X size={20} />
+          </button>
+        </div>
 
-          return (
-            <div key={item.label} className="flex flex-col">
-              {item.hasDropdown ? (
-                /* Dropdown Parent Button */
-                <button
-                  onClick={() => {
-                    if (isSignatories) setSignatoriesOpen(!signatoriesOpen);
-                    if (isActivityLogs) setActivityLogsOpen(!activityLogsOpen);
-                  }}
-                  className={`
-                    flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all w-full group
-                    ${isOpen ? "bg-purple-600 text-white" : "hover:bg-purple-50 text-slate-500"}
-                  `}
-                >
-                  <span className={`${isOpen ? "text-white" : "text-slate-400 group-hover:text-purple-600"}`}>
-                    {item.icon}
-                  </span>
-                  {!isCollapsed && (
-                    <>
-                      <span className={`flex-1 text-sm font-bold text-left ${isOpen ? "text-white" : "group-hover:text-purple-600"}`}>
-                        {item.label}
-                      </span>
-                      <ChevronDown size={14} className={`transition-transform duration-300 ${isOpen ? "rotate-180 text-white" : "group-hover:text-purple-600"}`} />
-                    </>
-                  )}
-                </button>
-              ) : (
-                /* Standard Link */
-                <Link href={linkToRoute(item.label)}>
-                  <div className={`
-                    flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all cursor-pointer group
-                    ${isActive ? "bg-purple-50 text-purple-600" : "hover:bg-purple-600 hover:text-white text-slate-500"}
-                  `}>
-                    <span className={`${isActive ? "text-purple-600" : "text-slate-400 group-hover:text-white"}`}>
+        {/* Collapse Toggle Button (Desktop Only) */}
+        <button
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className="hidden md:flex absolute -right-3 top-8 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 w-6 h-6 rounded-md items-center justify-center hover:border-purple-600 dark:hover:border-purple-500 transition-all shadow-sm z-50"
+        >
+          {isCollapsed ? <ChevronRight size={14} className="text-purple-600" />
+          : <ChevronLeft size={14} className="text-purple-600" />}
+        </button>
+
+        {/* Main Navigation */}
+        <div className="flex flex-col overflow-y-auto px-4 space-y-2 h-full py-4 md:py-8 custom-scrollbar">
+          {getLinksByRole().map((item) => {
+            const isSignatories = item.label === "Signatories";
+            const isActivityLogs = item.label === "Activity Logs";
+            const isOpen = isSignatories ? signatoriesOpen : isActivityLogs ? activityLogsOpen : false;
+            const isActive = pathname.startsWith(linkToRoute(item.label));
+
+            return (
+              <div key={item.label} className="flex flex-col">
+                {item.hasDropdown ? (
+                  /* Dropdown Parent Button */
+                  <button
+                    onClick={() => {
+                      if (isSignatories) setSignatoriesOpen(!signatoriesOpen);
+                      if (isActivityLogs) setActivityLogsOpen(!activityLogsOpen);
+                    }}
+                    className={`
+                      flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all w-full group
+                      ${isOpen ? "bg-purple-600 text-white" : "hover:bg-purple-50 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400"}
+                    `}
+                  >
+                    <span className={`${isOpen ? "text-white" : "text-slate-400 dark:text-slate-500 group-hover:text-purple-600 dark:group-hover:text-purple-400"}`}>
                       {item.icon}
                     </span>
-                    {!isCollapsed && (
-                      <span className="text-sm font-bold">
-                        {item.label}
+                    {(!isCollapsed || isMobileOpen) && (
+                      <>
+                        <span className={`flex-1 text-sm font-bold text-left ${isOpen ? "text-white" : "group-hover:text-purple-600 dark:group-hover:text-purple-400"}`}>
+                          {item.label}
+                        </span>
+                        <ChevronDown size={14} className={`transition-transform duration-300 ${isOpen ? "rotate-180 text-white" : "group-hover:text-purple-600 dark:group-hover:text-purple-400"}`} />
+                      </>
+                    )}
+                  </button>
+                ) : (
+                  /* Standard Link */
+                  <Link href={linkToRoute(item.label)} onClick={() => { if (isMobileOpen && onMobileClose) onMobileClose(); }}>
+                    <div className={`
+                      flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all cursor-pointer group
+                      ${isActive ? "bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400" : "hover:bg-purple-600 hover:text-white text-slate-500 dark:text-slate-400"}
+                    `}>
+                      <span className={`${isActive ? "text-purple-600 dark:text-purple-400" : "text-slate-400 dark:text-slate-500 group-hover:text-white"}`}>
+                        {item.icon}
                       </span>
+                      {(!isCollapsed || isMobileOpen) && (
+                        <span className="text-sm font-bold">
+                          {item.label}
+                        </span>
+                      )}
+                    </div>
+                  </Link>
+                )}
+
+                {/* Sub-menu Items (Dropdown Content) */}
+                {isOpen && (!isCollapsed || isMobileOpen) && (
+                  <div className="ml-9 mt-1 space-y-1 border-l-2 border-slate-100 dark:border-slate-800 pl-3">
+                    {isSignatories && (signatories.length === 0 ? (
+                      <p className="text-[10px] text-slate-400 py-2">No requirements found.</p>
+                    ) : ( signatories.map((sig) => (
+                            <Link key={sig.id} href={`/${role}/signatories/${sig.id}`} onClick={() => { if (isMobileOpen && onMobileClose) onMobileClose(); }} className="block py-2 group">
+                              <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${getStatusDot(sig.status)} inline-block mr-2`} />
+                              <div className="inline-block align-middle">
+                                <p className="text-[11px] font-black text-slate-800 dark:text-slate-200 uppercase tracking-tighter leading-none group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                                  {sig.role}
+                                </p>
+                                <p className="text-[10px] text-slate-400 dark:text-slate-500 truncate group-hover:text-slate-600 dark:group-hover:text-slate-300">
+                                  {sig.name}
+                                </p>
+                              </div>
+                            </Link>
+                          ))
+                        )
+                      )}
+
+                    {isActivityLogs && (
+                      <>
+                        <Link href={linkToRoute("Recent Logs")} onClick={() => { if (isMobileOpen && onMobileClose) onMobileClose(); }} className="block py-2 text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
+                          Recent Logs
+                        </Link>
+                        <Link href={linkToRoute("System History")} onClick={() => { if (isMobileOpen && onMobileClose) onMobileClose(); }} className="block py-2 text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
+                          System History
+                        </Link>
+                      </>
                     )}
                   </div>
-                </Link>
-              )}
+                )}
+              </div>
+            );
+          })}
+        </div>
 
-              {/* Sub-menu Items (Dropdown Content) */}
-              {isOpen && !isCollapsed && (
-                <div className="ml-9 mt-1 space-y-1 border-l-2 border-slate-100 pl-3">
-                  {isSignatories && (signatories.length === 0 ? (
-                    <p className="text-[10px] text-slate-400 py-2">No requirements found.</p>
-                  ) : ( signatories.map((sig) => (
-                          <Link key={sig.id} href={`/${role}/signatories/${sig.id}`} className="block py-2 group">
-                            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${getStatusDot(sig.status)}`} />
-                            <div>
-                              <p className="text-[11px] font-black text-slate-800 uppercase tracking-tighter leading-none group-hover:text-purple-600 transition-colors">
-                                {sig.role}
-                              </p>
-                              <p className="text-[10px] text-slate-400 truncate group-hover:text-slate-600">
-                                {sig.name}
-                              </p>
-                            </div>
-                          </Link>
-                        ))
-                      )
-                    )}
-
-                  {isActivityLogs && (
-                    <>
-                      <Link href={linkToRoute("Recent Logs")} className="block py-2 text-xs font-bold text-slate-500 hover:text-purple-600 transition-colors">
-                        Recent Logs
-                      </Link>
-                      <Link href={linkToRoute("System History")} className="block py-2 text-xs font-bold text-slate-500 hover:text-purple-600 transition-colors">
-                        System History
-                      </Link>
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Footer Support Section */}
-      <div className="px-4 py-6 border-t border-slate-100 mt-auto">
-        <Link 
-          href="/helpandsupport"
-          target="_blank"
-          className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-slate-500 hover:bg-purple-600 hover:text-white transition-all group"
-        >
-          <HelpCircle size={20} className="text-slate-400 group-hover:text-white shrink-0" />
-          {!isCollapsed && (
-            <div className="flex flex-col items-start leading-tight">
-              <span className="text-sm font-bold">Help & Support</span>
-              <span className="text-[10px] text-slate-400 group-hover:text-purple-100">Documentation</span>
-            </div>
-          )}
-        </Link>
-      </div>
-    </aside>
+        {/* Footer Support Section */}
+        <div className="px-4 py-6 border-t border-slate-100 dark:border-slate-800 mt-auto">
+          <Link 
+            href="/helpandsupport"
+            target="_blank"
+            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-purple-600 hover:text-white transition-all group"
+          >
+            <HelpCircle size={20} className="text-slate-400 dark:text-slate-500 group-hover:text-white shrink-0" />
+            {(!isCollapsed || isMobileOpen) && (
+              <div className="flex flex-col items-start leading-tight">
+                <span className="text-sm font-bold">Help & Support</span>
+                <span className="text-[10px] text-slate-400 dark:text-slate-500 group-hover:text-purple-100">Documentation</span>
+              </div>
+            )}
+          </Link>
+        </div>
+      </aside>
+    </>
   );
 }

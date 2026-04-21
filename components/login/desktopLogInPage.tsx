@@ -7,7 +7,7 @@ import LoginForm from "./LoginForm";
 
 export default function DesktopLogin() {
   return (
-    <main className="relative flex h-screen w-full overflow-hidden bg-white">
+    <main className="relative flex h-screen w-full overflow-hidden bg-white dark:bg-slate-950">
       
       {/* LEFT SIDE: Hero Section */}
       <section className="relative hidden w-1/2 lg:block">
@@ -46,14 +46,14 @@ export default function DesktopLogin() {
       </section>
 
       {/* RIGHT SIDE: Authentication */}
-      <section className="relative flex w-full flex-col items-center justify-center bg-[#F9FAFB] lg:w-1/2">
+      <section className="relative flex w-full flex-col items-center justify-center bg-[#F9FAFB] dark:bg-slate-950 lg:w-1/2">
         
         {/* BACK BUTTON - Positioned at the top-left of this section */}
         <Link 
           href="/" 
-          className="group absolute left-8 top-8 flex items-center gap-2 text-[11px] font-bold tracking-[0.15em] text-gray-400 transition-colors hover:text-purple-600"
+          className="group absolute left-8 top-8 flex items-center gap-2 text-[11px] font-bold tracking-[0.15em] text-gray-400 dark:text-slate-500 transition-colors hover:text-purple-600 dark:hover:text-purple-400"
         >
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100 transition-colors group-hover:bg-purple-100 group-hover:text-purple-600">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100 dark:bg-slate-800 transition-colors group-hover:bg-purple-100 dark:group-hover:bg-purple-900/50 group-hover:text-purple-600 dark:group-hover:text-purple-400">
             <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
           </div>
           <span className="hidden sm:inline uppercase">Back</span>
@@ -63,7 +63,7 @@ export default function DesktopLogin() {
           <LoginForm />
         </div>
         
-        <footer className="absolute bottom-6 text-center text-[13px] font-semibold text-gray-400 tracking-wide">
+        <footer className="absolute bottom-6 text-center text-[13px] font-semibold text-gray-400 dark:text-slate-500 tracking-wide">
           © {new Date().getFullYear()} BISU Clarin Campus — All rights reserved
         </footer>
       </section>

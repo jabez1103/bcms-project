@@ -48,7 +48,7 @@ export async function GET(
             ON s.requirement_id = r.requirement_id AND s.student_id = ?
         LEFT JOIN approvals a
             ON a.submission_id = s.submission_id
-        WHERE r.requirement_id = ? AND cp.period_status = 'enabled'
+        WHERE r.requirement_id = ? AND cp.period_status = 'live'
     `, [student_id, id]);
 
     if (rows.length === 0) return NextResponse.json({ errro: "Requirements not found" }, { status: 404 });

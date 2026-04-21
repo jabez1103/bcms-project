@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyToken } from "@/lib/auth";
 import { createConnection } from "@/lib/db";
+import { createNotification } from "@/lib/notifications";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 
@@ -18,7 +19,7 @@ export async function POST(request: NextRequest) {
         "SELECT student_id FROM students WHERE user_id = ?",
         [payload.user_id]
     );
-    if (student.legth === 0) return NextResponse.json({ error: "Student not found" }, { status: 404 });
+    if (student.length === 0) return NextResponse.json({ error: "Student not found" }, { status: 404 });
 
     const student_id = student[0].student_id;
 
@@ -28,6 +29,10 @@ export async function POST(request: NextRequest) {
     const comment = formData.get("comment") as string || "";
 
     if (!file || !requirement_id) return NextResponse.json({ error: "File and requirement are required" }, { status: 400 });
+
+    if (!file.type.startsWith("image/")) {
+        return NextResponse.json({ error: "Only image files are allowed." }, { status: 400 });
+    }
 
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
@@ -66,6 +71,34 @@ export async function POST(request: NextRequest) {
             "INSERT INTO approvals (submission_id, signatory_id, decision_status) SELECT ?, r.signatory_id, 'pending' FROM requirements r WHERE r.requirement_id = ?",
             [result.insertId, requirement_id]
         );
+    }
+
+    // --- Notify the signatory who owns this requirement ---
+    try {
+      const [reqRows]: any = await db.query(
+        `SELECT sg.user_id, req.requirement_name,
+                CONCAT(u2.first_name, ' ', u2.last_name) AS studentName
+         FROM requirements req
+         JOIN signatories sg ON req.signatory_id = sg.signatory_id
+         JOIN students st ON st.student_id = ?
+         JOIN users u2 ON st.user_id = u2.user_id
+         WHERE req.requirement_id = ?`,
+        [student_id, requirement_id]
+      );
+      if (reqRows.length > 0) {
+        const { user_id: sigUserId, requirement_name, studentName } = reqRows[0];
+        await createNotification({
+          db,
+          userId: sigUserId,
+          role: "signatory",
+          type: "submission_received",
+          title: "📄 New Submission",
+          message: `${studentName} submitted "${requirement_name}" — please review.`,
+          targetId: Number(requirement_id),
+        });
+      }
+    } catch (err) {
+      console.error("[Notification Error - submit]", err);
     }
 
     return NextResponse.json({ success: true, message: "Submitted successfully!" });

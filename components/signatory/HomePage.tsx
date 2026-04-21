@@ -17,6 +17,12 @@ import {
   GraduationCap
 } from "lucide-react";
 import {
+  SkeletonStatCard,
+  SkeletonChart,
+  SkeletonTableRow,
+  SkeletonMobileCard
+} from "@/components/ui/Skeleton";
+import {
   PieChart,
   Pie,
   Cell,
@@ -50,16 +56,25 @@ interface StudentSubmission {
   color: string;
 }
 
-const INITIAL_SUBMISSIONS: StudentSubmission[] = [
-  { id: "2021-0001", name: "Mariana Alcantara", level: "3rd Year", program: "BSCS", status: "Approved", requirementType: "Lab Return", submissionDate: "2026-04-10", hasAttachment: true, remarks: "All items returned.", initials: "MA", color: "bg-blue-100 text-blue-600" },
-  { id: "2022-0412", name: "Rafael Jimenez", level: "1st Year", program: "BS-Math", status: "Pending", requirementType: "Department Fee", submissionDate: "2026-04-15", hasAttachment: false, remarks: "", initials: "RJ", color: "bg-amber-100 text-amber-600" },
-  { id: "2021-0882", name: "Kristine Lopez", level: "2nd Year", program: "Education", status: "Rejected", requirementType: "Library Book", submissionDate: "2026-04-12", hasAttachment: true, remarks: "Wrong file uploaded.", initials: "KL", color: "bg-rose-100 text-rose-600" },
-  { id: "2023-1102", name: "John Doe", level: "1st Year", program: "BSCS", status: "Pending", requirementType: "Lab Return", submissionDate: "2026-04-16", hasAttachment: true, remarks: "", initials: "JD", color: "bg-amber-100 text-amber-600" },
-  { id: "2021-0994", name: "Sarah Smith", level: "3rd Year", program: "BSHM", status: "Approved", requirementType: "Uniform Clearance", submissionDate: "2026-04-08", hasAttachment: true, remarks: "Verified.", initials: "SS", color: "bg-blue-100 text-blue-600" },
-  { id: "2020-0551", name: "Leonel Messi", level: "4th Year", program: "BSES", status: "Approved", requirementType: "Lab Return", submissionDate: "2026-04-05", hasAttachment: true, remarks: "Complete.", initials: "LM", color: "bg-blue-100 text-blue-600" },
-  { id: "2022-0991", name: "Alice Guo", level: "2nd Year", program: "BSIT", status: "Pending", requirementType: "Lab Return", submissionDate: "2026-04-16", hasAttachment: true, remarks: "", initials: "AG", color: "bg-amber-100 text-amber-600" },
-  { id: "2022-1001", name: "Jabez Bautista", level: "4th Year", program: "BSCS", status: "Pending", requirementType: "Capstone Clearance", submissionDate: "2026-04-17", hasAttachment: true, remarks: "Final docs attached.", initials: "JB", color: "bg-violet-100 text-violet-600" },
+const COLORS = [
+  "bg-blue-100 text-blue-600",
+  "bg-amber-100 text-amber-600",
+  "bg-rose-100 text-rose-600",
+  "bg-violet-100 text-violet-600",
+  "bg-emerald-100 text-emerald-600"
 ];
+
+function getInitials(name: string) {
+  return name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase();
+}
+
+function getColorForId(id: string) {
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) {
+    hash = id.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return COLORS[Math.abs(hash) % COLORS.length];
+}
 
 const THEME_COLORS = {
   Approved: "#00FF00", 
@@ -70,7 +85,7 @@ const THEME_COLORS = {
 /* ================= MAIN DASHBOARD ================= */
 
 export default function SignatoryDashboard() {
-  const [submissions, setSubmissions] = useState<StudentSubmission[]>(INITIAL_SUBMISSIONS);
+  const [submissions, setSubmissions] = useState<StudentSubmission[]>([]);
   const [globalLevelFilter, setGlobalLevelFilter] = useState<YearLevel | "All">("All");
   const [viewMode, setViewMode] = useState<ChartView>("pie");
   const [tableSearch, setTableSearch] = useState("");
@@ -81,7 +96,38 @@ export default function SignatoryDashboard() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5);
 
+  const [loading, setLoading] = useState(true);
   const [chartRadius, setChartRadius] = useState({ inner: 60, outer: 85 });
+
+  useEffect(() => {
+    const fetchSubmissions = async () => {
+      try {
+        const res = await fetch("/api/signatory/submissions");
+        const data = await res.json();
+        if (data.success) {
+          const formatted = data.submissions.map((s: any) => ({
+            id: s.id,
+            name: s.name,
+            level: s.year,
+            program: s.program,
+            status: s.status,
+            requirementType: s.requirement,
+            submissionDate: s.submittedAt,
+            hasAttachment: !!s.fileUrl,
+            remarks: s.studentComment || "",
+            initials: getInitials(s.name),
+            color: getColorForId(s.id)
+          }));
+          setSubmissions(formatted);
+        }
+      } catch (error) {
+        console.error("Failed to fetch submissions", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchSubmissions();
+  }, []);
 
   useEffect(() => {
     const handleResize = () => {
@@ -125,20 +171,20 @@ export default function SignatoryDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 font-sans">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans">
       
       {/* STICKY HEADER COMPONENT */}
-      <header className="sticky top-0 z-[20] bg-white/80 backdrop-blur-xl border-b border-slate-200/60 px-4 py-4 sm:px-8 lg:px-12">
+      <header className="sticky top-0 z-[20] bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200/60 dark:border-slate-800 px-4 py-4 sm:px-8 lg:px-12">
         <div className="max-w-[1600px] mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center text-white shadow-lg shadow-slate-200">
+            <div className="w-10 h-10 bg-slate-900 dark:bg-slate-800 rounded-xl flex items-center justify-center text-white shadow-lg shadow-slate-200 dark:shadow-none">
                 <ShieldCheck size={20} />
             </div>
             <div className="space-y-0.5">
               <h1 className="text-xl sm:text-2xl font-black tracking-tight leading-none uppercase">
                 Signatory <span className="text-blue-600">Portal</span>
               </h1>
-              <div className="flex items-center gap-2 text-slate-400">
+              <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500">
                 <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
                 <p className="text-[9px] font-black uppercase tracking-[0.2em]">Queue Monitoring</p>
               </div>
@@ -146,10 +192,10 @@ export default function SignatoryDashboard() {
           </div>
           
           <div className="flex items-center gap-3 shrink-0">
-            <button className="flex-1 md:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-[9px] font-black uppercase hover:bg-slate-50 transition-all shadow-sm active:scale-95">
+            <button className="flex-1 md:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-[9px] font-black uppercase hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-sm active:scale-95">
               <History size={14} /> History
             </button>
-            <button className="flex-1 md:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-900 text-white rounded-xl text-[9px] font-black uppercase shadow-lg shadow-blue-900/10 hover:bg-blue-600 transition-all active:scale-95">
+            <button className="flex-1 md:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-900 dark:bg-blue-600 text-white rounded-xl text-[9px] font-black uppercase shadow-lg shadow-blue-900/10 hover:bg-blue-600 dark:hover:bg-blue-500 transition-all active:scale-95">
               <Download size={14} /> Export
             </button>
           </div>
@@ -160,20 +206,20 @@ export default function SignatoryDashboard() {
         
         {/* ANALYTICS GRID */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-12">
-          <div className="lg:col-span-8 bg-white p-6 sm:p-8 rounded-[2.5rem] border border-slate-200/60 shadow-sm">
+          <div className="lg:col-span-8 bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-[2.5rem] border border-slate-200/60 dark:border-slate-800 shadow-sm">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-10">
               <div>
-                <h3 className="font-black text-[10px] uppercase tracking-widest text-slate-400 mb-1">Performance</h3>
+                <h3 className="font-black text-[10px] uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1">Performance</h3>
                 <p className="text-xl font-black">Analytics Overview</p>
               </div>
-              <div className="flex items-center bg-slate-100 p-1.5 rounded-2xl w-full sm:w-auto">
+              <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1.5 rounded-2xl w-full sm:w-auto">
                 <div className="flex gap-1 mr-2">
-                  <button onClick={() => setViewMode("pie")} className={`p-2 rounded-xl transition-all ${viewMode === "pie" ? "bg-white text-blue-600 shadow-sm" : "text-slate-400 hover:text-slate-600"}`}><PieIcon size={18} /></button>
-                  <button onClick={() => setViewMode("bar")} className={`p-2 rounded-xl transition-all ${viewMode === "bar" ? "bg-white text-blue-600 shadow-sm" : "text-slate-400 hover:text-slate-600"}`}><BarChart3 size={18} /></button>
+                  <button onClick={() => setViewMode("pie")} className={`p-2 rounded-xl transition-all ${viewMode === "pie" ? "bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm" : "text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300"}`}><PieIcon size={18} /></button>
+                  <button onClick={() => setViewMode("bar")} className={`p-2 rounded-xl transition-all ${viewMode === "bar" ? "bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm" : "text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300"}`}><BarChart3 size={18} /></button>
                 </div>
-                <div className="w-[1px] h-6 bg-slate-200 mr-2" />
+                <div className="w-[1px] h-6 bg-slate-200 dark:bg-slate-700 mr-2" />
                 <select 
-                  className="bg-transparent text-[10px] font-black uppercase pr-4 outline-none cursor-pointer"
+                  className="bg-transparent dark:text-slate-200 text-[10px] font-black uppercase pr-4 outline-none cursor-pointer"
                   value={globalLevelFilter}
                   onChange={(e) => setGlobalLevelFilter(e.target.value as any)}
                 >
@@ -187,60 +233,70 @@ export default function SignatoryDashboard() {
             </div>
             
             <div className="h-[300px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                {viewMode === "pie" ? (
-                  <PieChart>
-                    <Pie data={analyticsData} innerRadius={chartRadius.inner} outerRadius={chartRadius.outer} paddingAngle={8} dataKey="value">
-                      {analyticsData.map((e, i) => <Cell key={i} fill={e.color} stroke="none" />)}
-                    </Pie>
-                    <Tooltip contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', fontSize: '12px', fontWeight: 'bold' }} />
-                    <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', paddingTop: '20px' }} />
-                  </PieChart>
-                ) : (
-                  <BarChart data={analyticsData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="8 8" vertical={false} stroke="#f1f5f9" />
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 900, fill: '#94a3b8'}} />
-                    <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 900, fill: '#94a3b8'}} />
-                    <Bar dataKey="value" radius={[10, 10, 0, 0]} barSize={40}>
-                      {analyticsData.map((e, i) => <Cell key={i} fill={e.color} />)}
-                    </Bar>
-                    <Tooltip cursor={{fill: '#f8fafc'}} contentStyle={{ borderRadius: '12px', border: 'none' }} />
-                  </BarChart>
-                )}
-              </ResponsiveContainer>
+              {loading ? (
+                <SkeletonChart />
+              ) : (
+                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+                  {viewMode === "pie" ? (
+                    <PieChart>
+                      <Pie data={analyticsData} innerRadius={chartRadius.inner} outerRadius={chartRadius.outer} paddingAngle={8} dataKey="value">
+                        {analyticsData.map((e, i) => <Cell key={i} fill={e.color} stroke="none" />)}
+                      </Pie>
+                      <Tooltip contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', fontSize: '12px', fontWeight: 'bold' }} />
+                      <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', paddingTop: '20px' }} />
+                    </PieChart>
+                  ) : (
+                    <BarChart data={analyticsData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="8 8" vertical={false} stroke="#f1f5f9" />
+                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 900, fill: '#94a3b8'}} />
+                      <YAxis axisLine={false} tickLine={false} tick={{fontSize: 10, fontWeight: 900, fill: '#94a3b8'}} />
+                      <Bar dataKey="value" radius={[10, 10, 0, 0]} barSize={40}>
+                        {analyticsData.map((e, i) => <Cell key={i} fill={e.color} />)}
+                      </Bar>
+                      <Tooltip cursor={{fill: '#f8fafc'}} contentStyle={{ borderRadius: '12px', border: 'none' }} />
+                    </BarChart>
+                  )}
+                </ResponsiveContainer>
+              )}
             </div>
           </div>
 
           <div className="lg:col-span-4 grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-4">
-            <StatCard label="Pending" value={analyticsData[1].value} color="text-amber-500" bg="bg-amber-50" icon={<Clock size={24} />} />
-            <StatCard label="Approved" value={analyticsData[0].value} color="text-[#00FF00]" bg="bg-green-50" icon={<ShieldCheck size={24} />} />
-            <StatCard label="Rejected" value={analyticsData[2].value} color="text-rose-500" bg="bg-rose-50" icon={<FileX size={24} />} />
+            {loading ? (
+              Array.from({ length: 3 }).map((_, i) => <SkeletonStatCard key={i} />)
+            ) : (
+              <>
+                <StatCard label="Pending" value={analyticsData[1].value} color="text-amber-500" bg="bg-amber-50" icon={<Clock size={24} />} />
+                <StatCard label="Approved" value={analyticsData[0].value} color="text-[#00FF00]" bg="bg-green-50" icon={<ShieldCheck size={24} />} />
+                <StatCard label="Rejected" value={analyticsData[2].value} color="text-rose-500" bg="bg-rose-50" icon={<FileX size={24} />} />
+              </>
+            )}
           </div>
         </div>
 
         {/* TABLE SECTION */}
-        <div className="bg-white rounded-[2.5rem] border border-slate-200/60 shadow-sm overflow-hidden">
-          <div className="p-6 sm:p-8 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 bg-slate-50/50">
+        <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200/60 dark:border-slate-800 shadow-sm overflow-hidden">
+          <div className="p-6 sm:p-8 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 bg-slate-50/50 dark:bg-slate-800/50">
             <div className="flex items-center gap-4">
               <div className="hidden sm:flex p-3.5 bg-slate-900 rounded-2xl text-white"><LayoutGrid size={22} /></div>
               <div>
-                <h2 className="text-xl font-black text-slate-800 uppercase tracking-tight">Review Queue</h2>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Manage student clearances</p>
+                <h2 className="text-xl font-black text-slate-800 dark:text-slate-100 uppercase tracking-tight">Review Queue</h2>
+                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-0.5">Manage student clearances</p>
               </div>
             </div>
             
             <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto">
               <div className="relative flex-grow sm:w-80">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" size={16} />
                 <input 
-                  className="w-full pl-11 pr-4 py-3.5 bg-white border border-slate-200 rounded-2xl text-xs font-bold outline-none focus:ring-2 ring-blue-500/10 transition-all shadow-inner"
+                  className="w-full pl-11 pr-4 py-3.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 dark:text-slate-200 rounded-2xl text-xs font-bold outline-none focus:ring-2 ring-blue-500/10 transition-all shadow-inner"
                   placeholder="Search by ID or Name..."
                   value={tableSearch}
                   onChange={(e) => setTableSearch(e.target.value)}
                 />
               </div>
               <select 
-                className="px-5 py-3.5 bg-white border border-slate-200 rounded-2xl text-[10px] font-black uppercase outline-none cursor-pointer hover:bg-slate-50 transition-all"
+                className="px-5 py-3.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-[10px] font-black uppercase outline-none cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700 transition-all"
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value as any)}
               >
@@ -252,25 +308,59 @@ export default function SignatoryDashboard() {
             </div>
           </div>
 
-          <div className="overflow-x-auto">
+          {/* MOBILE SKELETON & VIEW */}
+          <div className="block xl:hidden divide-y divide-slate-100 dark:divide-slate-800/50">
+            {loading ? (
+              Array.from({ length: 5 }).map((_, i) => <SkeletonMobileCard key={i} />)
+            ) : paginatedData.map((s) => (
+              <div key={s.id} className="p-5 space-y-4">
+                <div className="flex items-center gap-4">
+                  <div className={`w-12 h-12 rounded-2xl ${s.color} flex items-center justify-center font-black text-sm shadow-sm shrink-0`}>{s.initials}</div>
+                  <div className="min-w-0">
+                    <p className="font-black text-sm text-slate-800 dark:text-slate-200 truncate">{s.name}</p>
+                    <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 mt-0.5 tracking-tight flex items-center gap-1 truncate">
+                      <GraduationCap size={12} className="shrink-0" /> {s.id} • {s.level}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex justify-between items-end">
+                  <div className="space-y-1.5">
+                    <p className="text-xs font-bold text-slate-600 dark:text-slate-300">{s.requirementType}</p>
+                    <p className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-tighter">{s.program}</p>
+                  </div>
+                  <StatusBadge status={s.status} />
+                </div>
+                <button 
+                  onClick={() => setSelectedSubmission(s)} 
+                  className="w-full inline-flex items-center justify-center px-6 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-200 rounded-xl text-[10px] font-black uppercase hover:bg-slate-900 dark:hover:bg-slate-700 hover:text-white dark:hover:text-white transition-all active:scale-95 shadow-sm mt-2"
+                >
+                  Review
+                </button>
+              </div>
+            ))}
+          </div>
+
+          <div className="hidden xl:block overflow-x-auto">
             <table className="w-full text-left min-w-[800px]">
               <thead>
-                <tr className="border-b border-slate-100">
-                  <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Student Information</th>
-                  <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Requirement</th>
-                  <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Status</th>
-                  <th className="px-8 py-6 text-right text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Action</th>
+                <tr className="border-b border-slate-100 dark:border-slate-800">
+                  <th className="px-8 py-6 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Student Information</th>
+                  <th className="px-8 py-6 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Requirement</th>
+                  <th className="px-8 py-6 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Status</th>
+                  <th className="px-8 py-6 text-right text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50">
-                {paginatedData.map((s) => (
-                  <tr key={s.id} className="group hover:bg-slate-50/80 transition-all">
+              <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
+                {loading ? (
+                  Array.from({ length: 5 }).map((_, i) => <SkeletonTableRow key={i} cols={4} />)
+                ) : paginatedData.map((s) => (
+                  <tr key={s.id} className="group hover:bg-slate-50/80 dark:hover:bg-slate-800/80 transition-all">
                     <td className="px-8 py-6">
                       <div className="flex items-center gap-4">
                         <div className={`w-11 h-11 rounded-2xl ${s.color} flex items-center justify-center font-black text-xs shadow-sm`}>{s.initials}</div>
                         <div>
-                          <p className="font-black text-sm text-slate-800 group-hover:text-blue-600 transition-colors">{s.name}</p>
-                          <p className="text-[10px] font-black text-slate-400 mt-0.5 tracking-tight flex items-center gap-1">
+                          <p className="font-black text-sm text-slate-800 dark:text-slate-200 group-hover:text-blue-600 transition-colors">{s.name}</p>
+                          <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 mt-0.5 tracking-tight flex items-center gap-1">
                             <GraduationCap size={12} /> {s.id} • {s.level}
                           </p>
                         </div>
@@ -278,15 +368,15 @@ export default function SignatoryDashboard() {
                     </td>
                     <td className="px-8 py-6">
                       <div className="space-y-1">
-                        <p className="text-xs font-bold text-slate-600">{s.requirementType}</p>
-                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">{s.program}</p>
+                        <p className="text-xs font-bold text-slate-600 dark:text-slate-300">{s.requirementType}</p>
+                        <p className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-tighter">{s.program}</p>
                       </div>
                     </td>
                     <td className="px-8 py-6"><StatusBadge status={s.status} /></td>
                     <td className="px-8 py-6 text-right">
                       <button 
                         onClick={() => setSelectedSubmission(s)} 
-                        className="inline-flex items-center justify-center px-6 py-2.5 bg-white border border-slate-200 text-slate-900 rounded-xl text-[10px] font-black uppercase hover:bg-slate-900 hover:text-white hover:border-slate-900 transition-all active:scale-95 shadow-sm"
+                        className="inline-flex items-center justify-center px-6 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-200 rounded-xl text-[10px] font-black uppercase hover:bg-slate-900 dark:hover:bg-slate-700 hover:text-white dark:hover:text-white transition-all active:scale-95 shadow-sm"
                       >
                         Review
                       </button>
@@ -298,25 +388,25 @@ export default function SignatoryDashboard() {
           </div>
           
           {/* PAGINATION FOOTER */}
-          <div className="p-8 border-t border-slate-100 bg-slate-50/30 flex flex-col lg:flex-row justify-between items-center gap-6">
+          <div className="p-8 border-t border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-800/30 flex flex-col lg:flex-row justify-between items-center gap-6">
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-3">
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Rows per page</span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Rows per page</span>
                 <select 
                   value={itemsPerPage}
                   onChange={(e) => {
                     setItemsPerPage(Number(e.target.value));
                     setCurrentPage(1);
                   }}
-                  className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-[11px] font-black outline-none focus:ring-2 ring-blue-500/10 transition-all cursor-pointer shadow-sm"
+                  className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 dark:text-slate-200 rounded-xl px-3 py-2 text-[11px] font-black outline-none focus:ring-2 ring-blue-500/10 transition-all cursor-pointer shadow-sm"
                 >
                   {[5, 10, 20, 50].map(val => (
                     <option key={val} value={val}>{val}</option>
                   ))}
                 </select>
               </div>
-              <div className="h-4 w-[1px] bg-slate-200 hidden sm:block" />
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+              <div className="h-4 w-[1px] bg-slate-200 dark:bg-slate-700 hidden sm:block" />
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
                 Showing {paginatedData.length} of {filteredData.length} results
               </span>
             </div>
@@ -326,7 +416,7 @@ export default function SignatoryDashboard() {
                 <button 
                   onClick={() => setCurrentPage(p => Math.max(p - 1, 1))} 
                   disabled={currentPage === 1} 
-                  className="p-2.5 bg-white border border-slate-200 rounded-xl disabled:opacity-30 hover:bg-slate-50 transition-all text-slate-600 shadow-sm active:scale-95"
+                  className="p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl disabled:opacity-30 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all text-slate-600 dark:text-slate-400 shadow-sm active:scale-95"
                 >
                   <ChevronLeft size={16} />
                 </button>
@@ -345,7 +435,7 @@ export default function SignatoryDashboard() {
                         className={`w-9 h-9 rounded-xl text-[10px] font-black transition-all ${
                           currentPage === pageNum 
                           ? 'bg-slate-900 text-white shadow-lg shadow-slate-900/20' 
-                          : 'bg-white border border-slate-100 text-slate-400 hover:text-slate-900 hover:border-slate-300'
+                          : 'bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600'
                         }`}
                       >
                         {pageNum}
@@ -357,7 +447,7 @@ export default function SignatoryDashboard() {
                 <button 
                   onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))} 
                   disabled={currentPage === totalPages || totalPages === 0} 
-                  className="p-2.5 bg-white border border-slate-200 rounded-xl disabled:opacity-30 hover:bg-slate-50 transition-all text-slate-600 shadow-sm active:scale-95"
+                  className="p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl disabled:opacity-30 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all text-slate-600 dark:text-slate-400 shadow-sm active:scale-95"
                 >
                   <ChevronRight size={16} />
                 </button>
@@ -369,8 +459,8 @@ export default function SignatoryDashboard() {
 
       {/* REVIEW MODAL */}
       {selectedSubmission && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[100] flex items-center justify-center p-4 sm:p-6">
-          <div className="bg-white rounded-[2.5rem] w-full max-w-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-md z-[100] flex items-center justify-center p-4 sm:p-6">
+          <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] w-full max-w-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             <div className={`p-8 sm:p-10 ${selectedSubmission.color} flex justify-between items-start`}>
               <div>
                 <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-2">Reviewing Submission</p>
@@ -380,16 +470,16 @@ export default function SignatoryDashboard() {
               <button onClick={() => setSelectedSubmission(null)} className="p-2.5 bg-white/20 hover:bg-white/40 rounded-2xl transition-all"><X size={20}/></button>
             </div>
             <div className="p-8 sm:p-10 space-y-8">
-              <div className="p-6 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200">
-                <p className="text-[10px] font-black uppercase text-slate-400 mb-3 tracking-widest">Student Remarks</p>
-                <p className="text-sm font-bold text-slate-600 leading-relaxed italic">
+              <div className="p-6 bg-slate-50 dark:bg-slate-800 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-3xl">
+                <p className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 mb-3 tracking-widest">Student Remarks</p>
+                <p className="text-sm font-bold text-slate-600 dark:text-slate-300 leading-relaxed italic">
                   {selectedSubmission.remarks ? `"${selectedSubmission.remarks}"` : "No remarks provided by student."}
                 </p>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <button 
                   onClick={() => updateStatus(selectedSubmission.id, "Rejected")} 
-                  className="py-4.5 bg-white border-2 border-rose-100 text-rose-600 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-rose-50 transition-all active:scale-95"
+                  className="py-4.5 bg-white dark:bg-slate-800 border-2 border-rose-100 dark:border-rose-900/50 text-rose-600 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-rose-50 transition-all active:scale-95"
                 >
                   Decline
                 </button>
@@ -412,9 +502,9 @@ export default function SignatoryDashboard() {
 
 function StatCard({ label, value, color, icon, bg }: { label: string, value: number, color: string, icon: React.ReactNode, bg: string }) {
   return (
-    <div className="p-6 sm:p-8 bg-white rounded-[2rem] border border-slate-100 flex items-center justify-between shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 group">
+    <div className="p-6 sm:p-8 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 flex items-center justify-between shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 group">
       <div>
-        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 group-hover:text-slate-500 transition-colors">{label}</p>
+        <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1 group-hover:text-slate-500 dark:group-hover:text-slate-400 transition-colors">{label}</p>
         <h2 className={`text-4xl sm:text-5xl font-black ${color}`}>{value}</h2>
       </div>
       <div className={`p-4 sm:p-5 rounded-2xl ${bg} ${color} transition-transform group-hover:scale-110`}>{icon}</div>
@@ -424,9 +514,9 @@ function StatCard({ label, value, color, icon, bg }: { label: string, value: num
 
 function StatusBadge({ status }: { status: SubmissionStatus }) {
   const styles = {
-    Approved: "bg-green-200 text-gree-700 border-green-100",
-    Pending: "bg-amber-50 text-amber-700 border-amber-100",
-    Rejected: "bg-rose-50 text-rose-700 border-rose-100",
+    Approved: "bg-green-200 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-100 dark:border-green-900/50",
+    Pending: "bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border-amber-100 dark:border-amber-900/50",
+    Rejected: "bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400 border-rose-100 dark:border-rose-900/50",
   };
   return (
     <div className={`inline-flex items-center gap-2.5 px-4 py-2 rounded-xl text-[10px] font-black uppercase border shadow-sm ${styles[status]}`}>
