@@ -151,7 +151,7 @@ export default function UserAccounts() {
   };
 
   const updateFormFields = (key: string, value: string) => {
-    let newForm = { ...form, [key]: value };
+    const newForm = { ...form, [key]: value };
 
     if (["first_name", "middle_name", "last_name"].includes(key)) {
       newForm[key] = capitalizeWords(value);
