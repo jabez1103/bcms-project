@@ -1,34 +1,61 @@
 import { createConnection } from "@/lib/db";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import { signToken } from "@/lib/auth";
+import {
+    AUTH_COOKIE_NAME,
+    getAuthCookieOptions,
+    isTrustedMutationOrigin,
+    signToken,
+} from "@/lib/auth";
 
-
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
     try {
-        const { email, password } = await req.json();
-
-        let db = await createConnection();
-        const [rows]: any = await db.query(
-            "SELECT * FROM users WHERE email = ?",
-            [email]
-        );
-
-        if (rows.length === 0) {
-            return NextResponse.json({
-                success: false,
-                message: "User not found"
-            }, { status: 404 });
+        if (!isTrustedMutationOrigin(req)) {
+            return NextResponse.json(
+                { success: false, message: "Untrusted request origin." },
+                { status: 403 }
+            );
         }
 
+        const { email, password } = await req.json();
+
+        if (typeof email !== "string" || typeof password !== "string" || !email.trim() || !password) {
+            return NextResponse.json(
+                { success: false, message: "Email and password are required." },
+                { status: 400 }
+            );
+        }
+
+        const normalizedEmail = email.trim().toLowerCase();
+
+        const db = await createConnection();
+        const [rows]: any = await db.query(
+            "SELECT * FROM users WHERE email = ? LIMIT 1",
+            [normalizedEmail]
+        );
+
         const user = rows[0];
-        
-        const decryptPassword = await bcrypt.compare( password, user.password)
-        if (!decryptPassword) {
-            return NextResponse.json({
-                success: false,
-                message: "Incorrect password"
-            }, { status: 401 });
+
+        if (!user) {
+            return NextResponse.json(
+                { success: false, message: "Invalid email or password." },
+                { status: 401 }
+            );
+        }
+
+        if (user.account_status && String(user.account_status).toLowerCase() !== "active") {
+            return NextResponse.json(
+                { success: false, message: "This account is not active." },
+                { status: 403 }
+            );
+        }
+
+        const passwordMatches = await bcrypt.compare(password, user.password);
+        if (!passwordMatches) {
+            return NextResponse.json(
+                { success: false, message: "Invalid email or password." },
+                { status: 401 }
+            );
         }
 
         const token = await signToken({
@@ -50,20 +77,16 @@ export async function POST(req: Request) {
             }
         });
 
-        response.cookies.set("token", token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
-            maxAge: 60 * 60 * 24,
-            path: "/"
-        });
+        response.cookies.set(AUTH_COOKIE_NAME, token, getAuthCookieOptions());
 
         return response;
-
     } catch (error: any) {
-        return NextResponse.json({
-            success: false,
-            message: error.message
-        }, { status: 500 });
+        return NextResponse.json(
+            {
+                success: false,
+                message: error?.message || "Login failed."
+            },
+            { status: 500 }
+        );
     }
 }
