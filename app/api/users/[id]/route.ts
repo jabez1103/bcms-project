@@ -18,7 +18,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     department
   } = await request.json();
 
-    let db = await createConnection();
+    const db = await createConnection();
     if (password) {
         const hashedPassword = await bcrypt.hash(password, 10);
         await db.query(
@@ -81,7 +81,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 export async function DELETE(_: NextRequest, { params } : { params: Promise<{ id: string }> }) {
 
     const { id } = await params;
-    let db = await createConnection();
+    const db = await createConnection();
     await db.query(
         "DELETE FROM users WHERE user_id=?", [parseInt(id)]
     );

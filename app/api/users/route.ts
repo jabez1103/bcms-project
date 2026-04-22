@@ -3,7 +3,7 @@ import { createConnection } from "@/lib/db.js"
 import bcrypt from "bcryptjs";
 // Kuhahon ang mga user gaw
 export async function GET() {
-    let db = await createConnection();
+    const db = await createConnection();
     const [users] = await db.query("SELECT * FROM users");
     return Response.json(users);
 }
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     }
     
     const hashedPassword = await bcrypt.hash( password, 10 );
-    let db = await createConnection();
+    const db = await createConnection();
 
     await db.query(
         `INSERT INTO users (user_id, first_name, middle_name, last_name, email, password, role, account_status, profile_picture)

@@ -8,7 +8,7 @@ export async function POST(req: Request) {
     try {
         const { email, password } = await req.json();
 
-        let db = await createConnection();
+        const db = await createConnection();
         const [rows]: any = await db.query(
             "SELECT * FROM users WHERE email = ?",
             [email]
