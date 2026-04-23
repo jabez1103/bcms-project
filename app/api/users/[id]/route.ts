@@ -1,90 +1,173 @@
-import { NextRequest, NextResponse } from "next/server"
-import { createConnection } from "@/lib/db"
+import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
+import { createConnection } from "@/lib/db";
+import {
+  createErrorResponse,
+  parseUserIdParam,
+  syncRoleRecords,
+  validateUserPayload,
+} from "../user-utils";
 
-export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> } ) {
-
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   const { id } = await params;
-  const {
-    first_name,
-    middle_name,
-    last_name,
-    email,
-    password,
-    role,
-    account_status,
-    program,
-    year_level,
-    department
-  } = await request.json();
+  const userId = parseUserIdParam(id);
 
-    const db = await createConnection();
-    if (password) {
-        const hashedPassword = await bcrypt.hash(password, 10);
-        await db.query(
-        `UPDATE users SET first_name=?, middle_name=?, last_name=?, email=?, 
-        password=?, role=?, account_status=? WHERE user_id=?`,
-        [first_name, middle_name ?? null, last_name, email, hashedPassword, role, account_status, id]
-        );
-    } else {
-        await db.query(
-        `UPDATE users SET first_name=?, middle_name=?, last_name=?, email=?, 
-        role=?, account_status=? WHERE user_id=?`,
-        [first_name, middle_name ?? null, last_name, email, role, account_status, id]
-        );
+  if (userId === null) {
+    return createErrorResponse("Invalid user ID.", 400, {
+      user_id: "The provided user ID is invalid.",
+    });
+  }
+
+  const db = await createConnection();
+
+  try {
+    const body = await request.json();
+    const mergedPayload = {
+      ...body,
+      user_id: userId,
+    };
+
+    const validation = validateUserPayload(mergedPayload, {
+      requirePassword: false,
+    });
+
+    if (!validation.valid) {
+      return createErrorResponse(
+        "Please fix the highlighted fields.",
+        400,
+        validation.errors,
+      );
     }
 
-    if (role === "student") {
-        const [existing]: any = await db.query(
-        "SELECT student_id FROM students WHERE user_id = ?", [id]
+    const payload = validation.data;
+
+    const [existingUsers]: any = await db.query(
+      "SELECT user_id FROM users WHERE user_id = ? LIMIT 1",
+      [userId],
     );
-        if (existing.length > 0) {
-            await db.query(
-                "UPDATE students SET program=?, year_level=? WHERE user_id=?",
-                [program ?? null, year_level ?? null, id]
-        );
-        } else {
-            await db.query(
-                "INSERT INTO students (user_id, program, year_level) VALUES (?, ?, ?)",
-                [id, program ?? null, year_level ?? null]
-            );
-        }
-    } else if (role === "signatory") {
-        const [existing]: any = await db.query(
-            "SELECT signatory_id FROM signatories WHERE user_id = ?", [id]
-        );
-        if (existing.length > 0) {
-            await db.query(
-                "UPDATE signatories SET department=? WHERE user_id=?",
-                [department ?? null, id]
-            );
-        } else {
-            await db.query(
-                "INSERT INTO signatories (user_id, department) VALUES (?, ?)",
-                [id, department ?? null]
-            );
-        }
-    } else if (role === "admin") {
-        const [existing]: any = await db.query(
-            "SELECT admin_id FROM administrators WHERE user_id = ?", [id]
-        );
-        if (existing.length === 0) {
-            await db.query(
-                "INSERT INTO administrators (user_id) VALUES (?)", [id]
-            );
-        }
+
+    if (existingUsers.length === 0) {
+      return createErrorResponse("User not found.", 404);
     }
 
-    return NextResponse.json({success: true, message: "User updated!"});
+    const [emailConflict]: any = await db.query(
+      "SELECT user_id FROM users WHERE email = ? AND user_id <> ? LIMIT 1",
+      [payload.email, userId],
+    );
+
+    if (emailConflict.length > 0) {
+      return createErrorResponse("Email already exists.", 409, {
+        email: "This institutional email is already registered.",
+      });
+    }
+
+    await db.beginTransaction();
+
+    if (payload.password) {
+      const hashedPassword = await bcrypt.hash(payload.password, 10);
+      await db.query(
+        `UPDATE users
+         SET first_name = ?, middle_name = ?, last_name = ?, email = ?,
+             password = ?, role = ?, account_status = ?, profile_picture = ?
+         WHERE user_id = ?`,
+        [
+          payload.first_name,
+          payload.middle_name,
+          payload.last_name,
+          payload.email,
+          hashedPassword,
+          payload.role,
+          payload.account_status,
+          payload.profile_picture,
+          userId,
+        ],
+      );
+    } else {
+      await db.query(
+        `UPDATE users
+         SET first_name = ?, middle_name = ?, last_name = ?, email = ?,
+             role = ?, account_status = ?, profile_picture = ?
+         WHERE user_id = ?`,
+        [
+          payload.first_name,
+          payload.middle_name,
+          payload.last_name,
+          payload.email,
+          payload.role,
+          payload.account_status,
+          payload.profile_picture,
+          userId,
+        ],
+      );
+    }
+
+    await syncRoleRecords(db, userId, payload);
+
+    await db.commit();
+
+    return NextResponse.json({
+      success: true,
+      message: "User account updated successfully.",
+    });
+  } catch (error: any) {
+    try {
+      await db.rollback();
+    } catch {}
+
+    console.error("Failed to update user:", error);
+    return createErrorResponse("Failed to update user account.", 500);
+  } finally {
+    await db.end();
+  }
 }
 
-export async function DELETE(_: NextRequest, { params } : { params: Promise<{ id: string }> }) {
+export async function DELETE(
+  _: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const { id } = await params;
+  const userId = parseUserIdParam(id);
 
-    const { id } = await params;
-    const db = await createConnection();
-    await db.query(
-        "DELETE FROM users WHERE user_id=?", [parseInt(id)]
+  if (userId === null) {
+    return createErrorResponse("Invalid user ID.", 400, {
+      user_id: "The provided user ID is invalid.",
+    });
+  }
+
+  const db = await createConnection();
+
+  try {
+    const [existingUsers]: any = await db.query(
+      "SELECT user_id FROM users WHERE user_id = ? LIMIT 1",
+      [userId],
     );
 
-    return NextResponse.json( {success: true, message: "User successfully deleted!"} );
+    if (existingUsers.length === 0) {
+      return createErrorResponse("User not found.", 404);
+    }
+
+    await db.beginTransaction();
+    await db.query("DELETE FROM students WHERE user_id = ?", [userId]);
+    await db.query("DELETE FROM signatories WHERE user_id = ?", [userId]);
+    await db.query("DELETE FROM administrators WHERE user_id = ?", [userId]);
+    await db.query("DELETE FROM users WHERE user_id = ?", [userId]);
+    await db.commit();
+
+    return NextResponse.json({
+      success: true,
+      message: "User account deleted successfully.",
+    });
+  } catch (error: any) {
+    try {
+      await db.rollback();
+    } catch {}
+
+    console.error("Failed to delete user:", error);
+    return createErrorResponse("Failed to delete user account.", 500);
+  } finally {
+    await db.end();
+  }
 }
