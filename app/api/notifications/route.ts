@@ -6,6 +6,7 @@ import { createConnection } from "@/lib/db";
  * GET /api/notifications
  * Returns all notifications for the logged-in user, newest first.
  */
+
 export async function GET(request: NextRequest) {
   const token = request.cookies.get("token")?.value;
   if (!token) return NextResponse.json({ error: "Not logged in" }, { status: 401 });

@@ -31,7 +31,7 @@ export default function LandingPage() {
   useEffect(() => {
     if (mobileMenuOpen) {
       document.body.style.overflow = "hidden";
-    } else {
+    } else {  
       document.body.style.overflow = "unset";
     }
   }, [mobileMenuOpen]);

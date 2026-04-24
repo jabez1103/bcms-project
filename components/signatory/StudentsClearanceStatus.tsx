@@ -5,9 +5,10 @@ import {
   Search, Eye, X, CheckCircle2, AlertCircle,
   MessageSquare, Maximize2, ZoomIn, ZoomOut, RotateCcw,
   ChevronLeft, ChevronRight, GraduationCap, 
-  Layers, Hash, Info, CalendarDays
+  Layers, Hash, Info, CalendarDays, FileDown
 } from "lucide-react";
-import { SkeletonMobileCard, SkeletonTableRow,  } from "@/components/ui/Skeleton";
+import { SkeletonMobileCard, SkeletonTableRow } from "@/components/ui/Skeleton";
+import { downloadClearanceDoc } from "./downloadClearance";
 
 /* ================= TYPES ================= */
 type ClearanceStatus = "Cleared" | "Not Cleared";
@@ -125,11 +126,42 @@ const toSignatoryStatus = (status: SignatoryStatus): ClearanceStatus => {
     });
   }, [rows, search, statusFilter, programFilter, yearFilter, sectionFilter]);
 
+  // Reset to page 1 whenever any filter/search changes
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [search, statusFilter, programFilter, yearFilter, sectionFilter]);
+
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
   const paginatedData = filteredData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
+  const handleDownload = () =>
+    downloadClearanceDoc(selectedRecord!, studentProgress);
+
+
+
   return (
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 p-6 md:p-10 font-sans text-slate-900 dark:text-slate-100 transition-colors">
+
+      {/* ── STICKY HEADER ── */}
+      <header className="sticky top-0 z-[20] bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200/60 dark:border-slate-800 -mx-6 md:-mx-10 px-6 md:px-10 py-4 mb-6">
+        <div className="max-w-[1600px] mx-auto flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 bg-slate-900 dark:bg-slate-800 rounded-xl flex items-center justify-center text-white shadow-lg shadow-slate-200 dark:shadow-none">
+              <GraduationCap size={20} />
+            </div>
+            <div className="space-y-0.5">
+              <h1 className="text-xl sm:text-2xl font-black tracking-tight leading-none uppercase">
+                Student <span className="text-indigo-600">Clearance Status</span>
+              </h1>
+              <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                <p className="text-[9px] font-black uppercase tracking-[0.2em]">Manage student submissions</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
       <div className="max-w-[1600px] mx-auto space-y-6">
         
         {/* --- HEADER & FILTERS --- */}
@@ -304,7 +336,17 @@ const toSignatoryStatus = (status: SignatoryStatus): ClearanceStatus => {
                 <h2 className="text-xl md:text-2xl font-black text-slate-900 dark:text-slate-100 uppercase tracking-tight">{selectedRecord.name}</h2>
                 <p className="text-xs font-bold text-indigo-600 dark:text-indigo-400 mt-0.5">{selectedRecord.studentId} • {selectedRecord.program}</p>
               </div>
-              <button onClick={() => setSelectedRecord(null)} className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 hover:text-rose-500 dark:hover:text-rose-400 rounded-full transition-all shadow-sm"><X size={20} /></button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleDownload}
+                  disabled={loadingProgress || studentProgress.length === 0}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-indigo-200 dark:shadow-none"
+                >
+                  <FileDown size={14} />
+                  Download Soft Copy
+                </button>
+                <button onClick={() => setSelectedRecord(null)} className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 hover:text-rose-500 dark:hover:text-rose-400 rounded-full transition-all shadow-sm"><X size={20} /></button>
+              </div>
             </div>
 
             {/* Body */}

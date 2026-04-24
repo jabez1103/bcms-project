@@ -10,6 +10,7 @@ type Signatory = {
   id: number;
   role: string;
   name: string;
+  academic_credentials: string | null;  
   description: string;
   status: string;
   title?: string;
