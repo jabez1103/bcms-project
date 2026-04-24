@@ -3,18 +3,96 @@ import { verifyToken } from "@/lib/auth";
 import { createConnection } from "@/lib/db";
 import { createNotificationBulk } from "@/lib/notifications";
 
-// Auto-update status based on dates
-function computeStatus(start: string, end: string): string {
-  const now = new Date().toISOString().split("T")[0];
-  if (now > end) return "ended";
-  if (now >= start) return "live";
-  return "scheduled";
+type PeriodStatus = "live" | "scheduled" | "ended";
+type DbConnection = Awaited<ReturnType<typeof createConnection>>;
+type TokenPayload = {
+  role?: string;
+  user_id: number | string;
+} | null;
+
+type AdminContext =
+  | {
+      db: DbConnection;
+      adminId: number;
+    }
+  | {
+      response: NextResponse;
+    };
+
+type DateValidationRow = {
+  start_in_past: number | boolean;
+  end_in_past: number | boolean;
+};
+
+type ActivePeriodRow = {
+  period_id: number;
+  active_end_date: string;
+};
+
+type UserIdRow = {
+  user_id: number;
+};
+
+function normalizeScheduleDate(value: string, isEnd = false) {
+  if (!value) return null;
+
+  const hasTime = value.includes("T");
+  const normalized = hasTime
+    ? value
+    : `${value}T${isEnd ? "23:59:59" : "00:00:00"}`;
+
+  const parsed = new Date(normalized);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
-export async function GET() {
+async function getAdminContext(request: NextRequest): Promise<AdminContext> {
+  const token = request.cookies.get("token")?.value;
+
+  if (!token) {
+    return {
+      response: NextResponse.json({ error: "Not logged in" }, { status: 401 }),
+    };
+  }
+
+  const payload = (await verifyToken(token)) as TokenPayload;
+
+  if (!payload || String(payload.role).toLowerCase() !== "admin") {
+    return {
+      response: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
+    };
+  }
+
   const db = await createConnection();
 
-  // Auto-update ended periods on every fetch
+  try {
+    const [adminRows] = (await db.query(
+      `SELECT a.admin_id
+       FROM administrators a
+       JOIN users u ON a.user_id = u.user_id
+       WHERE u.user_id = ?
+       LIMIT 1`,
+      [payload.user_id],
+    )) as [Array<{ admin_id: number }>, unknown];
+
+    if (adminRows.length === 0) {
+      await db.end();
+
+      return {
+        response: NextResponse.json({ error: "Admin not found" }, { status: 403 }),
+      };
+    }
+
+    return {
+      db,
+      adminId: adminRows[0].admin_id,
+    };
+  } catch (error) {
+    await db.end();
+    throw error;
+  }
+}
+
+async function normalizePeriodStatuses(db: DbConnection) {
   await db.query(`
     UPDATE clearance_periods
     SET period_status = 'ended'
@@ -23,80 +101,232 @@ export async function GET() {
 
   await db.query(`
     UPDATE clearance_periods
-    SET period_status = 'live'
-    WHERE start_date <= CURDATE() AND end_date >= CURDATE() AND period_status != 'live'
+    SET period_status = 'scheduled'
+    WHERE period_status = 'live'
+      AND NOT (start_date <= CURDATE() AND end_date >= CURDATE())
   `);
 
-  const [rows] = await db.query(`
-    SELECT cp.*, CONCAT(u.first_name, ' ', u.last_name) AS set_by
-    FROM clearance_periods cp
-    LEFT JOIN administrators a ON cp.admin_id = a.admin_id
-    LEFT JOIN users u ON a.user_id = u.user_id
-    ORDER BY cp.created_at DESC
+  const [activeRows] = (await db.query(`
+    SELECT period_id
+    FROM clearance_periods
+    WHERE start_date <= CURDATE()
+      AND end_date >= CURDATE()
+      AND period_status != 'ended'
+    ORDER BY created_at DESC, period_id DESC
+    LIMIT 1
+  `)) as [Array<{ period_id: number }>, unknown];
+
+  await db.query(`
+    UPDATE clearance_periods
+    SET period_status = 'scheduled'
+    WHERE start_date <= CURDATE()
+      AND end_date >= CURDATE()
+      AND period_status != 'ended'
   `);
 
-  return NextResponse.json({ success: true, periods: rows });
+  if (activeRows.length > 0) {
+    await db.query(
+      `UPDATE clearance_periods SET period_status = 'live' WHERE period_id = ?`,
+      [activeRows[0].period_id],
+    );
+  }
+}
+
+async function findLivePeriodConflict(
+  db: DbConnection,
+  startDate: string,
+  endDate: string,
+) {
+  const [rows] = (await db.query(
+    `SELECT
+       period_id,
+       DATE_FORMAT(end_date, '%Y-%m-%d') AS active_end_date
+     FROM clearance_periods
+     WHERE period_status = 'live'
+       AND DATE(?) <= DATE(end_date)
+       AND DATE(?) >= DATE(start_date)
+     ORDER BY created_at DESC, period_id DESC
+     LIMIT 1`,
+    [startDate, endDate],
+  )) as [ActivePeriodRow[], unknown];
+
+  return rows;
+}
+
+export async function GET(request: NextRequest) {
+  let db: DbConnection | null = null;
+
+  try {
+    const context = await getAdminContext(request);
+
+    if ("response" in context) {
+      return context.response;
+    }
+
+    db = context.db;
+
+    await normalizePeriodStatuses(db);
+
+    const [rows] = (await db.query(`
+      SELECT cp.*, CONCAT(u.first_name, ' ', u.last_name) AS set_by
+      FROM clearance_periods cp
+      LEFT JOIN administrators a ON cp.admin_id = a.admin_id
+      LEFT JOIN users u ON a.user_id = u.user_id
+      ORDER BY cp.created_at DESC
+    `)) as [Array<Record<string, unknown>>, unknown];
+
+    return NextResponse.json({ success: true, periods: rows });
+  } catch (error) {
+    console.error("Failed to fetch clearance periods:", error);
+
+    return NextResponse.json(
+      { success: false, error: "Failed to fetch clearance periods." },
+      { status: 500 },
+    );
+  } finally {
+    if (db) {
+      await db.end();
+    }
+  }
 }
 
 export async function POST(request: NextRequest) {
-  const token = request.cookies.get("token")?.value;
-  if (!token) return NextResponse.json({ error: "Not logged in" }, { status: 401 });
+  let db: DbConnection | null = null;
 
-  const payload = await verifyToken(token) as any;
-  if (!payload) return NextResponse.json({ error: "Invalid token" }, { status: 401 });
-
-  const { academic_year, semester, start_date, end_date } = await request.json();
-
-  if (!academic_year || !start_date || !end_date)
-    return NextResponse.json({ error: "All fields are required" }, { status: 400 });
-
-  if (end_date <= start_date)
-    return NextResponse.json({ error: "End date must be after start date" }, { status: 400 });
-
-  const db = await createConnection();
-
-  // Get admin_id from administrators table
-  const [adminRows]: any = await db.query(
-    `SELECT a.admin_id FROM administrators a
-     JOIN users u ON a.user_id = u.user_id
-     WHERE u.user_id = ?`,
-    [payload.user_id]
-  );
-
-  if (adminRows.length === 0)
-    return NextResponse.json({ error: "Admin not found" }, { status: 403 });
-
-  const admin_id = adminRows[0].admin_id;
-  const period_status = computeStatus(start_date, end_date);
-
-  await db.query(
-    `INSERT INTO clearance_periods (academic_year, semester, start_date, end_date, period_status, admin_id)
-     VALUES (?, ?, ?, ?, ?, ?)`,
-    [academic_year, semester || null, start_date, end_date, period_status, admin_id]
-  );
-
-  // --- Notify all students and signatories ---
   try {
-    const [studentUsers]: any = await db.query(
-      `SELECT u.user_id FROM students st JOIN users u ON st.user_id = u.user_id`
+    const context = await getAdminContext(request);
+
+    if ("response" in context) {
+      return context.response;
+    }
+
+    db = context.db;
+
+    const { academic_year, semester, start_date, end_date } = await request.json();
+
+    if (!academic_year || !start_date || !end_date) {
+      return NextResponse.json({ error: "All fields are required" }, { status: 400 });
+    }
+
+    const startAt = normalizeScheduleDate(start_date);
+    const endAt = normalizeScheduleDate(end_date, true);
+
+    if (!startAt || !endAt) {
+      return NextResponse.json({ error: "Invalid schedule dates" }, { status: 400 });
+    }
+
+    if (endAt.getTime() <= startAt.getTime()) {
+      return NextResponse.json(
+        { error: "End date must be after start date" },
+        { status: 400 },
+      );
+    }
+
+    const [dateValidation] = (await db.query(
+      `SELECT
+         DATE(?) < CURDATE() AS start_in_past,
+         DATE(?) < CURDATE() AS end_in_past
+       FROM DUAL`,
+      [start_date, end_date],
+    )) as [DateValidationRow[], unknown];
+
+    if (dateValidation[0].start_in_past) {
+      return NextResponse.json(
+        { error: "Start date cannot be in the past." },
+        { status: 400 },
+      );
+    }
+
+    if (dateValidation[0].end_in_past) {
+      return NextResponse.json(
+        { error: "End date cannot be in the past." },
+        { status: 400 },
+      );
+    }
+
+    await normalizePeriodStatuses(db);
+    await db.beginTransaction();
+
+    const liveConflict = await findLivePeriodConflict(db, start_date, end_date);
+
+    if (liveConflict.length > 0) {
+      await db.rollback();
+
+      return NextResponse.json(
+        {
+          error: `Schedule Conflict: The selected dates overlap with a live period. Please choose a date after ${liveConflict[0].active_end_date}.`,
+        },
+        { status: 409 },
+      );
+    }
+
+    const [statusResult] = (await db.query(
+      `SELECT 
+         CASE
+           WHEN DATE(?) < CURDATE() THEN 'ended'
+           WHEN DATE(?) <= CURDATE() AND DATE(?) >= CURDATE() THEN 'live'
+           ELSE 'scheduled'
+         END AS period_status
+       FROM DUAL`,
+      [end_date, start_date, end_date],
+    )) as [Array<{ period_status: PeriodStatus }>, unknown];
+
+    const period_status = statusResult[0].period_status;
+
+    await db.query(
+      `INSERT INTO clearance_periods (
+        academic_year,
+        semester,
+        start_date,
+        end_date,
+        period_status,
+        admin_id
+      ) VALUES (?, ?, ?, ?, ?, ?)`,
+      [academic_year, semester || null, start_date, end_date, period_status, context.adminId],
     );
-    const [signatoryUsers]: any = await db.query(
-      `SELECT u.user_id FROM signatories sg JOIN users u ON sg.user_id = u.user_id`
+
+    await db.commit();
+
+    try {
+      const [studentUsers] = (await db.query(
+        `SELECT u.user_id FROM students st JOIN users u ON st.user_id = u.user_id`,
+      )) as [UserIdRow[], unknown];
+
+      const [signatoryUsers] = (await db.query(
+        `SELECT u.user_id FROM signatories sg JOIN users u ON sg.user_id = u.user_id`,
+      )) as [UserIdRow[], unknown];
+
+      const periodLabel = `${academic_year}${semester ? " — " + semester : ""}`;
+      const title = "🎓 Clearance Period Started";
+      const message = `A new clearance period (${periodLabel}) has been opened. Submit your requirements now.`;
+
+      const recipients = [
+        ...studentUsers.map((u) => ({ userId: u.user_id, role: "student" as const })),
+        ...signatoryUsers.map((u) => ({ userId: u.user_id, role: "signatory" as const })),
+      ];
+
+      await createNotificationBulk(db, recipients, "period_opened", title, message);
+    } catch {
+      // Non-critical notification failure
+    }
+
+    return NextResponse.json({ success: true, message: "Period created!" });
+  } catch (error) {
+    if (db) {
+      try {
+        await db.rollback();
+      } catch {}
+    }
+
+    console.error("Failed to create clearance period:", error);
+
+    return NextResponse.json(
+      { success: false, error: "Failed to create clearance period." },
+      { status: 500 },
     );
-
-    const periodLabel = `${academic_year}${semester ? " — " + semester : ""}`;
-    const title = "🎓 Clearance Period Started";
-    const message = `A new clearance period (${periodLabel}) has been opened. Submit your requirements now.`;
-
-    const recipients = [
-      ...studentUsers.map((u: any) => ({ userId: u.user_id, role: "student" as const })),
-      ...signatoryUsers.map((u: any) => ({ userId: u.user_id, role: "signatory" as const })),
-    ];
-
-    await createNotificationBulk(db, recipients, "period_opened", title, message);
-  } catch (_) {
-    // Non-critical
+  } finally {
+    if (db) {
+      await db.end();
+    }
   }
-
-  return NextResponse.json({ success: true, message: "Period created!" });
 }

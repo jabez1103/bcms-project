@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import {
   SkeletonMobileCard,
   SkeletonUserHeader,
@@ -34,6 +35,7 @@ type FormState = {
   program: string;
   year_level: string;
   department: string;
+  credentials: string;
 };
 
 type ApiResponse = {
@@ -61,7 +63,8 @@ const emptyForm: FormState = {
   profile_picture: "/avatars/defaultAvatar.jpg",
   program: "BSCS",
   year_level: "1",
-  department: "Registrar",
+  department: "Director, Scholarship and Admission",
+  credentials: "",
 };
 
 const PROGRAMS: Record<string, { label: string; years: number }> = {
@@ -75,17 +78,40 @@ const PROGRAMS: Record<string, { label: string; years: number }> = {
 };
 
 const DEPARTMENTS = [
-  "Registrar",
-  "Library",
-  "Cashier",
-  "Guidance",
-  "Clinic",
-  "Sports Office",
-  "Student Affairs",
-  "Dean Office",
+  'Director, Scholarship and Admission',
+  'Director, Guidance and Counseling Services',
+  'Director, Sports Development',
+  'Head, Housing and Residental Services',
+  'Head, Student Publication',
+  'Head, Student Goverment',
+  'Head, Student Discipline',
+  'Director, Health and Wellness Services',
+  'Diretor, Culture and Arts Affair',
+  'Director, Alumni Relations',
+  'Head, Student Organizations',
+  'Head, FSTLP',
+  'Director, Student Development Services',
+  'Sports Office',
+];
+
+
+const CREDENTIALS = [
+  { value: "", label: "None" },
+  { value: "PhD", label: "PhD — Doctor of Philosophy" },
+  { value: "EdD", label: "EdD — Doctor of Education" },
+  { value: "MD", label: "MD — Doctor of Medicine" },
+  { value: "Atty.", label: "Atty. — Attorney" },
+  { value: "Engr.", label: "Engr. — Engineer" },
+  { value: "Arch.", label: "Arch. — Architect" },
+  { value: "CPA", label: "CPA — Certified Public Accountant" },
+  { value: "LPT", label: "LPT — Licensed Professional Teacher" },
+  { value: "RN", label: "RN — Registered Nurse" },
+  { value: "RPm", label: "RPm — Registered Psychometrician" },
 ];
 
 const NAME_REGEX = /^[A-Za-z][A-Za-z\s.'-]*$/;
+const SELF_PROTECTION_MESSAGE =
+  "System Protection: You cannot modify your own administrative status";
 
 /* ================= HELPERS ================= */
 
@@ -120,6 +146,7 @@ function userToForm(user: User): FormState {
     program: user.program ?? "BSCS",
     year_level: user.year_level ? String(user.year_level) : "1",
     department: user.department ?? "Registrar",
+    credentials: (user as any).credentials ?? "",
   };
 }
 
@@ -213,6 +240,38 @@ function FieldError({ message }: { message?: string }) {
   );
 }
 
+type ProtectedActionButtonProps = {
+  disabled: boolean;
+  tooltip: string;
+  onClick: () => void;
+  className: string;
+  children: ReactNode;
+};
+
+function ProtectedActionButton({
+  disabled,
+  tooltip,
+  onClick,
+  className,
+  children,
+}: ProtectedActionButtonProps) {
+  if (disabled) {
+    return (
+      <span title={tooltip} className="inline-flex">
+        <button type="button" disabled className={className}>
+          {children}
+        </button>
+      </span>
+    );
+  }
+
+  return (
+    <button type="button" onClick={onClick} className={className}>
+      {children}
+    </button>
+  );
+}
+
 /* ================= COMPONENT ================= */
 
 export default function UserAccounts() {
@@ -228,12 +287,31 @@ export default function UserAccounts() {
   const [saving, setSaving] = useState(false);
   const [busyUserId, setBusyUserId] = useState<number | null>(null);
 
+  // IMPORT NI NA PART BAI JUSKO
+  const [showImportModal, setShowImportModal]   = useState(false);
+  const [importFile, setImportFile]             = useState<File | null>(null);
+  const [importPreview, setImportPreview]       = useState<any[]>([]);
+  const [importResult, setImportResult]         = useState<{
+    imported: number;
+    skipped: { user_id: string; name: string; reason: string }[];
+    errors: string[];
+  } | null>(null);
+  const [importing, setImporting]               = useState(false);
+  const [fileType, setFileType]                 = useState<"csv" | "xlsx" | null>(null);
+  const [activeResultTab, setActiveResultTab]   = useState<"skipped" | "errors">("skipped");
+
   const [roleFilter, setRoleFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
+
+  const { user: currentUser, loading: currentUserLoading } = useCurrentUser();
 
   const itemsPerPage = 6;
   const years = PROGRAMS[form.program]?.years ?? 4;
   const isEditing = editingId !== null;
+  const isProtectedAdminAction = (user: User) =>
+    !currentUserLoading &&
+    String(currentUser?.role ?? "").toLowerCase() === "admin" &&
+    Number(currentUser?.user_id) === user.user_id;
 
   useEffect(() => {
     const maxYears = PROGRAMS[form.program]?.years ?? 4;
@@ -537,6 +615,119 @@ export default function UserAccounts() {
     }
   };
 
+  // IMPORT FUNCTIONS HERE BOSS
+  function parseCSV(text: string): any[] {
+    const lines = text.trim().split("\n").filter(l => l.trim());
+    const headers = lines[0].split(",").map(h => h.trim().toLowerCase().replace(/\s+/g, "_"));
+    return lines.slice(1).map(line => {
+      const values = line.split(",").map(v => v.trim());
+      return headers.reduce((obj: any, h, i) => { obj[h] = values[i] || ""; return obj; }, {});
+    });
+  }
+
+  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImportFile(file);
+    setImportResult(null);
+
+    const ext = file.name.split(".").pop()?.toLowerCase();
+    setFileType(ext === "xlsx" ? "xlsx" : "csv");
+
+    if (ext === "xlsx") {
+      // Parse Excel
+      const XLSX = await import("xlsx");
+      const arrayBuffer = await file.arrayBuffer();
+      const workbook = XLSX.read(arrayBuffer, { type: "array" });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const data = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+      // Normalize keys
+      const normalized = (data as any[]).map(row =>
+        Object.fromEntries(
+          Object.entries(row).map(([k, v]) => [k.toLowerCase().replace(/\s+/g, "_"), v])
+        )
+      );
+      setImportPreview(normalized.slice(0, 5));
+    } else {
+      // Parse CSV
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const text = ev.target?.result as string;
+        setImportPreview(parseCSV(text).slice(0, 5));
+      };
+      reader.readAsText(file);
+    }
+  };
+
+  const handleImportSubmit = async () => {
+    if (!importFile) return;
+    setImporting(true);
+
+    try {
+      let users: any[] = [];
+
+      if (fileType === "xlsx") {
+        const XLSX = await import("xlsx");
+        const arrayBuffer = await importFile.arrayBuffer();
+        const workbook = XLSX.read(arrayBuffer, { type: "array" });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const data = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+        users = (data as any[]).map(row =>
+          Object.fromEntries(
+            Object.entries(row).map(([k, v]) => [k.toLowerCase().replace(/\s+/g, "_"), v])
+          )
+        );
+      } else {
+        const reader = new FileReader();
+        await new Promise<void>(resolve => {
+          reader.onload = (ev) => {
+            users = parseCSV(ev.target?.result as string);
+            resolve();
+          };
+          reader.readAsText(importFile);
+        });
+      }
+
+      const res = await fetch("/api/users/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ users }),
+      });
+
+      const data = await res.json();
+      setImportResult(data);
+      fetchUsers();
+    } catch {
+      setImportResult({ imported: 0, skipped: [], errors: ["Failed to parse or upload file."] });
+    }
+
+    setImporting(false);
+  };
+
+  const downloadSample = (type: "csv" | "xlsx") => {
+    const rows = [
+      { user_id: 10001, first_name: "Juan", middle_name: "dela", last_name: "Cruz", role: "student", program: "BSIT", year_level: 1, department: "", credentials: "" },
+      { user_id: 10002, first_name: "Maria", middle_name: "", last_name: "Santos", role: "signatory", program: "", year_level: "", department: "Library", credentials: "LPT" },
+      { user_id: 10003, first_name: "Pedro", middle_name: "", last_name: "Reyes", role: "admin", program: "", year_level: "", department: "", credentials: "" },
+    ];
+
+
+    if (type === "csv") {
+      const headers = Object.keys(rows[0]).join(",");
+      const csv = [headers, ...rows.map(r => Object.values(r).join(","))].join("\n");
+      const blob = new Blob([csv], { type: "text/csv" });
+      const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "sample_users.csv"; a.click();
+    } else {
+      import("xlsx").then(XLSX => {
+        const ws = XLSX.utils.json_to_sheet(rows);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Users");
+        XLSX.writeFile(wb, "sample_users.xlsx");
+      });
+    }
+  };
+
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 p-4 sm:p-6 md:p-12 font-sans">
@@ -594,12 +785,29 @@ export default function UserAccounts() {
               Manage student and staff roles, credentials, and system access.
             </p>
           </div>
-          <button
-            onClick={() => handleOpenModal()}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 md:px-8 py-3 rounded-xl md:rounded-2xl font-bold transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2 w-full md:w-fit"
-          >
-            <span className="text-xl">+</span> Add New Account
-          </button>
+          <div className="flex flex-col sm:flex-row gap-3 w-full md:w-fit">
+            {/* ✅ Import button */}
+            <button
+              onClick={() => {
+                setShowImportModal(true);
+                setImportFile(null);
+                setImportPreview([]);
+                setImportResult(null);
+                setFileType(null);
+                setActiveResultTab("skipped");
+              }}
+              className="border-2 border-indigo-200 dark:border-indigo-500/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 px-6 py-3 rounded-xl md:rounded-2xl font-bold transition-all flex items-center justify-center gap-2 w-full md:w-fit"
+            >
+              ↑ Import Users
+            </button>
+
+            <button
+              onClick={() => handleOpenModal()}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 md:px-8 py-3 rounded-xl md:rounded-2xl font-bold transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2 w-full md:w-fit"
+            >
+              <span className="text-xl">+</span> Add New Account
+            </button>
+          </div>
         </div>
 
         {notice && (
@@ -665,8 +873,13 @@ export default function UserAccounts() {
                       {u.last_name[0]}
                     </div>
                     <div className="min-w-0">
-                      <div className="font-bold text-slate-800 dark:text-slate-200 text-sm truncate">
+                      <div className={`font-bold text-slate-800 dark:text-slate-200 text-sm truncate ${isProtectedAdminAction(u) ? "italic" : ""}`}>
                         {u.first_name} {u.last_name}
+                        {isProtectedAdminAction(u) && (
+                          <span className="ml-2 text-[9px] font-black uppercase tracking-widest bg-indigo-100 dark:bg-indigo-500/20 text-indigo-500 dark:text-indigo-400 px-1.5 py-0.5 rounded-md align-middle">
+                            You
+                          </span>
+                        )}
                       </div>
                       <div className="text-xs text-slate-400 truncate">{u.email}</div>
                     </div>
@@ -688,26 +901,28 @@ export default function UserAccounts() {
                       </span>
                     </div>
 
-                    <div className="flex gap-4">
-                      <button
-                        onClick={() => toggleStatus(u)}
-                        disabled={busyUserId === u.user_id}
-                        className="text-slate-600 dark:text-slate-400 font-bold text-xs uppercase disabled:opacity-50"
-                      >
-                        {busyUserId === u.user_id
-                          ? "Working..."
-                          : u.account_status === "active"
-                            ? "Deactivate"
-                            : "Activate"}
-                      </button>
-                      <button
-                        onClick={() => handleOpenModal(u)}
-                        disabled={busyUserId === u.user_id}
-                        className="text-indigo-600 dark:text-indigo-400 font-bold text-xs uppercase disabled:opacity-50"
-                      >
-                        Edit
-                      </button>
-                    </div>
+                      <div className="flex gap-4">
+                        <ProtectedActionButton
+                          disabled={busyUserId === u.user_id || isProtectedAdminAction(u)}
+                          tooltip={SELF_PROTECTION_MESSAGE}
+                          onClick={() => toggleStatus(u)}
+                          className="text-slate-600 dark:text-slate-400 font-bold text-xs uppercase disabled:opacity-50"
+                        >
+                          {busyUserId === u.user_id
+                            ? "Working..."
+                            : u.account_status === "active"
+                              ? "Deactivate"
+                              : "Activate"}
+                        </ProtectedActionButton>
+                        <ProtectedActionButton
+                          disabled={busyUserId === u.user_id || isProtectedAdminAction(u)}
+                          tooltip={SELF_PROTECTION_MESSAGE}
+                          onClick={() => handleOpenModal(u)}
+                          className="text-indigo-600 dark:text-indigo-400 font-bold text-xs uppercase disabled:opacity-50"
+                        >
+                          Edit
+                        </ProtectedActionButton>
+                      </div>
                   </div>
                 </div>
               ))
@@ -770,10 +985,16 @@ export default function UserAccounts() {
                                 u.account_status === "active"
                                   ? "text-slate-800 dark:text-slate-200"
                                   : "text-slate-400 italic"
-                              }`}
+                              } ${isProtectedAdminAction(u) ? "italic" : ""}`}
                             >
                               {u.first_name}
                               {u.middle_name ? ` ${u.middle_name}` : ""} {u.last_name}
+                              {/*  "You" badge */}
+                              {isProtectedAdminAction(u) && (
+                                <span className="ml-2 text-[9px] font-black uppercase tracking-widest bg-indigo-100 dark:bg-indigo-500/20 text-indigo-500 dark:text-indigo-400 px-1.5 py-0.5 rounded-md align-middle">
+                                  You
+                                </span>
+                              )}
                             </div>
                             <div className="text-xs text-slate-400 font-medium mt-0.5">
                               {u.email}
@@ -789,9 +1010,10 @@ export default function UserAccounts() {
                       </td>
 
                       <td className="px-8 py-5">
-                        <button
+                        <ProtectedActionButton
+                          disabled={busyUserId === u.user_id || isProtectedAdminAction(u)}
+                          tooltip={SELF_PROTECTION_MESSAGE}
                           onClick={() => toggleStatus(u)}
-                          disabled={busyUserId === u.user_id}
                           className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-50 ${
                             u.account_status === "active"
                               ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-500/20"
@@ -808,24 +1030,26 @@ export default function UserAccounts() {
                             : u.account_status === "active"
                               ? "Enabled"
                               : "Deactivated"}
-                        </button>
+                        </ProtectedActionButton>
                       </td>
 
                       <td className="px-8 py-5 text-right space-x-3">
-                        <button
+                        <ProtectedActionButton
+                          disabled={busyUserId === u.user_id || isProtectedAdminAction(u)}
+                          tooltip={SELF_PROTECTION_MESSAGE}
                           onClick={() => handleOpenModal(u)}
-                          disabled={busyUserId === u.user_id}
                           className="text-indigo-600 dark:text-indigo-400 font-bold text-xs hover:underline uppercase tracking-wider disabled:opacity-50"
                         >
                           Modify
-                        </button>
-                        <button
+                        </ProtectedActionButton>
+                        <ProtectedActionButton
+                          disabled={busyUserId === u.user_id || isProtectedAdminAction(u)}
+                          tooltip={SELF_PROTECTION_MESSAGE}
                           onClick={() => deleteUser(u.user_id)}
-                          disabled={busyUserId === u.user_id}
                           className="text-rose-400 dark:hover:text-rose-500 font-bold text-xs hover:underline uppercase tracking-wider disabled:opacity-50"
                         >
                           {busyUserId === u.user_id ? "Working..." : "Remove"}
-                        </button>
+                        </ProtectedActionButton>
                       </td>
                     </tr>
                   ))
@@ -1097,27 +1321,49 @@ export default function UserAccounts() {
                 )}
 
                 {form.role === "signatory" && (
-                  <div className="md:col-span-2">
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">
-                      Department
-                    </label>
-                    <select
-                      value={form.department}
-                      onChange={(e) => updateFormFields("department", e.target.value)}
-                      className={`w-full border-2 rounded-xl md:rounded-2xl p-3 md:p-3.5 text-sm font-bold outline-none bg-white dark:bg-slate-900 ${
-                        formErrors.department
-                          ? "border-rose-300 bg-rose-50 dark:border-rose-500/40 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300"
-                          : "border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:border-indigo-500"
-                      }`}
-                    >
-                      {DEPARTMENTS.map((dept) => (
-                        <option key={dept} value={dept}>
-                          {dept}
-                        </option>
-                      ))}
-                    </select>
-                    <FieldError message={formErrors.department} />
-                  </div>
+                  <>
+                    <div className="md:col-span-2">
+                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">
+                        Department
+                      </label>
+                      <select
+                        value={form.department}
+                        onChange={(e) => updateFormFields("department", e.target.value)}
+                        className={`w-full border-2 rounded-xl md:rounded-2xl p-3 md:p-3.5 text-sm font-bold outline-none bg-white dark:bg-slate-900 ${
+                          formErrors.department
+                            ? "border-rose-300 bg-rose-50 dark:border-rose-500/40 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300"
+                            : "border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:border-indigo-500"
+                        }`}
+                      >
+                        {DEPARTMENTS.map((dept) => (
+                          <option key={dept} value={dept}>{dept}</option>
+                        ))}
+                      </select>
+                      <FieldError message={formErrors.department} />
+                    </div>
+
+                    {/* Academic Credentials */}
+                    <div className="md:col-span-2">
+                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">
+                        Academic Credentials <span className="text-indigo-400 normal-case font-medium">(optional)</span>
+                      </label>
+                      <select
+                        value={form.credentials}
+                        onChange={(e) => updateFormFields("credentials", e.target.value)}
+                        className="w-full border-2 border-slate-200 dark:border-slate-700 rounded-xl md:rounded-2xl p-3 md:p-3.5 text-sm font-bold outline-none bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:border-indigo-500"
+                      >
+                        {CREDENTIALS.map((c) => (
+                          <option key={c.value} value={c.value}>{c.label}</option>
+                        ))}
+                      </select>
+                      {/* Preview how name will appear */}
+                      {form.credentials && (
+                        <p className="mt-2 text-[11px] font-bold text-indigo-500">
+                          Display: {form.credentials} {form.last_name || "LastName"}, {form.first_name || "FirstName"}
+                        </p>
+                      )}
+                    </div>
+                  </>
                 )}
               </div>
             </div>
@@ -1143,6 +1389,184 @@ export default function UserAccounts() {
                     ? "Update Info"
                     : "Register Account"}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showImportModal && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl shadow-2xl w-full max-w-2xl max-h-[95vh] flex flex-col overflow-hidden animate-in slide-in-from-bottom sm:zoom-in-95 duration-200">
+
+            {/* HEADER */}
+            <div className="p-6 md:p-8 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center shrink-0">
+              <div>
+                <h2 className="text-xl font-black text-slate-900 dark:text-slate-100 uppercase tracking-tight">Import Users</h2>
+                <p className="text-xs text-slate-400 mt-1">Bulk register accounts via CSV or Excel</p>
+              </div>
+              <button onClick={() => setShowImportModal(false)} className="text-slate-400 hover:text-slate-600 text-3xl font-light p-2">&times;</button>
+            </div>
+
+            <div className="p-6 md:p-8 space-y-6 overflow-y-auto">
+
+              {/* FORMAT GUIDE */}
+              <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-5 border border-slate-100 dark:border-slate-800 space-y-3">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Required Columns</p>
+                <code className="block text-xs text-indigo-600 dark:text-indigo-400 font-mono bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
+                  user_id, first_name, middle_name, last_name, role, program, year_level, department, credentials
+                </code>
+                <ul className="text-[10px] text-slate-400 space-y-1 leading-relaxed">
+                  <li>• <strong>role</strong>: student / signatory / admin</li>
+                  <li>• <strong>program</strong>: for students (e.g. BSIT, BSCS)</li>
+                  <li>• <strong>department</strong>: for signatories (e.g. Library)</li>
+                  <li>• <strong>credentials</strong>: for signatories (e.g. PhD, LPT, Atty.)</li>
+                  <li>• <strong>password & email</strong>: auto-generated</li>
+                </ul>
+                <div className="flex gap-3 pt-1">
+                  <button onClick={() => downloadSample("csv")} className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 hover:underline uppercase tracking-wider">↓ Sample CSV</button>
+                  <span className="text-slate-300 dark:text-slate-700">|</span>
+                  <button onClick={() => downloadSample("xlsx")} className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 hover:underline uppercase tracking-wider">↓ Sample Excel</button>
+                </div>
+              </div>
+
+              {/* FILE UPLOAD */}
+              {!importResult && (
+                <div>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">
+                    Select File <span className="text-indigo-400 normal-case font-medium">(CSV or Excel)</span>
+                  </label>
+                  <div className={`border-2 border-dashed rounded-2xl p-6 transition-colors ${importFile ? "border-indigo-400 bg-indigo-50/30 dark:bg-indigo-500/10" : "border-slate-200 dark:border-slate-700 hover:border-indigo-300"}`}>
+                    <input type="file" accept=".csv,.xlsx" onChange={handleImportFile} className="hidden" id="import-upload" />
+                    <label htmlFor="import-upload" className="cursor-pointer flex flex-col items-center gap-2">
+                      <span className="text-3xl">{importFile ? (fileType === "xlsx" ? "📊" : "📄") : "📁"}</span>
+                      <span className="text-sm font-bold text-slate-600 dark:text-slate-300 text-center">
+                        {importFile ? importFile.name : "Click to browse"}
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                        {importFile ? `${fileType?.toUpperCase()} selected` : "CSV or Excel (.xlsx) only"}
+                      </span>
+                    </label>
+                  </div>
+                </div>
+              )}
+
+              {/* PREVIEW TABLE */}
+              {importPreview.length > 0 && !importResult && (
+                <div>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Preview — First 5 rows</p>
+                  <div className="overflow-x-auto rounded-2xl border border-slate-100 dark:border-slate-800">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-slate-50 dark:bg-slate-800">
+                        <tr>
+                          {Object.keys(importPreview[0]).map(h => (
+                            <th key={h} className="px-4 py-2 font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
+                        {importPreview.map((row, i) => (
+                          <tr key={i}>
+                            {Object.values(row).map((val: any, j) => (
+                              <td key={j} className="px-4 py-2 font-medium text-slate-600 dark:text-slate-300 whitespace-nowrap">{String(val) || "—"}</td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* RESULT */}
+              {importResult && (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="bg-emerald-50 dark:bg-emerald-500/10 rounded-2xl p-4 text-center border border-emerald-100 dark:border-emerald-500/20">
+                      <p className="text-3xl font-black text-emerald-600 dark:text-emerald-400">{importResult.imported}</p>
+                      <p className="text-[10px] font-black text-emerald-500 uppercase tracking-wider mt-1">Imported</p>
+                    </div>
+                    <div className="bg-amber-50 dark:bg-amber-500/10 rounded-2xl p-4 text-center border border-amber-100 dark:border-amber-500/20">
+                      <p className="text-3xl font-black text-amber-600 dark:text-amber-400">{importResult.skipped.length}</p>
+                      <p className="text-[10px] font-black text-amber-500 uppercase tracking-wider mt-1">Skipped</p>
+                    </div>
+                    <div className="bg-rose-50 dark:bg-rose-500/10 rounded-2xl p-4 text-center border border-rose-100 dark:border-rose-500/20">
+                      <p className="text-3xl font-black text-rose-600 dark:text-rose-400">{importResult.errors.length}</p>
+                      <p className="text-[10px] font-black text-rose-500 uppercase tracking-wider mt-1">Errors</p>
+                    </div>
+                  </div>
+
+                  {(importResult.skipped.length > 0 || importResult.errors.length > 0) && (
+                    <div>
+                      <div className="flex gap-2 mb-3">
+                        {importResult.skipped.length > 0 && (
+                          <button onClick={() => setActiveResultTab("skipped")}
+                            className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${activeResultTab === "skipped" ? "bg-amber-500 text-white" : "bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400"}`}>
+                            Duplicates ({importResult.skipped.length})
+                          </button>
+                        )}
+                        {importResult.errors.length > 0 && (
+                          <button onClick={() => setActiveResultTab("errors")}
+                            className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${activeResultTab === "errors" ? "bg-rose-500 text-white" : "bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400"}`}>
+                            Errors ({importResult.errors.length})
+                          </button>
+                        )}
+                      </div>
+
+                      {activeResultTab === "skipped" && importResult.skipped.length > 0 && (
+                        <div className="rounded-2xl border border-amber-100 dark:border-amber-500/20 overflow-hidden">
+                          <table className="w-full text-left text-xs">
+                            <thead className="bg-amber-50 dark:bg-amber-500/10">
+                              <tr>
+                                <th className="px-4 py-2 font-black text-amber-500 uppercase tracking-wider">User ID</th>
+                                <th className="px-4 py-2 font-black text-amber-500 uppercase tracking-wider">Name</th>
+                                <th className="px-4 py-2 font-black text-amber-500 uppercase tracking-wider">Reason</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-amber-50 dark:divide-amber-500/10">
+                              {importResult.skipped.map((s, i) => (
+                                <tr key={i}>
+                                  <td className="px-4 py-2 font-bold text-slate-600 dark:text-slate-300">{s.user_id}</td>
+                                  <td className="px-4 py-2 font-medium text-slate-600 dark:text-slate-300">{s.name}</td>
+                                  <td className="px-4 py-2 text-amber-600 dark:text-amber-400 font-medium">{s.reason}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+
+                      {activeResultTab === "errors" && importResult.errors.length > 0 && (
+                        <div className="bg-rose-50 dark:bg-rose-500/10 rounded-2xl p-4 border border-rose-100 dark:border-rose-500/20 space-y-1">
+                          {importResult.errors.map((e, i) => (
+                            <p key={i} className="text-xs text-rose-600 dark:text-rose-400 font-medium">{e}</p>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <button
+                    onClick={() => { setImportFile(null); setImportPreview([]); setImportResult(null); setFileType(null); }}
+                    className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 hover:underline uppercase tracking-wider"
+                  >
+                    ↑ Import Another File
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* FOOTER */}
+            <div className="p-6 md:p-8 bg-slate-50 dark:bg-slate-800 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-3 shrink-0">
+              <button onClick={() => setShowImportModal(false)}
+                className="px-6 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-slate-600">
+                {importResult ? "Close" : "Cancel"}
+              </button>
+              {!importResult && (
+                <button onClick={handleImportSubmit} disabled={!importFile || importing}
+                  className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white px-8 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg transition-all active:scale-95">
+                  {importing ? "Importing..." : "Import Users"}
+                </button>
+              )}
             </div>
           </div>
         </div>

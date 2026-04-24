@@ -1,12 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { createConnection } from "@/lib/db";
+import { AUTH_COOKIE_NAME, verifyToken } from "@/lib/auth";
 import {
   createErrorResponse,
   parseUserIdParam,
   syncRoleRecords,
   validateUserPayload,
 } from "../user-utils";
+
+const SELF_PROTECTION_MESSAGE =
+  "System Protection: You cannot modify your own administrative status";
+
+async function getAdminPayload(request: NextRequest) {
+  const token = request.cookies.get(AUTH_COOKIE_NAME)?.value;
+
+  if (!token) {
+    return { response: createErrorResponse("Not logged in.", 401) } as const;
+  }
+
+  const payload = await verifyToken(token);
+
+  if (!payload || String(payload.role).toLowerCase() !== "admin") {
+    return { response: createErrorResponse("Unauthorized.", 401) } as const;
+  }
+
+  return { payload } as const;
+}
 
 export async function PUT(
   request: NextRequest,
@@ -19,6 +39,15 @@ export async function PUT(
     return createErrorResponse("Invalid user ID.", 400, {
       user_id: "The provided user ID is invalid.",
     });
+  }
+
+  const auth = await getAdminPayload(request);
+  if ("response" in auth) {
+    return auth.response;
+  }
+
+  if (Number(auth.payload.user_id) === userId) {
+    return createErrorResponse(SELF_PROTECTION_MESSAGE, 403);
   }
 
   const db = await createConnection();
@@ -125,7 +154,7 @@ export async function PUT(
 }
 
 export async function DELETE(
-  _: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
@@ -135,6 +164,15 @@ export async function DELETE(
     return createErrorResponse("Invalid user ID.", 400, {
       user_id: "The provided user ID is invalid.",
     });
+  }
+
+  const auth = await getAdminPayload(request);
+  if ("response" in auth) {
+    return auth.response;
+  }
+
+  if (Number(auth.payload.user_id) === userId) {
+    return createErrorResponse(SELF_PROTECTION_MESSAGE, 403);
   }
 
   const db = await createConnection();

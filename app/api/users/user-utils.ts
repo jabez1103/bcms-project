@@ -11,14 +11,20 @@ export const PROGRAMS: Record<string, number> = {
 };
 
 export const DEPARTMENTS = [
-  "Registrar",
-  "Library",
-  "Cashier",
-  "Guidance",
-  "Clinic",
-  "Sports Office",
-  "Student Affairs",
-  "Dean Office",
+  'Director, Scholarship and Admission',
+  'Director, Guidance and Counseling Services',
+  'Director, Sports Development',
+  'Head, Housing and Residental Services',
+  'Head, Student Publication',
+  'Head, Student Goverment',
+  'Head, Student Discipline',
+  'Director, Health and Wellness Services',
+  'Diretor, Culture and Arts Affair',
+  'Director, Alumni Relations',
+  'Head, Student Organizations',
+  'Head, FSTLP',
+  'Director, Student Development Services',
+  'Sports Office',
 ] as const;
 
 export const VALID_ROLES = ["student", "signatory", "admin"] as const;
@@ -43,6 +49,7 @@ export type ValidatedUserPayload = {
   program: string | null;
   year_level: number | null;
   department: string | null;
+  credentials: string | null;
 };
 
 function toTrimmedString(value: unknown) {
@@ -102,6 +109,7 @@ export function validateUserPayload(
   const program = toTrimmedString(input?.program).toUpperCase();
   const yearLevelRaw = toTrimmedString(input?.year_level);
   const department = normalizeOptionalText(input?.department);
+  const credentials = normalizeOptionalText(input?.credentials);
 
   if (!userIdRaw) {
     errors.user_id = "User ID is required.";
@@ -202,6 +210,7 @@ export function validateUserPayload(
       program: role === "student" ? program : null,
       year_level: role === "student" ? year_level : null,
       department: role === "signatory" ? department : null,
+      credentials: role === "signatory" ? credentials : null,
     },
   };
 }
@@ -217,7 +226,10 @@ export function parseUserIdParam(id: string) {
 export async function syncRoleRecords(
   db: any,
   userId: number,
-  payload: Pick<ValidatedUserPayload, "role" | "program" | "year_level" | "department">,
+  payload: Pick<
+    ValidatedUserPayload,
+    "role" | "program" | "year_level" | "department" | "credentials"
+  >,
 ) {
   await db.query("DELETE FROM students WHERE user_id = ?", [userId]);
   await db.query("DELETE FROM signatories WHERE user_id = ?", [userId]);
@@ -225,19 +237,22 @@ export async function syncRoleRecords(
 
   if (payload.role === "student") {
     await db.query(
-      "INSERT INTO students (user_id, program, year_level) VALUES (?, ?, ?)",
-      [userId, payload.program, payload.year_level],
+      "INSERT INTO students (student_id, user_id, program, year_level) VALUES (?, ?, ?, ?)",
+      [userId, userId, payload.program, payload.year_level],
     );
     return;
   }
 
   if (payload.role === "signatory") {
     await db.query(
-      "INSERT INTO signatories (user_id, department) VALUES (?, ?)",
-      [userId, payload.department],
+      "INSERT INTO signatories (signatory_id, user_id, department, credentials) VALUES (?, ?, ?, ?)",
+      [userId, userId, payload.department, payload.credentials],
     );
     return;
   }
 
-  await db.query("INSERT INTO administrators (user_id) VALUES (?)", [userId]);
+  await db.query(
+    "INSERT INTO administrators (admin_id, user_id) VALUES (?, ?)",
+    [userId, userId],
+  );
 }

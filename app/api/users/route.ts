@@ -1,13 +1,40 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { createConnection } from "@/lib/db.js";
+import { AUTH_COOKIE_NAME, verifyToken } from "@/lib/auth";
 import {
   createErrorResponse,
   syncRoleRecords,
   validateUserPayload,
 } from "./user-utils";
 
-export async function GET() {
+async function getAdminContext(request: NextRequest) {
+  const token = request.cookies.get(AUTH_COOKIE_NAME)?.value;
+
+  if (!token) {
+    return {
+      response: createErrorResponse("Not logged in.", 401),
+    } as const;
+  }
+
+  const payload = await verifyToken(token);
+
+  if (!payload || String(payload.role).toLowerCase() !== "admin") {
+    return {
+      response: createErrorResponse("Unauthorized.", 401),
+    } as const;
+  }
+
+  return { payload } as const;
+}
+
+export async function GET(request: NextRequest) {
+  const context = await getAdminContext(request);
+
+  if ("response" in context) {
+    return context.response;
+  }
+
   const db = await createConnection();
 
   try {
@@ -43,6 +70,12 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const context = await getAdminContext(request);
+
+  if ("response" in context) {
+    return context.response;
+  }
+
   const db = await createConnection();
 
   try {
