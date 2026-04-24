@@ -58,6 +58,21 @@ export async function POST(req: NextRequest) {
             );
         }
 
+        const role = String(user.role ?? "").toLowerCase();
+
+        if (role === "student" || role === "signatory") {
+            const [activePeriods]: any = await db.query(
+                "SELECT period_id FROM clearance_periods WHERE period_status = 'live' ORDER BY created_at DESC LIMIT 1"
+            );
+
+            if (activePeriods.length === 0) {
+                return NextResponse.json(
+                    { success: false, message: "No active clearance period found." },
+                    { status: 403 }
+                );
+            }
+        }
+
         const token = await signToken({
             user_id: user.user_id,
             full_name: `${user.first_name} ${user.last_name}`,
