@@ -20,7 +20,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             SELECT
                 sg.signatory_id as id,
                 sg.department AS role,
-                CONCAT(u.first_name, ' ', u.last_name) AS name,
+                CONCAT(u.first_name, ' ', u.last_name,
+                  IF(sg.academic_credentials IS NOT NULL AND sg.academic_credentials != '',
+                    CONCAT(', ', sg.academic_credentials), '')) AS name,
                 CASE
                     WHEN COUNT(s.submission_id) = 0 THEN 'Not Submitted'
                     WHEN SUM(CASE WHEN a.decision_status = 'rejected' THEN 1 ELSE 0 END) > 0 THEN 'Rejected'
@@ -34,7 +36,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             LEFT JOIN submissions s ON s.requirement_id = r.requirement_id AND s.student_id = ?
             LEFT JOIN approvals a ON a.submission_id = s.submission_id
             WHERE cp.period_status = 'live'
-            GROUP BY sg.signatory_id, sg.department, u.first_name, u.last_name
+            GROUP BY sg.signatory_id, sg.department, u.first_name, u.last_name, sg.academic_credentials
             ORDER BY sg.department ASC
         `, [student_id]);
 

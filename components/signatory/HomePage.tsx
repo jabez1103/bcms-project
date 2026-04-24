@@ -14,7 +14,8 @@ import {
   PieChart as PieIcon,
   BarChart3,
   Download,
-  GraduationCap
+  GraduationCap,
+  MessageSquare
 } from "lucide-react";
 import {
   SkeletonStatCard,
@@ -50,7 +51,7 @@ interface StudentSubmission {
   status: SubmissionStatus;
   requirementType: string;
   submissionDate: string;
-  hasAttachment: boolean;
+  fileUrl: string;
   remarks: string;
   initials: string;
   color: string;
@@ -99,6 +100,10 @@ export default function SignatoryDashboard() {
   const [loading, setLoading] = useState(true);
   const [chartRadius, setChartRadius] = useState({ inner: 60, outer: 85 });
 
+  /* --- SELECTION & BULK STATE --- */
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [showBulkModal, setShowBulkModal] = useState<"Approve" | "Reject" | null>(null);
+
   useEffect(() => {
     const fetchSubmissions = async () => {
       try {
@@ -113,7 +118,7 @@ export default function SignatoryDashboard() {
             status: s.status,
             requirementType: s.requirement,
             submissionDate: s.submittedAt,
-            hasAttachment: !!s.fileUrl,
+            fileUrl: s.fileUrl || "",
             remarks: s.studentComment || "",
             initials: getInitials(s.name),
             color: getColorForId(s.id)
@@ -165,7 +170,54 @@ export default function SignatoryDashboard() {
     return filteredData.slice(start, start + itemsPerPage);
   }, [filteredData, currentPage, itemsPerPage]);
 
-  const updateStatus = (id: string, newStatus: SubmissionStatus) => {
+  const isPageSelected =
+    paginatedData.length > 0 && paginatedData.every(s => selectedIds.includes(s.id));
+
+  const handleSelectPage = () => {
+    const pageIds = paginatedData.map(s => s.id);
+    if (isPageSelected) {
+      setSelectedIds(prev => prev.filter(id => !pageIds.includes(id)));
+    } else {
+      setSelectedIds(prev => Array.from(new Set([...prev, ...pageIds])));
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  };
+
+  const handleBulkAction = async () => {
+    if (!showBulkModal) return;
+    const newStatus = showBulkModal === "Approve" ? "Approved" : "Rejected";
+    try {
+      const res = await fetch("/api/signatory/submissions/review", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ submissionIds: selectedIds, status: showBulkModal.toLowerCase() }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSubmissions(prev =>
+          prev.map(s => selectedIds.includes(s.id) ? { ...s, status: newStatus } : s)
+        );
+      }
+    } catch (err) {
+      console.error("Bulk action failed", err);
+    }
+    setSelectedIds([]);
+    setShowBulkModal(null);
+  };
+
+  const updateStatus = async (id: string, newStatus: SubmissionStatus) => {
+    try {
+      await fetch("/api/signatory/submissions/review", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ submissionIds: [id], status: newStatus.toLowerCase() }),
+      });
+    } catch (err) {
+      console.error("Status update failed", err);
+    }
     setSubmissions(prev => prev.map(s => s.id === id ? { ...s, status: newStatus } : s));
     setSelectedSubmission(null);
   };
@@ -308,13 +360,51 @@ export default function SignatoryDashboard() {
             </div>
           </div>
 
+          {/* SELECT ALL + BULK ACTIONS TOOLBAR */}
+          <div className="px-6 sm:px-8 py-4 border-t border-slate-100 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm flex items-center justify-between sticky top-0 z-10">
+            <button
+              onClick={handleSelectPage}
+              className="flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-slate-700 dark:text-slate-300"
+            >
+              <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${
+                isPageSelected
+                  ? 'bg-slate-900 dark:bg-indigo-600 border-slate-900 dark:border-indigo-600'
+                  : 'border-slate-300 dark:border-slate-600'
+              }`}>
+                {isPageSelected && <span className="text-white text-[10px] font-black">&#10003;</span>}
+              </div>
+              Select Page
+            </button>
+            {selectedIds.length > 0 && (
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 px-3 py-1.5 rounded-full">
+                  {selectedIds.length} Selected
+                </span>
+                <button onClick={() => setShowBulkModal("Approve")} className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95">
+                  Approve
+                </button>
+                <button onClick={() => setShowBulkModal("Reject")} className="px-4 py-2 bg-rose-500 hover:bg-rose-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95">
+                  Reject
+                </button>
+              </div>
+            )}
+          </div>
+
           {/* MOBILE SKELETON & VIEW */}
           <div className="block xl:hidden divide-y divide-slate-100 dark:divide-slate-800/50">
             {loading ? (
               Array.from({ length: 5 }).map((_, i) => <SkeletonMobileCard key={i} />)
             ) : paginatedData.map((s) => (
-              <div key={s.id} className="p-5 space-y-4">
+              <div key={s.id} className={`p-5 space-y-4 transition-colors ${
+                selectedIds.includes(s.id) ? 'bg-indigo-50/30 dark:bg-indigo-900/10' : ''
+              }`}>
                 <div className="flex items-center gap-4">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.includes(s.id)}
+                    onChange={() => toggleSelect(s.id)}
+                    className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-indigo-600 cursor-pointer"
+                  />
                   <div className={`w-12 h-12 rounded-2xl ${s.color} flex items-center justify-center font-black text-sm shadow-sm shrink-0`}>{s.initials}</div>
                   <div className="min-w-0">
                     <p className="font-black text-sm text-slate-800 dark:text-slate-200 truncate">{s.name}</p>
@@ -330,8 +420,8 @@ export default function SignatoryDashboard() {
                   </div>
                   <StatusBadge status={s.status} />
                 </div>
-                <button 
-                  onClick={() => setSelectedSubmission(s)} 
+                <button
+                  onClick={() => setSelectedSubmission(s)}
                   className="w-full inline-flex items-center justify-center px-6 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-200 rounded-xl text-[10px] font-black uppercase hover:bg-slate-900 dark:hover:bg-slate-700 hover:text-white dark:hover:text-white transition-all active:scale-95 shadow-sm mt-2"
                 >
                   Review
@@ -352,11 +442,19 @@ export default function SignatoryDashboard() {
               </thead>
               <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
                 {loading ? (
-                  Array.from({ length: 5 }).map((_, i) => <SkeletonTableRow key={i} cols={4} />)
+                  Array.from({ length: 5 }).map((_, i) => <SkeletonTableRow key={i} cols={5} />)
                 ) : paginatedData.map((s) => (
-                  <tr key={s.id} className="group hover:bg-slate-50/80 dark:hover:bg-slate-800/80 transition-all">
+                  <tr key={s.id} className={`group hover:bg-slate-50/80 dark:hover:bg-slate-800/80 transition-all ${
+                    selectedIds.includes(s.id) ? 'bg-indigo-50/30 dark:bg-indigo-900/10' : ''
+                  }`}>
                     <td className="px-8 py-6">
                       <div className="flex items-center gap-4">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.includes(s.id)}
+                          onChange={() => toggleSelect(s.id)}
+                          className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                        />
                         <div className={`w-11 h-11 rounded-2xl ${s.color} flex items-center justify-center font-black text-xs shadow-sm`}>{s.initials}</div>
                         <div>
                           <p className="font-black text-sm text-slate-800 dark:text-slate-200 group-hover:text-blue-600 transition-colors">{s.name}</p>
@@ -374,8 +472,8 @@ export default function SignatoryDashboard() {
                     </td>
                     <td className="px-8 py-6"><StatusBadge status={s.status} /></td>
                     <td className="px-8 py-6 text-right">
-                      <button 
-                        onClick={() => setSelectedSubmission(s)} 
+                      <button
+                        onClick={() => setSelectedSubmission(s)}
                         className="inline-flex items-center justify-center px-6 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-200 rounded-xl text-[10px] font-black uppercase hover:bg-slate-900 dark:hover:bg-slate-700 hover:text-white dark:hover:text-white transition-all active:scale-95 shadow-sm"
                       >
                         Review
@@ -457,39 +555,127 @@ export default function SignatoryDashboard() {
         </div>
       </main>
 
-      {/* REVIEW MODAL */}
+      {/* INSPECTION MODAL */}
       {selectedSubmission && (
-        <div className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-md z-[100] flex items-center justify-center p-4 sm:p-6">
-          <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] w-full max-w-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            <div className={`p-8 sm:p-10 ${selectedSubmission.color} flex justify-between items-start`}>
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-2">Reviewing Submission</p>
-                <h2 className="text-2xl sm:text-3xl font-black leading-tight">{selectedSubmission.name}</h2>
-                <p className="text-xs font-bold mt-1 opacity-80">{selectedSubmission.id} • {selectedSubmission.requirementType}</p>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 dark:bg-slate-900/80 backdrop-blur-md">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-4xl h-[85vh] rounded-[3rem] shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in duration-300">
+
+            {/* Header */}
+            <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center shrink-0">
+              <div className="flex items-center gap-4">
+                <div className={`w-12 h-12 ${selectedSubmission.color} rounded-2xl flex items-center justify-center font-black text-sm shadow-sm`}>
+                  {selectedSubmission.initials}
+                </div>
+                <div>
+                  <h2 className="text-xl font-black text-slate-900 dark:text-slate-100 uppercase tracking-tight">{selectedSubmission.name}</h2>
+                  <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider">{selectedSubmission.id} • {selectedSubmission.requirementType}</p>
+                </div>
               </div>
-              <button onClick={() => setSelectedSubmission(null)} className="p-2.5 bg-white/20 hover:bg-white/40 rounded-2xl transition-all"><X size={20}/></button>
+              <button
+                onClick={() => setSelectedSubmission(null)}
+                className="p-4 bg-slate-50 dark:bg-slate-800 rounded-full text-slate-400 dark:text-slate-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 hover:text-rose-500 dark:hover:text-rose-400 transition-colors"
+              >
+                <X size={20} />
+              </button>
             </div>
-            <div className="p-8 sm:p-10 space-y-8">
-              <div className="p-6 bg-slate-50 dark:bg-slate-800 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-3xl">
-                <p className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 mb-3 tracking-widest">Student Remarks</p>
-                <p className="text-sm font-bold text-slate-600 dark:text-slate-300 leading-relaxed italic">
-                  {selectedSubmission.remarks ? `"${selectedSubmission.remarks}"` : "No remarks provided by student."}
-                </p>
+
+            {/* Body */}
+            <div className="flex-1 overflow-y-auto p-8 md:p-12 flex flex-col md:flex-row gap-10">
+
+              {/* File preview */}
+              <div className="flex-1">
+                {selectedSubmission.fileUrl ? (
+                  <img
+                    src={selectedSubmission.fileUrl}
+                    className="w-full rounded-3xl shadow-lg border-8 border-slate-50 dark:border-slate-800 object-contain max-h-[60vh]"
+                    alt="Submitted file preview"
+                  />
+                ) : (
+                  <div className="w-full h-64 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-400 dark:text-slate-500">
+                    <p className="text-sm font-bold uppercase tracking-widest">No file attached</p>
+                  </div>
+                )}
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <button 
-                  onClick={() => updateStatus(selectedSubmission.id, "Rejected")} 
-                  className="py-4.5 bg-white dark:bg-slate-800 border-2 border-rose-100 dark:border-rose-900/50 text-rose-600 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-rose-50 transition-all active:scale-95"
-                >
-                  Decline
-                </button>
-                <button 
-                  onClick={() => updateStatus(selectedSubmission.id, "Approved")} 
-                  className="py-4.5 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-slate-900/20 hover:bg-blue-600 transition-all active:scale-95"
-                >
-                  Approve
-                </button>
+
+              {/* Sidebar */}
+              <div className="w-full md:w-80 space-y-8 shrink-0">
+                {/* Student comment */}
+                <div className="space-y-4">
+                  <h4 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Student Note</h4>
+                  {selectedSubmission.remarks ? (
+                    <div className="bg-indigo-50 dark:bg-indigo-500/10 rounded-2xl p-4 border border-indigo-100 dark:border-indigo-500/20">
+                      <div className="flex items-center gap-2 mb-2">
+                        <MessageSquare size={13} className="text-indigo-500 shrink-0" />
+                        <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Comment from Student</span>
+                      </div>
+                      <p className="text-sm font-medium text-slate-700 dark:text-slate-200 italic leading-relaxed">
+                        "{selectedSubmission.remarks}"
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-slate-400 dark:text-slate-500 italic">No comment was added by the student.</p>
+                  )}
+                </div>
+
+                {/* Actions */}
+                <div className="pt-8 border-t border-slate-100 dark:border-slate-800 grid grid-cols-1 gap-3">
+                  <button
+                    onClick={() => updateStatus(selectedSubmission.id, "Approved")}
+                    className="w-full py-5 bg-indigo-600 dark:bg-indigo-500 text-white rounded-3xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-indigo-100 dark:shadow-none hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-all active:scale-95"
+                  >
+                    Approve Document
+                  </button>
+                  <button
+                    onClick={() => updateStatus(selectedSubmission.id, "Rejected")}
+                    className="w-full py-5 bg-white dark:bg-slate-900 text-rose-500 dark:text-rose-400 border border-rose-100 dark:border-rose-500/20 rounded-3xl text-[10px] font-black uppercase tracking-widest hover:bg-rose-50 dark:hover:bg-rose-500/5 transition-all active:scale-95"
+                  >
+                    Reject
+                  </button>
+                </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* BULK CONFIRM MODAL */}
+      {showBulkModal && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-md animate-in fade-in">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-[2.5rem] shadow-2xl p-8 text-center space-y-6 border border-transparent dark:border-slate-800">
+            <div className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center ${
+              showBulkModal === "Approve"
+                ? "bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+                : "bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400"
+            }`}>
+              <span className="text-2xl font-black">{showBulkModal === "Approve" ? "✓" : "✕"}</span>
+            </div>
+            <div>
+              <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight mb-2">
+                Confirm {showBulkModal}
+              </h3>
+              <p className="text-slate-500 dark:text-slate-400 font-medium text-sm">
+                Are you sure you want to {showBulkModal.toLowerCase()}{" "}
+                <strong>{selectedIds.length}</strong> selected submission{selectedIds.length !== 1 ? "s" : ""}?
+                This action cannot be undone.
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-3 pt-4">
+              <button
+                onClick={() => setShowBulkModal(null)}
+                className="py-4 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleBulkAction}
+                className={`py-4 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg transition-transform active:scale-95 ${
+                  showBulkModal === "Approve"
+                    ? "bg-emerald-500 shadow-emerald-500/20 hover:bg-emerald-600"
+                    : "bg-rose-500 shadow-rose-500/20 hover:bg-rose-600"
+                }`}
+              >
+                Yes, {showBulkModal}
+              </button>
             </div>
           </div>
         </div>

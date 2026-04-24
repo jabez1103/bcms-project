@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { 
-  Search, X, CheckSquare, Square, 
+  Search, X, CheckSquare, 
   Eye, LayoutGrid, Table as TableIcon, 
   Calendar, MessageSquare, User,
-  GraduationCap, Layers, Hash, Bell, ChevronDown
+  GraduationCap, Layers, Hash, Bell, ChevronDown,
+  ChevronLeft, ChevronRight
 } from "lucide-react";
 import { SkeletonMobileCard, SkeletonTableRow } from "@/components/ui/Skeleton";
 
@@ -51,12 +52,17 @@ export default function UltimateClearancePortal() {
   // Filter States
   const [search, setSearch] = useState("");
   const [programFilter, setProgramFilter] = useState<Program | "All">("All");
+  const [statusFilter, setStatusFilter] = useState<SubmissionStatus | "All">("All");
 
   const [students, setStudents] = useState<Student[]>([]);
   const [showBulkModal, setShowBulkModal] = useState<"Approve" | "Reject" | null>(null);
   const [loading, setLoading] = useState(true);
 
   const [viewMode, setViewMode] = useState<"grid" | "table">("table");
+
+  /* --- PAGINATION --- */
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   React.useEffect(() => {
     const fetchSubmissions = async () => {
@@ -76,10 +82,20 @@ export default function UltimateClearancePortal() {
   }, []);
 
   const filteredData = useMemo(() => {
-    return students.filter(s => 
-      s.name.toLowerCase().includes(search.toLowerCase()) || s.id.includes(search)
-    );
-  }, [search, students]);
+    return students.filter(s => {
+      const matchesSearch = s.name.toLowerCase().includes(search.toLowerCase()) || s.id.includes(search);
+      const matchesStatus = statusFilter === "All" || s.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [search, statusFilter, students]);
+
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  const paginatedData = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredData.slice(start, start + itemsPerPage);
+  }, [filteredData, currentPage, itemsPerPage]);
+
+  useEffect(() => { setCurrentPage(1); }, [search, statusFilter]);
 
   const handleBulkAction = async () => {
     if (!showBulkModal) return;
@@ -105,10 +121,10 @@ export default function UltimateClearancePortal() {
     setShowBulkModal(null);
   };
 
-  const isPageSelected = filteredData.length > 0 && filteredData.every(s => selectedIds.includes(s.id));
+  const isPageSelected = paginatedData.length > 0 && paginatedData.every(s => selectedIds.includes(s.id));
   
   const handleSelectPage = () => {
-    const pageIds = filteredData.map(s => s.id);
+    const pageIds = paginatedData.map(s => s.id);
     if (isPageSelected) {
       setSelectedIds(prev => prev.filter(id => !pageIds.includes(id)));
     } else {
@@ -122,14 +138,33 @@ export default function UltimateClearancePortal() {
 
   return (
     <div className="w-full h-full font-sans text-slate-900 dark:text-slate-100">
-      
+
+      {/* ── STICKY HEADER ── */}
+      <header className="sticky top-0 z-[20] bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200/60 dark:border-slate-800 px-4 py-4 sm:px-8 lg:px-12">
+        <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 bg-slate-900 dark:bg-slate-800 rounded-xl flex items-center justify-center text-white shadow-lg shadow-slate-200 dark:shadow-none">
+              <Eye size={20} />
+            </div>
+            <div className="space-y-0.5">
+              <h1 className="text-xl sm:text-2xl font-black tracking-tight leading-none uppercase">
+                Review <span className="text-indigo-600">Submissions</span>
+              </h1>
+              <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500">
+                <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
+                <p className="text-[9px] font-black uppercase tracking-[0.2em]">Clearance Audit</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
       {/* MAIN CONTENT AREA */}
       <main className="max-w-6xl mx-auto p-4 md:p-8 space-y-8">
         
-        {/* HEADER SECTION */}
-        <section className="space-y-6">
+        {/* SEARCH & SELECT ALL */}
+        <section className="space-y-4">
           <div className="text-center md:text-left">
-            <h1 className="text-5xl font-black tracking-tighter text-[#0F172A] dark:text-slate-100 uppercase">Clearance Audit</h1>
             <p className="text-slate-400 dark:text-slate-500 font-bold mt-1 uppercase text-[10px] tracking-[0.25em]">Active Submissions • April 2026</p>
           </div>
         </section>
@@ -156,7 +191,33 @@ export default function UltimateClearancePortal() {
             </div>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-50 dark:border-slate-800 shadow-sm flex items-center justify-between">
+          {/* STATUS FILTER PILLS */}
+          <div className="flex flex-wrap gap-2">
+            {(["All", "Pending", "Approved", "Rejected"] as const).map((s) => {
+              const count = s === "All" ? students.length : students.filter(x => x.status === s).length;
+              const active = statusFilter === s;
+              const colors: Record<string, string> = {
+                All:      active ? "bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shadow-md" : "bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:border-slate-400",
+                Pending:  active ? "bg-amber-500 text-white shadow-md shadow-amber-200 dark:shadow-none" : "bg-white dark:bg-slate-900 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/30 hover:border-amber-400",
+                Approved: active ? "bg-emerald-500 text-white shadow-md shadow-emerald-200 dark:shadow-none" : "bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30 hover:border-emerald-400",
+                Rejected: active ? "bg-rose-500 text-white shadow-md shadow-rose-200 dark:shadow-none" : "bg-white dark:bg-slate-900 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-500/30 hover:border-rose-400",
+              };
+              return (
+                <button
+                  key={s}
+                  onClick={() => setStatusFilter(s)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 ${colors[s]}`}
+                >
+                  {s}
+                  <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-black ${
+                    active ? "bg-white/25 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
+                  }`}>{count}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm p-6 rounded-[2rem] border border-slate-50 dark:border-slate-800 shadow-sm flex items-center justify-between sticky top-0 z-10">
             <button onClick={handleSelectPage} className="flex items-center gap-4 text-[10px] font-black uppercase tracking-widest text-slate-700 dark:text-slate-300">
               <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${isPageSelected ? 'bg-slate-900 dark:bg-indigo-600 border-slate-900 dark:border-indigo-600' : 'border-slate-200 dark:border-slate-700'}`}>
                 {isPageSelected && <CheckSquare size={14} className="text-white" />}
@@ -173,17 +234,18 @@ export default function UltimateClearancePortal() {
           </div>
         </section>
 
-        {/* MAIN LIST */}
-        <div className="pb-20">
+        {/* MAIN LIST — single card wraps both views + pagination */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2rem] overflow-hidden shadow-sm">
+
           {/* GRID VIEW */}
-          <div className={viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" : "hidden"}>
+          <div className={viewMode === "grid" ? "p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" : "hidden"}>
             {loading ? (
               <>
                 <SkeletonMobileCard />
                 <SkeletonMobileCard />
                 <SkeletonMobileCard />
               </>
-            ) : filteredData.map((s) => (
+            ) : paginatedData.map((s) => (
               <div 
                 key={s.id} 
                 className={`bg-white dark:bg-slate-900 rounded-[2rem] border transition-all duration-300 overflow-hidden relative group flex flex-col ${
@@ -202,9 +264,16 @@ export default function UltimateClearancePortal() {
                   </div>
 
                   <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-700/50 space-y-2">
-                     <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">{s.requirement}</p>
+                     <div className="flex items-center justify-between gap-2">
+                       <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">{s.requirement}</p>
+                       {s.studentComment && (
+                         <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 text-[9px] font-black text-indigo-500 uppercase shrink-0">
+                           <MessageSquare size={9} /> Note
+                         </span>
+                       )}
+                     </div>
                      <p className="text-xs text-slate-500 dark:text-slate-400 italic font-medium leading-relaxed line-clamp-3">
-                       "{s.studentComment}"
+                       {s.studentComment ? `"${s.studentComment}"` : <span className="not-italic text-slate-300 dark:text-slate-600">No comment added</span>}
                      </p>
                   </div>
                 </div>
@@ -229,8 +298,7 @@ export default function UltimateClearancePortal() {
           </div>
 
           {/* TABLE VIEW */}
-          <div className={viewMode === "table" ? "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2rem] overflow-hidden shadow-sm" : "hidden"}>
-             <div className="overflow-x-auto">
+          <div className={viewMode === "table" ? "overflow-x-auto border-t border-slate-100 dark:border-slate-800" : "hidden"}>
                <table className="w-full text-left border-collapse min-w-[800px]">
                  <thead>
                    <tr className="bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
@@ -250,7 +318,7 @@ export default function UltimateClearancePortal() {
                        <SkeletonTableRow cols={5} />
                        <SkeletonTableRow cols={5} />
                      </>
-                   ) : filteredData.map((s) => (
+                   ) : paginatedData.map((s) => (
                      <tr key={s.id} className={`group hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors ${selectedIds.includes(s.id) ? 'bg-indigo-50/30 dark:bg-indigo-900/10' : ''}`}>
                        <td className="px-6 py-5">
                          <div className="flex items-center gap-4">
@@ -284,7 +352,65 @@ export default function UltimateClearancePortal() {
                    ))}
                  </tbody>
                </table>
-             </div>
+          </div>
+
+          {/* PAGINATION FOOTER */}
+          <div className="px-6 sm:px-8 py-5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-800/30 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Rows</span>
+                <select
+                  value={itemsPerPage}
+                  onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }}
+                  className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 dark:text-slate-200 rounded-xl px-3 py-2 text-[11px] font-black outline-none cursor-pointer shadow-sm"
+                >
+                  {[5, 10, 20, 50].map(v => <option key={v} value={v}>{v}</option>)}
+                </select>
+              </div>
+              <div className="h-4 w-[1px] bg-slate-200 dark:bg-slate-700 hidden sm:block" />
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                {paginatedData.length} of {filteredData.length} results
+              </span>
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
+                disabled={currentPage === 1}
+                className="p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl disabled:opacity-30 hover:bg-slate-900 hover:text-white dark:hover:bg-indigo-600 transition-all text-slate-600 dark:text-slate-400 shadow-sm active:scale-95"
+              >
+                <ChevronLeft size={16} />
+              </button>
+              <div className="flex gap-1 mx-1">
+                {[...Array(totalPages)].map((_, i) => {
+                  const p = i + 1;
+                  if (totalPages > 5 && p !== 1 && p !== totalPages && Math.abs(currentPage - p) > 1) {
+                    if (p === 2 || p === totalPages - 1) return <span key={i} className="px-2 text-slate-300 dark:text-slate-600 font-black self-center">···</span>;
+                    return null;
+                  }
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => setCurrentPage(p)}
+                      className={`w-9 h-9 rounded-xl text-[10px] font-black transition-all ${
+                        currentPage === p
+                          ? 'bg-slate-900 dark:bg-indigo-600 text-white shadow-lg shadow-slate-900/20'
+                          : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-900 hover:text-white dark:hover:bg-indigo-600 dark:hover:text-white'
+                      }`}
+                    >
+                      {p}
+                    </button>
+                  );
+                })}
+              </div>
+              <button
+                onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
+                disabled={currentPage === totalPages || totalPages === 0}
+                className="p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl disabled:opacity-30 hover:bg-slate-900 hover:text-white dark:hover:bg-indigo-600 transition-all text-slate-600 dark:text-slate-400 shadow-sm active:scale-95"
+              >
+                <ChevronRight size={16} />
+              </button>
+            </div>
           </div>
         </div>
       </main>
@@ -311,7 +437,19 @@ export default function UltimateClearancePortal() {
               <div className="w-full md:w-80 space-y-8">
                 <div className="space-y-4">
                   <h4 className="text-[10px] font-black text-slate-300 dark:text-slate-500 uppercase tracking-widest">Student Note</h4>
-                  <p className="text-sm font-medium text-slate-600 dark:text-slate-300 italic leading-relaxed">"{selectedStudent.studentComment}"</p>
+                  {selectedStudent.studentComment ? (
+                    <div className="bg-indigo-50 dark:bg-indigo-500/10 rounded-2xl p-4 border border-indigo-100 dark:border-indigo-500/20">
+                      <div className="flex items-center gap-2 mb-2">
+                        <MessageSquare size={13} className="text-indigo-500 shrink-0" />
+                        <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Comment from Student</span>
+                      </div>
+                      <p className="text-sm font-medium text-slate-700 dark:text-slate-200 italic leading-relaxed">
+                        "{selectedStudent.studentComment}"
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-slate-400 dark:text-slate-500 italic">No comment was added by the student.</p>
+                  )}
                 </div>
                 <div className="pt-8 border-t border-slate-50 dark:border-slate-800 grid grid-cols-1 gap-3">
                     <button onClick={async () => {

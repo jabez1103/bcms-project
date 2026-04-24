@@ -209,8 +209,11 @@ function RequirementRow({ requirement }: { requirement: Signatory }) {
     <tr className="group hover:bg-slate-50/80 dark:hover:bg-slate-800/80 transition-all">
       <td className="px-8 py-5">
         <p className="font-bold text-slate-800 dark:text-slate-200 text-sm group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-          {requirement.title || requirement.description}
+          {requirement.title || "Requirement"}
         </p>
+        {requirement.description && (
+          <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5 line-clamp-1">{requirement.description}</p>
+        )}
       </td>
       <td className="px-8 py-5">
         <div className="flex items-center gap-2">
@@ -276,9 +279,11 @@ function SignatoryCard({ person }: { person: Signatory }) {
 
       {/* --- BODY --- */}
       <div className="p-6 flex-1 min-h-[110px]">
-        {person.title && <h4 className="text-slate-800 dark:text-slate-100 font-bold text-sm mb-2">{person.title}</h4>}
-        <p className="text-slate-500 dark:text-slate-400 text-xs leading-relaxed font-medium line-clamp-3">
-          {person.description}
+        <h4 className="text-slate-800 dark:text-slate-100 font-bold text-sm mb-1.5">
+          {person.title || "Requirement"}
+        </h4>
+        <p className="text-slate-500 dark:text-slate-400 text-xs leading-relaxed font-medium line-clamp-4">
+          {person.description || "No description provided."}
         </p>
       </div>
 

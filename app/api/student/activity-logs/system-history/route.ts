@@ -4,10 +4,12 @@ import { createConnection } from "@/lib/db";
 
 /**
  * GET /api/student/activity-logs/system-history
- * Returns major system events for the student:
- *   - Account creation
- *   - Clearance periods they participated in (submitted at least one requirement)
- *   - Any live/ended clearance period they were enrolled during
+ *
+ * Returns a chronological list of major system events for the logged-in student:
+ *   1. Account creation
+ *   2. Enrollment info
+ *   3. Auth events  (login / logout / password_changed) — from auth_events table
+ *   4. Clearance periods they participated in
  */
 export async function GET(request: NextRequest) {
   const token = request.cookies.get("token")?.value;
@@ -19,6 +21,7 @@ export async function GET(request: NextRequest) {
   const db = await createConnection();
 
   try {
+    /* ── 1. Student meta ─────────────────────────────────────── */
     const [student]: any = await db.query(
       `SELECT st.student_id, st.program, st.year_level, u.created_at
        FROM students st
@@ -31,26 +34,72 @@ export async function GET(request: NextRequest) {
 
     const { student_id, program, year_level, created_at } = student[0];
 
-    const events: { id: number; action: string; status: string; time: string }[] = [];
+    const events: {
+      id: number;
+      event_type: string;
+      action: string;
+      status: string;
+      time: string;
+      ip_address: string | null;
+    }[] = [];
+
     let idCounter = 1;
 
-    // 1. Account created
+    /* ── 2. Account created ──────────────────────────────────── */
     events.push({
       id: idCounter++,
+      event_type: "account_created",
       action: "Account created",
       status: "neutral",
       time: formatDate(created_at),
+      ip_address: null,
     });
 
-    // 2. Enrolled info
+    /* ── 3. Enrolled info ────────────────────────────────────── */
     events.push({
       id: idCounter++,
-      action: `Enrolled in ${program} — ${year_level}`,
+      event_type: "enrolled",
+      action: `Enrolled in ${program} — Year ${year_level}`,
       status: "neutral",
       time: formatDate(created_at),
+      ip_address: null,
     });
 
-    // 3. Clearance periods (live + ended) where the student has submitted at least once
+    /* ── 4. Auth events (login / logout / password_changed) ─── */
+    const [authRows]: any = await db.query(
+      `SELECT event_id, event_type, ip_address, created_at
+       FROM auth_events
+       WHERE user_id = ?
+       ORDER BY created_at ASC`,
+      [payload.user_id]
+    );
+
+    for (const ev of authRows) {
+      let action = "";
+      let status = "neutral";
+
+      if (ev.event_type === "login") {
+        action = "Logged in to BCMS";
+        status = "login";
+      } else if (ev.event_type === "logout") {
+        action = "Logged out of BCMS";
+        status = "logout";
+      } else if (ev.event_type === "password_changed") {
+        action = "Password changed";
+        status = "password_changed";
+      }
+
+      events.push({
+        id: idCounter++,
+        event_type: ev.event_type,
+        action,
+        status,
+        time: formatDateTime(ev.created_at),
+        ip_address: ev.ip_address ?? null,
+      });
+    }
+
+    /* ── 5. Clearance periods ────────────────────────────────── */
     const [periods]: any = await db.query(
       `SELECT DISTINCT
          cp.period_id,
@@ -73,22 +122,26 @@ export async function GET(request: NextRequest) {
 
       events.push({
         id: idCounter++,
+        event_type: "period_started",
         action: `Clearance period started: ${label}`,
         status: p.period_status === "live" ? "active" : "neutral",
         time: formatDate(p.start_date),
+        ip_address: null,
       });
 
       if (p.period_status === "ended") {
         events.push({
           id: idCounter++,
+          event_type: "period_ended",
           action: `Clearance period ended: ${label}`,
           status: "neutral",
-          time: formatDate(p.start_date), // approximate; no end_date stored per row
+          time: formatDate(p.start_date),
+          ip_address: null,
         });
       }
     }
 
-    // Sort ascending by natural order (account first, then periods)
+    /* ── Sort by natural insertion order (already chronological) */
     return NextResponse.json({ success: true, history: events });
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
@@ -100,4 +153,16 @@ export async function GET(request: NextRequest) {
 function formatDate(date: string | Date): string {
   const d = new Date(date);
   return d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+}
+
+function formatDateTime(date: string | Date): string {
+  const d = new Date(date);
+  return d.toLocaleString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
 }

@@ -151,6 +151,9 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
       router.push("/signatory/home");
     }
   };
+   
+  
+  
 
   if (loading) {
     return (

@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     const db = await createConnection();
 
     const [student]: any = await db.query(
-        "SELECT student_id FROM students WHERE user_id = ?",
+        "SELECT student_id, year_level FROM students WHERE user_id = ?",
         [payload.user_id]
     );
 
@@ -22,6 +22,16 @@ export async function GET(request: NextRequest) {
     }
 
     const student_id = student[0].student_id;
+    const year_level  = student[0].year_level;  // numeric: 1, 2, 3, 4
+
+    // Map numeric year_level to the string stored in requirements.target_year
+    const yearMap: Record<number, string> = {
+      1: "1st Year",
+      2: "2nd Year",
+      3: "3rd Year",
+      4: "4th Year",
+    };
+    const studentYearLabel = yearMap[year_level] ?? null;
 
     const [rows]: any = await db.query(`
         SELECT
@@ -29,7 +39,10 @@ export async function GET(request: NextRequest) {
             sg.department AS role,
             r.requirement_name AS title,
             r.description,
-            CONCAT(u.first_name, ' ', u.last_name) AS name,
+            r.requirement_type AS format,
+            CONCAT(u.first_name, ' ', u.last_name,
+              IF(sg.academic_credentials IS NOT NULL AND sg.academic_credentials != '',
+                CONCAT(', ', sg.academic_credentials), '')) AS name,
             COALESCE(a.decision_status,
                 CASE WHEN s.submission_id IS NOT NULL THEN 'pending' ELSE 'not_submitted' END
             ) AS status
@@ -42,8 +55,10 @@ export async function GET(request: NextRequest) {
         LEFT JOIN approvals a
             ON a.submission_id = s.submission_id
         WHERE cp.period_status = 'live'
+          AND COALESCE(r.req_status, 'active') = 'active'
+          AND (r.target_year = 'All Years' OR r.target_year = ?)
         ORDER BY r.requirement_id ASC
-        `, [student_id]);
+        `, [student_id, studentYearLabel ?? 'All Years']);
 
     return NextResponse.json({ success: true, signatories: rows });
 }

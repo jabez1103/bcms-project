@@ -7,6 +7,7 @@ import {
     isTrustedMutationOrigin,
     signToken,
 } from "@/lib/auth";
+import { logAuthEvent } from "@/lib/authEvents";
 
 export async function POST(req: NextRequest) {
     try {
@@ -93,6 +94,16 @@ export async function POST(req: NextRequest) {
         });
 
         response.cookies.set(AUTH_COOKIE_NAME, token, getAuthCookieOptions());
+
+        // Log the login event (best-effort — don't block the response)
+        try {
+            const ip =
+                req.headers.get("x-forwarded-for")?.split(",")[0].trim() ??
+                req.headers.get("x-real-ip") ??
+                null;
+            const ua = req.headers.get("user-agent") ?? null;
+            await logAuthEvent(db, user.user_id, "login", ip, ua);
+        } catch {}
 
         return response;
     } catch (error: any) {
