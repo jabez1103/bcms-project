@@ -240,6 +240,13 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
     } catch (_) {}
   };
 
+  const openNotificationSettings = () => {
+    setNotifSettingsOpen(true);
+    setSettingsOpen(true);
+    setMenuOpen(false);
+    setNotifOpen(false);
+  };
+
   /** Navigate based on notification type + role */
   const handleNotifClick = async (notif: Notification) => {
     await markAsRead(notif.id);
@@ -405,7 +412,7 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
                             <Check size={14} className="text-emerald-500" /> Mark all as read
                           </button>
                           <button 
-                            onClick={() => { setSettingsOpen(true); setMenuOpen(false); setNotifOpen(false); }} 
+                            onClick={openNotificationSettings}
                             className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors text-left"
                           >
                             <Settings2 size={14} className="text-brand-500" /> Notification Settings
@@ -519,7 +526,7 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
                     Profile
                   </Link>
                   <button 
-                    onClick={() => { setSettingsOpen(true); setDropdownOpen(false); }} 
+                    onClick={() => { setNotifSettingsOpen(false); setSettingsOpen(true); setDropdownOpen(false); }} 
                     className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-brand-50 dark:hover:bg-slate-800 hover:text-brand-600 dark:hover:text-brand-400 transition-colors text-left"
                   >
                  
@@ -543,7 +550,8 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
       {/* MODALS */}
       <SettingsModal 
         isOpen={isSettingsOpen} 
-        onClose={() => setSettingsOpen(false)} 
+        onClose={() => { setSettingsOpen(false); setNotifSettingsOpen(false); }}
+        defaultTab={isNotifSettingsOpen ? "Notifications" : undefined}
       />
 
       

@@ -4,13 +4,19 @@ import bcrypt from "bcryptjs";
 import type { RowDataPacket } from "mysql2/promise";
 import {
   AUTH_COOKIE_NAME,
-  AUTH_FALLBACK_COOKIE_NAME,
   getAuthCookieOptions,
   isTrustedMutationOrigin,
   signToken,
 } from "@/lib/auth";
 import { logAuthEvent } from "@/lib/authEvents";
 import { ensureUsersSessionTokenColumn } from "@/lib/ensureSessionTokenColumn";
+import {
+  buildLoginRateLimitKey,
+  checkLoginRateLimit,
+  getClientIpFromHeaders,
+  registerFailedLoginAttempt,
+  registerSuccessfulLogin,
+} from "@/lib/loginRateLimit";
 
 export async function POST(req: NextRequest) {
   if (!isTrustedMutationOrigin(req)) {
@@ -20,7 +26,17 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const { email, password, rememberMe } = await req.json();
+  let email: unknown;
+  let password: unknown;
+  let rememberMe: unknown;
+  try {
+    ({ email, password, rememberMe } = await req.json());
+  } catch {
+    return NextResponse.json(
+      { success: false, message: "Invalid request body." },
+      { status: 400 }
+    );
+  }
 
   if (typeof email !== "string" || typeof password !== "string" || !email.trim() || !password) {
     return NextResponse.json(
@@ -30,6 +46,23 @@ export async function POST(req: NextRequest) {
   }
 
   const normalizedEmail = email.trim().toLowerCase();
+  const clientIp = getClientIpFromHeaders(req.headers);
+  const rateLimitKey = buildLoginRateLimitKey(clientIp, normalizedEmail);
+  const rateCheck = checkLoginRateLimit(rateLimitKey);
+  if (!rateCheck.allowed) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Too many login attempts. Please try again later.",
+      },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": String(rateCheck.retryAfterSeconds),
+        },
+      }
+    );
+  }
 
   const db = await createConnection();
   try {
@@ -54,6 +87,7 @@ export async function POST(req: NextRequest) {
     const user = rows[0];
 
     if (!user) {
+      registerFailedLoginAttempt(rateLimitKey);
       return NextResponse.json(
         { success: false, message: "Invalid email or password." },
         { status: 401 }
@@ -61,6 +95,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (user.account_status && String(user.account_status).toLowerCase() !== "active") {
+      registerFailedLoginAttempt(rateLimitKey);
       return NextResponse.json(
         { success: false, message: "This account is not active." },
         { status: 403 }
@@ -84,6 +119,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (!passwordMatches) {
+      registerFailedLoginAttempt(rateLimitKey);
       return NextResponse.json(
         { success: false, message: "Invalid email or password." },
         { status: 401 }
@@ -132,16 +168,10 @@ export async function POST(req: NextRequest) {
         role: user.role,
         avatar: user.profile_picture,
       },
-      ...(process.env.NODE_ENV !== "production" ? { devToken: token, devTokenMaxAge: maxAgeSeconds } : {}),
     });
 
+    registerSuccessfulLogin(rateLimitKey);
     response.cookies.set(AUTH_COOKIE_NAME, token, getAuthCookieOptions(maxAgeSeconds));
-    if (process.env.NODE_ENV !== "production") {
-      response.cookies.set(AUTH_FALLBACK_COOKIE_NAME, token, {
-        ...getAuthCookieOptions(maxAgeSeconds),
-        httpOnly: false,
-      });
-    }
 
     try {
       const ip =

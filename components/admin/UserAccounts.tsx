@@ -956,7 +956,7 @@ export default function UserAccounts() {
                     </div>
                   </div>
 
-                  <div className="flex flex-col items-start gap-2.5">
+                  <div className="flex items-center justify-between gap-3">
                     <div className="flex gap-2 flex-wrap">
                       <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">
                         {u.role}
@@ -972,7 +972,7 @@ export default function UserAccounts() {
                       </span>
                     </div>
 
-                      <div className="flex gap-3">
+                      <div className="flex gap-3 ml-auto shrink-0">
                         <ProtectedActionButton
                           disabled={busyUserId === u.user_id || isProtectedAdminAction(u)}
                           tooltip={SELF_PROTECTION_MESSAGE}

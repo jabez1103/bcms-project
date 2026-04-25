@@ -1,7 +1,6 @@
 import { SignJWT, jwtVerify, type JWTPayload } from "jose";
 
 export const AUTH_COOKIE_NAME = "token";
-export const AUTH_FALLBACK_COOKIE_NAME = "token_fallback";
 export const AUTH_ISSUER = "bcms-project";
 export const AUTH_AUDIENCE = "bcms-project-app";
 export const DEFAULT_JWT_TTL_SECONDS = 60 * 60 * 12;

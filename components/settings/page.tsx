@@ -19,9 +19,10 @@ interface SettingsModalProps {
 }
 
 export default function SettingsModal({ onClose, isOpen, defaultTab }: SettingsModalProps) {
-  // Initialize with defaultTab or "Account"
   const pathname = usePathname();
-  const previousUrl = useRef(pathname);
+  const previousUrl = useRef<string | null>(null);
+  const previousTitle = useRef<string | null>(null);
+  const initializedTabFromUrl = useRef(false);
   
   const [activeTab, setActiveTab] = useState("Account");
   const [isMobile, setIsMobile] = useState(false);
@@ -34,6 +35,30 @@ export default function SettingsModal({ onClose, isOpen, defaultTab }: SettingsM
     { id: "Notifications", icon: <Bell size={18} />, label: "Notifications" },
     { id: "Appearance", icon: <Palette size={18} />, label: "Appearance" },
   ];
+
+  const tabToSlug: Record<string, string> = {
+    Account: "account",
+    Security: "security",
+    Notifications: "notifications",
+    Appearance: "appearance",
+  };
+
+  const slugToTab: Record<string, string> = {
+    account: "Account",
+    security: "Security",
+    notifications: "Notifications",
+    appearance: "Appearance",
+  };
+
+  const getUrlWithSettingsTab = (tab: string | null) => {
+    const url = new URL(window.location.href);
+    if (tab) {
+      url.searchParams.set("settings", tabToSlug[tab] ?? "account");
+    } else {
+      url.searchParams.delete("settings");
+    }
+    return `${url.pathname}${url.search}${url.hash}`;
+  };
 
   // Sync activeTab with defaultTab prop when modal opens
   useEffect(() => {
@@ -48,10 +73,50 @@ export default function SettingsModal({ onClose, isOpen, defaultTab }: SettingsM
 
   // Track the original URL
   useEffect(() => {
-    if (!isOpen) {
-      previousUrl.current = pathname;
+    if (!isOpen && previousUrl.current) {
+      window.history.replaceState(window.history.state, "", previousUrl.current);
+      previousUrl.current = null;
+      initializedTabFromUrl.current = false;
+      if (previousTitle.current !== null) {
+        document.title = previousTitle.current;
+        previousTitle.current = null;
+      }
+      if (isMobile) {
+        setShowMobileContent(false);
+      }
     }
-  }, [isOpen, pathname]);
+  }, [isOpen, isMobile, pathname]);
+
+  // Keep URL in sync with Settings tab while modal is open.
+  useEffect(() => {
+    if (!isOpen) return;
+    if (!previousUrl.current) {
+      previousUrl.current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    }
+
+    if (!defaultTab && !initializedTabFromUrl.current) {
+      const url = new URL(window.location.href);
+      const fromUrl = slugToTab[url.searchParams.get("settings") || ""];
+      if (fromUrl) {
+        setActiveTab(fromUrl);
+        if (window.innerWidth < 768) {
+          setShowMobileContent(true);
+        }
+      }
+      initializedTabFromUrl.current = true;
+    }
+
+    window.history.replaceState(window.history.state, "", getUrlWithSettingsTab(activeTab));
+  }, [isOpen, activeTab, defaultTab]);
+
+  // Sync document title with active settings tab while modal is open.
+  useEffect(() => {
+    if (!isOpen) return;
+    if (previousTitle.current === null) {
+      previousTitle.current = document.title;
+    }
+    document.title = `Settings - ${activeTab}`;
+  }, [isOpen, activeTab]);
 
 
   useEffect(() => {

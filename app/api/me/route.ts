@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   AUTH_COOKIE_NAME,
-  AUTH_FALLBACK_COOKIE_NAME,
   getAuthCookieOptions,
-  getExpiredAuthCookieOptions,
   isTrustedMutationOrigin,
   signToken,
 } from "@/lib/auth";
@@ -11,19 +9,12 @@ import { createConnection } from "@/lib/db";
 import {
   verifySessionFromCookies,
   verifySessionFromCookiesDetailed,
-  verifySessionTokenDetailed,
 } from "@/lib/requestSession";
 import type { RowDataPacket } from "mysql2/promise";
 import { ensureUsersContactNumberColumn } from "@/lib/ensureUsersContactNumberColumn";
 
 export async function GET(request: NextRequest) {
-  let session = await verifySessionFromCookiesDetailed(request);
-  const bootstrapToken = request.headers.get("x-session-token");
-  const lightweightSessionCheck = request.headers.get("x-session-check") === "1";
-
-  if (!session.ok && bootstrapToken) {
-    session = await verifySessionTokenDetailed(bootstrapToken);
-  }
+  const session = await verifySessionFromCookiesDetailed(request);
 
   if (!session.ok) {
     // Avoid clearing cookies here to prevent race conditions where an older
@@ -32,23 +23,6 @@ export async function GET(request: NextRequest) {
       { error: "Invalid or expired session.", reason: session.reason },
       { status: 401 }
     );
-  }
-
-  if (lightweightSessionCheck) {
-    const response = NextResponse.json({
-      success: true,
-      user: session.payload,
-    });
-    if (bootstrapToken) {
-      response.cookies.set(AUTH_COOKIE_NAME, bootstrapToken, getAuthCookieOptions());
-      if (process.env.NODE_ENV !== "production") {
-        response.cookies.set(AUTH_FALLBACK_COOKIE_NAME, bootstrapToken, {
-          ...getAuthCookieOptions(),
-          httpOnly: false,
-        });
-      }
-    }
-    return response;
   }
 
   const db = await createConnection();
@@ -71,15 +45,6 @@ export async function GET(request: NextRequest) {
         contact_number: contactNumber,
       },
     });
-    if (bootstrapToken) {
-      response.cookies.set(AUTH_COOKIE_NAME, bootstrapToken, getAuthCookieOptions());
-      if (process.env.NODE_ENV !== "production") {
-        response.cookies.set(AUTH_FALLBACK_COOKIE_NAME, bootstrapToken, {
-          ...getAuthCookieOptions(),
-          httpOnly: false,
-        });
-      }
-    }
     return response;
   } finally {
     await db.end();
@@ -190,12 +155,6 @@ export async function PATCH(request: NextRequest) {
       },
     });
     response.cookies.set(AUTH_COOKIE_NAME, refreshedToken, getAuthCookieOptions());
-    if (process.env.NODE_ENV !== "production") {
-      response.cookies.set(AUTH_FALLBACK_COOKIE_NAME, refreshedToken, {
-        ...getAuthCookieOptions(),
-        httpOnly: false,
-      });
-    }
     return response;
   } catch {
     return NextResponse.json(

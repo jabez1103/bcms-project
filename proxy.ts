@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   AUTH_COOKIE_NAME,
-  AUTH_FALLBACK_COOKIE_NAME,
   isAllowedRole,
   type UserRole,
 } from "@/lib/auth";
@@ -62,14 +61,6 @@ function clearAuthCookie(response: NextResponse) {
     path: "/",
     expires: new Date(0),
   });
-  response.cookies.set(AUTH_FALLBACK_COOKIE_NAME, "", {
-    httpOnly: false,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    maxAge: 0,
-    path: "/",
-    expires: new Date(0),
-  });
 }
 
 /** Confirms cookie JWT + DB session (single active session). Edge-safe via internal fetch. */
@@ -77,26 +68,25 @@ async function validateActiveSession(
   request: NextRequest
 ): Promise<{ role: string } | null | { reason: "session_replaced" }> {
   try {
-    const res = await fetch(new URL("/api/me", request.nextUrl.origin), {
+    const res = await fetch(new URL("/api/session/validate", request.nextUrl.origin), {
       method: "GET",
       headers: {
         cookie: request.headers.get("cookie") ?? "",
-        "x-session-check": "1",
       },
       cache: "no-store",
     });
     const data = (await res.json()) as {
-      success?: boolean;
-      user?: { role?: unknown };
+      ok?: boolean;
+      role?: unknown;
       reason?: string;
     };
-    if (!res.ok || !data.success) {
+    if (!res.ok || !data.ok) {
       if (data?.reason === "session_replaced") {
         return { reason: "session_replaced" };
       }
       return null;
     }
-    return { role: String(data.user?.role ?? "") };
+    return { role: String(data.role ?? "") };
   } catch {
     return null;
   }
@@ -104,8 +94,7 @@ async function validateActiveSession(
 
 export async function proxy(request: NextRequest) {
   const token =
-    request.cookies.get(AUTH_COOKIE_NAME)?.value ??
-    request.cookies.get(AUTH_FALLBACK_COOKIE_NAME)?.value;
+    request.cookies.get(AUTH_COOKIE_NAME)?.value;
   const path = request.nextUrl.pathname;
   const isPublicApiRoute = PUBLIC_API_ROUTES.some((route) => path.startsWith(route));
 
@@ -121,13 +110,18 @@ export async function proxy(request: NextRequest) {
     }
 
     const session = await validateActiveSession(request);
-    if (!session || "reason" in session) {
+    if (!session) {
+      return createUnauthorizedResponse(request, 401);
+    }
+    if ("reason" in session) {
       const response = createUnauthorizedResponse(
         request,
         401,
-        session && "reason" in session ? session.reason : "unauthorized"
+        session.reason
       );
-      clearAuthCookie(response);
+      if (session.reason === "session_replaced") {
+        clearAuthCookie(response);
+      }
       return response;
     }
 
@@ -148,13 +142,19 @@ export async function proxy(request: NextRequest) {
 
   const session = await validateActiveSession(request);
 
-  if (!session || "reason" in session) {
+  if (!session) {
+    return createUnauthorizedResponse(request, 401);
+  }
+
+  if ("reason" in session) {
     const response = createUnauthorizedResponse(
       request,
       401,
-      session && "reason" in session ? session.reason : "unauthorized"
+      session.reason
     );
-    clearAuthCookie(response);
+    if (session.reason === "session_replaced") {
+      clearAuthCookie(response);
+    }
     return response;
   }
 

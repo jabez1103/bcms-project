@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, FormEvent, useEffect, useRef } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 import { roleHomePath, writeAuthTabSync } from "@/lib/authSync";
 import { MIN_PASSWORD_LENGTH } from "@/lib/passwordPolicy";
@@ -11,7 +11,6 @@ interface LoginFormProps {
 }
 
 export default function LoginForm({ mobile = false }: LoginFormProps) {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const loginRequestInFlight = useRef(false);
 
@@ -64,49 +63,19 @@ export default function LoginForm({ mobile = false }: LoginFormProps) {
       });
 
       const data = await res.json();
-      let redirectRole: string | undefined = data?.user?.role;
 
       if (data.success) {
-        setSuccess("Login successful! Redirecting...");
         try {
           localStorage.setItem("user", JSON.stringify(data.user));
         } catch {
           // Some mobile/private browsing contexts may block storage writes.
           // Do not block login redirect when server authentication already succeeded.
         }
-        if (typeof data.devToken === "string" && data.devToken.length > 0) {
-          try {
-            const maxAge =
-              typeof data.devTokenMaxAge === "number" && Number.isFinite(data.devTokenMaxAge)
-                ? Math.max(0, Math.floor(data.devTokenMaxAge))
-                : 60 * 60 * 12;
-            document.cookie = `token_fallback=${data.devToken}; Path=/; Max-Age=${maxAge}; SameSite=Lax`;
-            const bootstrapRes = await fetch("/api/me", {
-              method: "GET",
-              credentials: "include",
-              headers: {
-                "x-session-token": data.devToken,
-                "x-session-check": "1",
-              },
-              cache: "no-store",
-            });
-            if (bootstrapRes.ok) {
-              const bootstrapData = (await bootstrapRes.json()) as {
-                success?: boolean;
-                user?: { role?: string };
-              };
-              if (bootstrapData.success && bootstrapData.user?.role) {
-                redirectRole = bootstrapData.user.role;
-              }
-            }
-          } catch {
-            // Non-blocking: primary cookie may still be present.
-          }
-        }
-        writeAuthTabSync("login", redirectRole);
+        setSuccess("Login successful! Redirecting...");
+        writeAuthTabSync("login", data.user.role);
 
         // Navigate immediately once login succeeds to reduce race windows.
-        window.location.replace(roleHomePath(redirectRole || data.user.role));
+        window.location.replace(roleHomePath(data.user.role));
       } else {
         setError(data.message || "Invalid credentials");
       }
@@ -162,6 +131,7 @@ export default function LoginForm({ mobile = false }: LoginFormProps) {
   };
 
   return (
+  <>
   <form
   onSubmit={handleLogin}
   className={`
@@ -275,67 +245,6 @@ export default function LoginForm({ mobile = false }: LoginFormProps) {
     </button>
   </div>
 
-  {showForgotPassword && (
-    <div className="mt-6 w-full space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
-      <div className="h-px bg-slate-100 dark:bg-slate-800 w-full" />
-      <div className="space-y-3.5">
-        <div className="flex items-center justify-between">
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-600 dark:text-brand-400">
-            Reset Password
-          </p>
-          <button 
-            onClick={() => setShowForgotPassword(false)}
-            className="text-[10px] font-bold text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors uppercase tracking-widest"
-          >
-            Cancel
-          </button>
-        </div>
-        
-        <div className="space-y-3">
-          <input
-            type="email"
-            value={forgotEmail}
-            onChange={(e) => setForgotEmail(e.target.value)}
-            placeholder="Institutional Email"
-            className="h-11 w-full rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 px-4 text-sm text-slate-900 dark:text-white outline-none transition focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-brand-500/5"
-          />
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <input
-              type="password"
-              value={forgotPassword}
-              onChange={(e) => setForgotPassword(e.target.value)}
-              placeholder="New password"
-              className="h-11 w-full rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 px-4 text-sm text-slate-900 dark:text-white outline-none transition focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-brand-500/5"
-            />
-            <input
-              type="password"
-              value={forgotConfirmPassword}
-              onChange={(e) => setForgotConfirmPassword(e.target.value)}
-              placeholder="Confirm"
-              className="h-11 w-full rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 px-4 text-sm text-slate-900 dark:text-white outline-none transition focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-brand-500/5"
-            />
-          </div>
-        </div>
-
-        {forgotMessage && (
-          <p className={`text-[11px] font-semibold text-center ${forgotMessage.includes("success") ? "text-emerald-500" : "text-red-500"}`}>
-            {forgotMessage}
-          </p>
-        )}
-        
-        <button
-          type="button"
-          onClick={handleForgotPassword}
-          disabled={forgotLoading}
-          className="w-full h-11 rounded-xl bg-brand-600 text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-brand-500/20 hover:bg-brand-700 active:scale-95 transition-all disabled:opacity-50"
-        >
-          {forgotLoading ? "Processing..." : "Submit Reset Request"}
-        </button>
-      </div>
-      <div className="h-px bg-slate-100 dark:bg-slate-800 w-full" />
-    </div>
-  )}
-
   {/* Status Messages */}
   <div className="mt-4 min-h-[20px] text-center  ">
     {sessionNotice && (
@@ -360,5 +269,65 @@ export default function LoginForm({ mobile = false }: LoginFormProps) {
     )}
   </button>
 </form>
+{showForgotPassword && (
+  <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/60 backdrop-blur-sm px-3 sm:px-4">
+    <div className="w-full max-w-[520px] rounded-[1.75rem] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 sm:p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+      <div className="flex items-center justify-between mb-4">
+        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-600 dark:text-brand-400">
+          Reset Password
+        </p>
+        <button
+          type="button"
+          onClick={() => setShowForgotPassword(false)}
+          className="text-[10px] font-bold text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors uppercase tracking-widest"
+        >
+          Close
+        </button>
+      </div>
+
+      <div className="space-y-3">
+        <input
+          type="email"
+          value={forgotEmail}
+          onChange={(e) => setForgotEmail(e.target.value)}
+          placeholder="Institutional Email"
+          className="h-11 w-full rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 px-4 text-sm text-slate-900 dark:text-white outline-none transition focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-brand-500/5"
+        />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <input
+            type="password"
+            value={forgotPassword}
+            onChange={(e) => setForgotPassword(e.target.value)}
+            placeholder="New password"
+            className="h-11 w-full rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 px-4 text-sm text-slate-900 dark:text-white outline-none transition focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-brand-500/5"
+          />
+          <input
+            type="password"
+            value={forgotConfirmPassword}
+            onChange={(e) => setForgotConfirmPassword(e.target.value)}
+            placeholder="Confirm"
+            className="h-11 w-full rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 px-4 text-sm text-slate-900 dark:text-white outline-none transition focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-brand-500/5"
+          />
+        </div>
+      </div>
+
+      {forgotMessage && (
+        <p className={`mt-3 text-[11px] font-semibold text-center ${forgotMessage.includes("success") ? "text-emerald-500" : "text-red-500"}`}>
+          {forgotMessage}
+        </p>
+      )}
+
+      <button
+        type="button"
+        onClick={handleForgotPassword}
+        disabled={forgotLoading}
+        className="mt-4 w-full h-11 rounded-xl bg-brand-600 text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-brand-500/20 hover:bg-brand-700 active:scale-95 transition-all disabled:opacity-50"
+      >
+        {forgotLoading ? "Processing..." : "Submit Reset Request"}
+      </button>
+    </div>
+  </div>
+)}
+  </>
   );
 }

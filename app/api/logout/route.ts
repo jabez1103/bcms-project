@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
     AUTH_COOKIE_NAME,
-    AUTH_FALLBACK_COOKIE_NAME,
     getExpiredAuthCookieOptions,
     isTrustedMutationOrigin,
     verifyToken,
@@ -24,10 +23,6 @@ export async function POST(request: NextRequest) {
 
     const response = NextResponse.json({ success: true, message: "Logged out." });
     response.cookies.set(AUTH_COOKIE_NAME, "", getExpiredAuthCookieOptions());
-    response.cookies.set(AUTH_FALLBACK_COOKIE_NAME, "", {
-        ...getExpiredAuthCookieOptions(),
-        httpOnly: false,
-    });
 
     // Log the logout event best-effort
     if (token) {
