@@ -97,7 +97,7 @@ export default function ProfilePage() {
   };
 
   if (loading) return (
-    <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 p-6 md:p-12">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 p-3 sm:p-5 md:p-12">
       <div className="max-w-6xl mx-auto mt-20">
         <SkeletonDetailView />
       </div>
@@ -117,7 +117,7 @@ export default function ProfilePage() {
       {/* Banner - Dark Slate */}
       <div className="w-full h-48 bg-[#0F172A]" />
       
-      <div className="max-w-6xl mx-auto px-6">
+      <div className="max-w-6xl mx-auto px-2 sm:px-4 md:px-6">
         {/* Header Section */}
         <header className="relative flex flex-col md:flex-row items-center md:items-end justify-between gap-6 -mt-16 mb-12">
           <div className="flex flex-col md:flex-row items-center md:items-end gap-6">

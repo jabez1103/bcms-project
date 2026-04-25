@@ -5,6 +5,53 @@ import { resolveImportEmail, resolveImportPassword } from "@/lib/defaultImported
 import { MIN_PASSWORD_LENGTH } from "@/lib/passwordPolicy";
 
 const ALLOWED_ROLES = new Set(["student", "signatory", "admin"]);
+const COMPOUND_FIRST_NAME_PARTS = new Set([
+  "mae",
+  "may",
+  "anne",
+  "ann",
+  "marie",
+  "lyn",
+  "lynn",
+  "joy",
+  "jay",
+  "jane",
+  "grace",
+  "faith",
+  "rose",
+  "paul",
+  "john",
+  "mark",
+  "anthony",
+  "angelo",
+  "michael",
+  "joseph",
+]);
+
+function normalizeImportedNameParts(firstName: unknown, middleName: unknown) {
+  const first = String(firstName ?? "").trim().replace(/\s+/g, " ");
+  const middleRaw = String(middleName ?? "").trim().replace(/\s+/g, " ");
+
+  if (!middleRaw) {
+    return { firstName: first, middleName: null as string | null };
+  }
+
+  const middleToken = middleRaw.toLowerCase();
+  const firstWordCount = first.split(" ").filter(Boolean).length;
+  const middleWordCount = middleRaw.split(" ").filter(Boolean).length;
+
+  // Preserve common two-word first names from import sheets
+  // (e.g. "Aira Mae", "Rey Anthony").
+  if (
+    firstWordCount === 1 &&
+    middleWordCount === 1 &&
+    COMPOUND_FIRST_NAME_PARTS.has(middleToken)
+  ) {
+    return { firstName: `${first} ${middleRaw}`.trim(), middleName: null as string | null };
+  }
+
+  return { firstName: first, middleName: middleRaw };
+}
 
 export async function POST(request: NextRequest) {
   const { users } = await request.json();
@@ -47,7 +94,8 @@ export async function POST(request: NextRequest) {
           continue;
         }
 
-        const fn = String(first_name).trim();
+        const normalizedNames = normalizeImportedNameParts(first_name, middle_name);
+        const fn = normalizedNames.firstName;
         const ln = String(last_name).trim();
         const uidStr = String(user_id).trim();
         const uidNum = Number(uidStr);
@@ -94,7 +142,7 @@ export async function POST(request: NextRequest) {
             [
               uidNum,
               fn,
-              middle_name ? String(middle_name).trim() : null,
+              normalizedNames.middleName,
               ln,
               suffix ? String(suffix).trim() : null,
               finalEmail,

@@ -35,7 +35,7 @@ export function RequirementCard({
   onDelete: (id: string) => void;
 }) {
   return (
-    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 md:p-8 rounded-[2rem] hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-none transition-all group">
+    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 sm:p-5 md:p-8 rounded-2xl md:rounded-[2rem] hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-none transition-all group">
       <div className="flex flex-col lg:flex-row gap-6 lg:items-start">
 
         {/* Format icon */}

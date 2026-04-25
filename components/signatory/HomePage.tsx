@@ -231,7 +231,7 @@ export default function SignatoryDashboard() {
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans">
       
       {/* STICKY HEADER COMPONENT */}
-      <header className="sticky top-0 z-[20] bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200/60 dark:border-slate-800 px-4 py-4 sm:px-8 lg:px-12">
+      <header className="sticky top-0 z-[20] bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200/60 dark:border-slate-800 px-3 py-4 sm:px-5 lg:px-12">
         <div className="max-w-[1600px] mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="w-10 h-10 bg-slate-900 dark:bg-slate-800 rounded-xl flex items-center justify-center text-white shadow-lg shadow-slate-200 dark:shadow-none">
@@ -252,7 +252,7 @@ export default function SignatoryDashboard() {
         </div>
       </header>
 
-      <main className="max-w-[1600px] mx-auto px-4 py-8 sm:px-8 lg:px-12">
+      <main className="max-w-[1600px] mx-auto px-2 sm:px-4 py-6 sm:py-8 lg:px-12">
         
         {/* ANALYTICS GRID */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-12">

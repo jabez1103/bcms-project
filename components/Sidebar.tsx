@@ -46,15 +46,15 @@ export function Sidebar({ role, activePage, onPageClick, isMobileOpen, onMobileC
     [pathname, role]
   );
 
-  useEffect(() => {
-    if (isSignatoriesRoute) setSignatoriesOpen(true);
-    if (isActivityLogsRoute) setActivityLogsOpen(true);
-  }, [isSignatoriesRoute, isActivityLogsRoute]);
-
   const [isCollapsed, setIsCollapsed] = useState<boolean | null>(null);
   const [signatoriesOpen, setSignatoriesOpen] = useState(false);
   const [activityLogsOpen, setActivityLogsOpen] = useState(false);
   const [signatories, setSignatories] = useState<Signatory[]>([]);
+
+  useEffect(() => {
+    if (isSignatoriesRoute) setSignatoriesOpen(true);
+    if (isActivityLogsRoute) setActivityLogsOpen(true);
+  }, [isSignatoriesRoute, isActivityLogsRoute]);
 
   useEffect(() => {
     const handleResize = () => {

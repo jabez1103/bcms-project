@@ -140,10 +140,10 @@ const toSignatoryStatus = (status: SignatoryStatus): ClearanceStatus => {
 
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 p-6 md:p-10 font-sans text-slate-900 dark:text-slate-100 transition-colors">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 p-2 sm:p-4 md:p-10 font-sans text-slate-900 dark:text-slate-100 transition-colors">
 
       {/* ── STICKY HEADER ── */}
-      <header className="sticky top-0 z-[20] bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200/60 dark:border-slate-800 -mx-6 md:-mx-10 px-6 md:px-10 py-4 mb-6">
+      <header className="sticky top-0 z-[20] bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200/60 dark:border-slate-800 -mx-2 sm:-mx-4 md:-mx-10 px-2 sm:px-4 md:px-10 py-4 mb-5 md:mb-6">
         <div className="max-w-[1600px] mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="w-10 h-10 bg-slate-900 dark:bg-slate-800 rounded-xl flex items-center justify-center text-white shadow-lg shadow-slate-200 dark:shadow-none">
@@ -165,7 +165,7 @@ const toSignatoryStatus = (status: SignatoryStatus): ClearanceStatus => {
       <div className="max-w-[1600px] mx-auto space-y-6">
         
         {/* --- HEADER & FILTERS --- */}
-        <div className="bg-white dark:bg-slate-900 p-6 md:p-8 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm">
+        <div className="bg-white dark:bg-slate-900 p-4 sm:p-5 md:p-8 rounded-2xl md:rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm">
           <div className="flex flex-col xl:flex-row gap-6 mb-8 items-start xl:items-center justify-between">
             <div>
               <h1 className="text-2xl md:text-3xl font-black tracking-tight uppercase">Clearance Status</h1>

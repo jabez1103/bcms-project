@@ -133,12 +133,12 @@ export default function LandingPage() {
             </button>
           </div>
 
-          <nav className="flex-1 flex flex-col justify-center gap-8">
+          <nav className="flex-1 flex flex-col justify-center items-start gap-8">
             {navItems.map((item, idx) => (
               <button
                 key={idx} 
                 onClick={() => handleNavAction(item.href)}
-                className="text-5xl font-black text-white tracking-tighter hover:text-brand-400 transition-colors"
+                className="text-4xl sm:text-5xl font-black text-white tracking-tighter hover:text-brand-400 transition-colors text-left"
               >
                 {item.title}
               </button>
@@ -175,7 +175,7 @@ export default function LandingPage() {
 
       {/* --- PREMIUM GLASS NAVBAR --- */}
       <header 
-        className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-500 px-6 ${
+        className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-500 px-3 sm:px-4 md:px-6 ${
           isScrolled 
             ? "py-3 bg-white/70 dark:bg-slate-950/80 backdrop-blur-xl border-b border-brand-100 dark:border-slate-800 shadow-sm" 
             : "py-6 bg-transparent"
@@ -260,7 +260,7 @@ export default function LandingPage() {
           <div className="absolute inset-0 bg-black/30" />
         </div>
 
-        <div className="relative z-10 text-center px-6 max-w-5xl">
+        <div className="relative z-10 text-center px-3 sm:px-4 md:px-6 max-w-5xl">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-[10px] font-bold tracking-[0.3em] uppercase mb-8">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-400 opacity-75"></span>
@@ -310,7 +310,7 @@ export default function LandingPage() {
       </section>
 
       {/* --- THE PROCESS --- */}
-      <section id="how-it-works" className="py-32 px-6 bg-[#FDFCFE] dark:bg-slate-950 transition-colors duration-300 scroll-mt-28">
+      <section id="how-it-works" className="py-24 md:py-32 px-3 sm:px-4 md:px-6 bg-[#FDFCFE] dark:bg-slate-950 transition-colors duration-300 scroll-mt-28">
         <div className="mx-auto max-w-7xl">
           <div className="flex flex-col md:flex-row items-end justify-between mb-20 gap-8">
             <div className="max-w-2xl">
@@ -358,7 +358,7 @@ export default function LandingPage() {
       </section>
 
       {/* --- POLICY --- */}
-      <section id="policy" className="py-28 px-6 bg-white dark:bg-slate-950 transition-colors duration-300 scroll-mt-28">
+      <section id="policy" className="py-20 md:py-28 px-3 sm:px-4 md:px-6 bg-white dark:bg-slate-950 transition-colors duration-300 scroll-mt-28">
         <div className="mx-auto max-w-7xl">
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-8 mb-14">
             <div className="max-w-3xl">
@@ -405,7 +405,7 @@ export default function LandingPage() {
       </section>
 
       {/* --- DIRECTORY --- */}
-      <section id="directory" className="py-28 px-6 bg-[#F8FAFC] dark:bg-slate-900/30 transition-colors duration-300 scroll-mt-28">
+      <section id="directory" className="py-20 md:py-28 px-3 sm:px-4 md:px-6 bg-[#F8FAFC] dark:bg-slate-900/30 transition-colors duration-300 scroll-mt-28">
         <div className="mx-auto max-w-7xl">
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-8 mb-14">
             <div className="max-w-3xl">
@@ -445,7 +445,7 @@ export default function LandingPage() {
       </section>
 
       {/* --- FOOTER --- */}
-      <footer className="bg-gray-950 dark:bg-slate-950 py-24 px-6 overflow-hidden relative">
+      <footer className="bg-gray-950 dark:bg-slate-950 py-20 md:py-24 px-3 sm:px-4 md:px-6 overflow-hidden relative">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-px bg-gradient-to-r from-transparent via-brand-500/50 to-transparent" />
         <div className="mx-auto max-w-7xl text-center relative z-10">
           <div className="relative h-16 w-16 mx-auto mb-8 opacity-50 grayscale hover:grayscale-0 transition-all duration-500">

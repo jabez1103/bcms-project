@@ -269,7 +269,7 @@ export default function UltimateClearancePortal() {
                   selectedIds.includes(String(s.id)) ? 'border-brand-500 ring-4 ring-brand-50 dark:ring-brand-500/10' : 'border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-lg'
                 }`}
               >
-                <div className="p-6 md:p-8 space-y-5 flex-1">
+                <div className="p-4 sm:p-5 md:p-8 space-y-3 sm:space-y-4 md:space-y-5 flex-1">
                   <div className="flex justify-between items-start">
                     <div className="space-y-1">
                        <h3 className="text-xl font-black text-slate-900 dark:text-slate-100 tracking-tight leading-tight">{s.name}</h3>

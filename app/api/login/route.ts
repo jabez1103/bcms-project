@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import type { RowDataPacket } from "mysql2/promise";
 import {
   AUTH_COOKIE_NAME,
+  AUTH_FALLBACK_COOKIE_NAME,
   getAuthCookieOptions,
   isTrustedMutationOrigin,
   signToken,
@@ -131,9 +132,16 @@ export async function POST(req: NextRequest) {
         role: user.role,
         avatar: user.profile_picture,
       },
+      ...(process.env.NODE_ENV !== "production" ? { devToken: token, devTokenMaxAge: maxAgeSeconds } : {}),
     });
 
     response.cookies.set(AUTH_COOKIE_NAME, token, getAuthCookieOptions(maxAgeSeconds));
+    if (process.env.NODE_ENV !== "production") {
+      response.cookies.set(AUTH_FALLBACK_COOKIE_NAME, token, {
+        ...getAuthCookieOptions(maxAgeSeconds),
+        httpOnly: false,
+      });
+    }
 
     try {
       const ip =

@@ -108,7 +108,7 @@ export default function ManageRequirements() {
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans pb-10 transition-colors">
 
       {/* ── STICKY HEADER ── */}
-      <header className="sticky top-0 z-[20] bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200/60 dark:border-slate-800 px-4 py-4 sm:px-8 lg:px-12">
+      <header className="sticky top-0 z-[20] bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200/60 dark:border-slate-800 px-2 sm:px-4 py-4 lg:px-12">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="w-10 h-10 bg-brand-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-brand-200 dark:shadow-none">
@@ -131,7 +131,7 @@ export default function ManageRequirements() {
         </div>
       </header>
 
-      <div className="max-w-6xl mx-auto p-4 md:p-8 lg:p-12">
+      <div className="max-w-6xl mx-auto p-2 sm:p-4 md:p-8 lg:p-12">
 
         {/* Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-6 gap-4 mb-10">

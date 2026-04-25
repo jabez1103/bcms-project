@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import { 
   Search, 
   BookOpen, 
@@ -122,7 +122,7 @@ export default function HelpAndSupport() {
   ];
 
   // Simple filter logic for better UX
-  const filteredCategories = useMemo(() => {
+  const filteredCategories = (() => {
     if (!searchQuery) return categories;
     const query = searchQuery.toLowerCase();
     return categories.filter(cat => 
@@ -133,7 +133,7 @@ export default function HelpAndSupport() {
         return link.toLowerCase().includes(query) || answer.toLowerCase().includes(query);
       })
     );
-  }, [searchQuery]);
+  })();
 
   return (
     <div id="help-top" className="min-h-screen bg-[#f8fafc] dark:bg-slate-950 pb-20 font-sans transition-colors duration-300">

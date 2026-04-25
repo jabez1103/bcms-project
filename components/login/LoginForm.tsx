@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, FormEvent, useEffect } from "react";
+import { useState, FormEvent, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 import { roleHomePath, writeAuthTabSync } from "@/lib/authSync";
@@ -13,6 +13,7 @@ interface LoginFormProps {
 export default function LoginForm({ mobile = false }: LoginFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const loginRequestInFlight = useRef(false);
 
   
   const [email, setEmail] = useState("");
@@ -41,33 +42,78 @@ export default function LoginForm({ mobile = false }: LoginFormProps) {
 
   const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
+    if (loginRequestInFlight.current || isLoading) return;
+    loginRequestInFlight.current = true;
     setIsLoading(true);
     setError("");
     setSuccess("");
+    const formData = new FormData(e.currentTarget as HTMLFormElement);
+    const submittedEmail = String(formData.get("email") ?? email).trim();
+    const submittedPassword = String(formData.get("password") ?? password);
 
     try {
       const res = await fetch("/api/login", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, rememberMe }),
+        body: JSON.stringify({
+          email: submittedEmail,
+          password: submittedPassword,
+          rememberMe,
+        }),
       });
 
       const data = await res.json();
+      let redirectRole: string | undefined = data?.user?.role;
 
       if (data.success) {
         setSuccess("Login successful! Redirecting...");
-        localStorage.setItem("user", JSON.stringify(data.user));
-        writeAuthTabSync("login", data.user.role);
+        try {
+          localStorage.setItem("user", JSON.stringify(data.user));
+        } catch {
+          // Some mobile/private browsing contexts may block storage writes.
+          // Do not block login redirect when server authentication already succeeded.
+        }
+        if (typeof data.devToken === "string" && data.devToken.length > 0) {
+          try {
+            const maxAge =
+              typeof data.devTokenMaxAge === "number" && Number.isFinite(data.devTokenMaxAge)
+                ? Math.max(0, Math.floor(data.devTokenMaxAge))
+                : 60 * 60 * 12;
+            document.cookie = `token_fallback=${data.devToken}; Path=/; Max-Age=${maxAge}; SameSite=Lax`;
+            const bootstrapRes = await fetch("/api/me", {
+              method: "GET",
+              credentials: "include",
+              headers: {
+                "x-session-token": data.devToken,
+                "x-session-check": "1",
+              },
+              cache: "no-store",
+            });
+            if (bootstrapRes.ok) {
+              const bootstrapData = (await bootstrapRes.json()) as {
+                success?: boolean;
+                user?: { role?: string };
+              };
+              if (bootstrapData.success && bootstrapData.user?.role) {
+                redirectRole = bootstrapData.user.role;
+              }
+            }
+          } catch {
+            // Non-blocking: primary cookie may still be present.
+          }
+        }
+        writeAuthTabSync("login", redirectRole);
 
-        setTimeout(() => {
-          router.push(roleHomePath(data.user.role));
-        }, 1200);
+        // Navigate immediately once login succeeds to reduce race windows.
+        window.location.replace(roleHomePath(redirectRole || data.user.role));
       } else {
         setError(data.message || "Invalid credentials");
       }
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {
+      loginRequestInFlight.current = false;
       setIsLoading(false);
     }
   };
@@ -121,7 +167,7 @@ export default function LoginForm({ mobile = false }: LoginFormProps) {
   className={`
     flex flex-col items-center font-body z-10 transition-all duration-700
     rounded-[2rem] border border-slate-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl
-    p-8 ${mobile ? "sm:p-8 px-6" : "sm:p-12"} shadow-[0_32px_64px_-12px_rgba(0,0,0,0.08)]          
+    p-6 sm:p-8 ${mobile ? "px-4 sm:px-6" : "sm:p-12"} shadow-[0_32px_64px_-12px_rgba(0,0,0,0.08)]          
     w-[94%] sm:w-full max-w-[460px] mx-auto animate-fade-in-up
     ${mobile ? "my-4" : "relative"}
   `}
@@ -157,6 +203,7 @@ export default function LoginForm({ mobile = false }: LoginFormProps) {
       </label>
       <input
         type="email"
+        name="email"
         required
         placeholder="institutional-email@bisu.edu.ph"
         className="h-12 w-full rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 px-5 text-sm text-slate-900 dark:text-white outline-none transition focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-brand-500/5 dark:focus:ring-brand-400/10"
@@ -176,6 +223,7 @@ export default function LoginForm({ mobile = false }: LoginFormProps) {
       <div className="relative group">
         <input
           type={showPassword ? "text" : "password"} 
+          name="password"
           required
           placeholder="•••••••••••••"
           className="h-12 w-full rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 px-5 pr-12 text-sm text-slate-900 dark:text-white outline-none transition focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-brand-500/5 dark:focus:ring-brand-400/10"

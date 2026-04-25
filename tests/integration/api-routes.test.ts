@@ -38,6 +38,7 @@ vi.mock("bcryptjs", () => ({
 
 vi.mock("@/lib/auth", () => ({
   AUTH_COOKIE_NAME: "token",
+  AUTH_FALLBACK_COOKIE_NAME: "token_fallback",
   getAuthCookieOptions: vi.fn(() => ({ httpOnly: true, sameSite: "lax", path: "/" })),
   getExpiredAuthCookieOptions: vi.fn(() => ({
     httpOnly: true,

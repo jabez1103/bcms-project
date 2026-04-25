@@ -31,10 +31,10 @@ export function PageHeader({
 }: PageHeaderProps) {
   return (
     <div className="sticky top-0 z-[30] w-full bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200/60 dark:border-slate-800 transition-all duration-300">
-      <div className="px-4 py-6 md:px-8 lg:px-12 max-w-[1600px] mx-auto">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="px-2 py-4 sm:px-3 sm:py-5 md:px-8 lg:px-12 max-w-[1600px] mx-auto">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6">
           
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-3 md:gap-4">
             {/* Breadcrumbs */}
             {breadcrumbs && breadcrumbs.length > 0 && (
               <nav className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
@@ -59,14 +59,14 @@ export function PageHeader({
             )}
 
             {/* Title Area */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3 md:gap-4">
               {Icon && (
-                <div className="w-12 h-12 bg-brand-600 dark:bg-brand-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-brand-500/20">
-                  <Icon size={24} />
+                <div className="w-10 h-10 md:w-12 md:h-12 bg-brand-600 dark:bg-brand-500 rounded-xl md:rounded-2xl flex items-center justify-center text-white shadow-lg shadow-brand-500/20">
+                  <Icon size={20} />
                 </div>
               )}
               <div>
-                <h1 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight uppercase">
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight uppercase">
                   {title}
                 </h1>
                 {description && (

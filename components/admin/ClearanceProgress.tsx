@@ -224,7 +224,7 @@ export default function ClearanceProgress() {
   };
 
   if (loading) return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-4 md:p-10">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-2 sm:p-4 md:p-10">
       <div className="max-w-6xl mx-auto space-y-10">
 
         {/* Header skeleton */}
@@ -269,7 +269,7 @@ export default function ClearanceProgress() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 p-4 md:p-10">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 p-2 sm:p-4 md:p-10">
       <PageHeader
         title="Clearance Progress"
         description="Monitor real-time approval rates and identify bottlenecks across all departments."
@@ -286,12 +286,12 @@ export default function ClearanceProgress() {
         }
       />
 
-      <div className="max-w-[1600px] mx-auto p-6 md:p-10">
+      <div className="max-w-[1600px] mx-auto p-2 sm:p-4 md:p-10">
 
         {/* STATS GRID */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 md:gap-6 mb-6 md:mb-10">
           {stats.map((stat, i) => (
-            <div key={i} className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 flex items-center gap-5">
+            <div key={i} className="bg-white dark:bg-slate-900 p-4 sm:p-5 md:p-6 rounded-2xl md:rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 flex items-center gap-3 sm:gap-4 md:gap-5">
               <div className={`text-2xl w-12 h-12 flex items-center justify-center rounded-2xl ${stat.color} dark:bg-opacity-10`}>
                 {stat.icon}
               </div>
@@ -304,7 +304,7 @@ export default function ClearanceProgress() {
         </div>
 
         {/* FILTERS */}
-        <section className="bg-white dark:bg-slate-900 rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 p-6 mb-8">
+        <section className="bg-white dark:bg-slate-900 rounded-2xl md:rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 p-4 sm:p-5 md:p-6 mb-5 md:mb-8">
           <div className="flex flex-col lg:flex-row gap-4 justify-between items-center">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full lg:w-auto">
 

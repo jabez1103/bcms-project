@@ -13,7 +13,7 @@ export default function DesktopLogin() {
       {/* LEFT SIDE: Hero Section */}
       <section className="relative hidden w-1/2 lg:block">
         <div className="absolute inset-0">
-          <Image src="/bisu.png" alt="Campus" fill priority className="object-cover" />
+          <Image src="/bisu.png" alt="Campus" fill priority sizes="50vw" className="object-cover" />
           <div className="absolute inset-0 bg-gradient-to-br from-brand-900/90 to-brand-950/80 backdrop-brightness-100" />
         </div>
 
@@ -21,7 +21,7 @@ export default function DesktopLogin() {
           <header className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="relative h-14 w-14 drop-shadow-2xl">
-                <Image src="/left_logo.png" alt="Logo" fill className="object-contain" />
+                <Image src="/left_logo.png" alt="Logo" fill sizes="56px" className="object-contain" />
               </div>
                   <div className="flex flex-col">
 
@@ -56,7 +56,7 @@ export default function DesktopLogin() {
         {/* BACK BUTTON - Positioned at the top-left of this section */}
         <Link 
           href="/" 
-          className="group absolute left-8 top-8 flex items-center gap-2 text-[11px] font-bold tracking-[0.15em] text-gray-400 dark:text-slate-500 transition-colors hover:text-brand-600 dark:hover:text-brand-400"
+          className="group absolute left-4 sm:left-6 md:left-8 top-4 sm:top-6 md:top-8 flex items-center gap-2 text-[11px] font-bold tracking-[0.15em] text-gray-400 dark:text-slate-500 transition-colors hover:text-brand-600 dark:hover:text-brand-400"
         >
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100 dark:bg-slate-800 transition-colors group-hover:bg-brand-100 dark:group-hover:bg-brand-900/50 group-hover:text-brand-600 dark:group-hover:text-brand-400">
             <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
@@ -64,7 +64,7 @@ export default function DesktopLogin() {
           <span className="hidden sm:inline uppercase">Back</span>
         </Link>
 
-        <div className="z-20 w-full max-w-[450px] px-6">
+        <div className="z-20 w-full max-w-[450px] px-3 sm:px-4 md:px-6">
           <LoginForm />
         </div>
         

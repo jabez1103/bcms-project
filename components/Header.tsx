@@ -288,7 +288,7 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
 
   return (
     <>
-      <header className="flex justify-between items-center px-4 md:px-8 h-[10vh] bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 sticky top-0 z-40 transition-colors duration-300">
+      <header className="flex justify-between items-center px-2 sm:px-3 md:px-8 h-[10vh] bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 sticky top-0 z-40 transition-colors duration-300">
         {/* LEFT SIDE: BRANDING */}
         <div className="flex items-center gap-3">
           {/* HAMBURGER MENU (MOBILE ONLY) */}

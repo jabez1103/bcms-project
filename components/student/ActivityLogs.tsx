@@ -87,18 +87,18 @@ export default function ActivityLogs() {
         icon={History}
         breadcrumbs={[{ label: "Student" }, { label: "Activity Logs" }]}
       />
-      <div className="max-w-[1600px] mx-auto p-6 md:p-10">
+      <div className="max-w-[1600px] mx-auto p-2 sm:p-4 md:p-10">
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] shadow-sm transition-colors overflow-hidden">
 
 
         {/* Tabs */}
-        <div className="px-6 md:px-8 pt-6">
-          <div className="flex gap-4 border-b border-slate-100 dark:border-slate-800">
+        <div className="px-4 sm:px-5 md:px-8 pt-4 sm:pt-5 md:pt-6">
+          <div className="flex gap-3 sm:gap-4 border-b border-slate-100 dark:border-slate-800">
             {(["recent", "history"] as const).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`pb-4 text-sm font-bold uppercase tracking-widest transition-colors border-b-2 ${
+                className={`pb-3 sm:pb-4 text-xs sm:text-sm font-bold uppercase tracking-widest transition-colors border-b-2 ${
                   activeTab === tab
                     ? "border-brand-600 text-brand-600 dark:text-brand-400 dark:border-brand-400"
                     : "border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
@@ -111,7 +111,7 @@ export default function ActivityLogs() {
         </div>
 
         {/* List */}
-        <div className="p-6 md:p-8">
+        <div className="p-4 sm:p-5 md:p-8">
           {isLoading ? (
             <LogSkeleton />
           ) : displayData.length === 0 ? (

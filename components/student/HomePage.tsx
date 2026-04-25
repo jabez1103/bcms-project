@@ -72,7 +72,7 @@ export default function HomePage() {
 
   if (loading) return (
     <div className="bg-[#F8FAFC] dark:bg-slate-950 min-h-screen min-w-full relative font-sans">
-      <div className="p-6 md:p-10 pt-28">
+      <div className="p-2 sm:p-4 md:p-10 pt-24 md:pt-28">
         <div className="max-w-7xl mx-auto">
           <div className="animate-pulse space-y-4">
             <div className="h-16 bg-slate-200 dark:bg-slate-800 rounded-2xl w-full"></div>
@@ -109,7 +109,7 @@ export default function HomePage() {
         }
       />
 
-      <div className="max-w-[1600px] mx-auto p-6 md:p-10">
+      <div className="max-w-[1600px] mx-auto p-2 sm:p-4 md:p-10">
         {/* --- FILTERS --- */}
         <div className="flex flex-col lg:flex-row items-center justify-between gap-6 mb-10">
           <div className="flex flex-wrap gap-2 p-1.5 bg-slate-100 dark:bg-slate-800 rounded-2xl w-fit shadow-inner">

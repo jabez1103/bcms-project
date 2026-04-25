@@ -1,5 +1,10 @@
 import type { NextRequest } from "next/server";
-import { AUTH_COOKIE_NAME, verifyToken, type AuthTokenPayload } from "@/lib/auth";
+import {
+  AUTH_COOKIE_NAME,
+  AUTH_FALLBACK_COOKIE_NAME,
+  verifyToken,
+  type AuthTokenPayload,
+} from "@/lib/auth";
 import { createConnection } from "@/lib/db";
 import { ensureUsersSessionTokenColumn } from "@/lib/ensureSessionTokenColumn";
 import type { RowDataPacket } from "mysql2/promise";
@@ -57,9 +62,26 @@ export async function verifySessionToken(token: string): Promise<AuthTokenPayloa
 export async function verifySessionFromCookiesDetailed(
   request: NextRequest
 ): Promise<SessionVerificationResult> {
-  const token = request.cookies.get(AUTH_COOKIE_NAME)?.value;
-  if (!token) return { ok: false, reason: "missing_cookie" };
-  return verifySessionTokenDetailed(token);
+  const primaryToken = request.cookies.get(AUTH_COOKIE_NAME)?.value ?? null;
+  const fallbackToken = request.cookies.get(AUTH_FALLBACK_COOKIE_NAME)?.value ?? null;
+
+  if (!primaryToken && !fallbackToken) return { ok: false, reason: "missing_cookie" };
+
+  if (primaryToken) {
+    const primaryResult = await verifySessionTokenDetailed(primaryToken);
+    if (primaryResult.ok) return primaryResult;
+  }
+
+  if (fallbackToken && fallbackToken !== primaryToken) {
+    const fallbackResult = await verifySessionTokenDetailed(fallbackToken);
+    if (fallbackResult.ok) return fallbackResult;
+  }
+
+  // If both failed, keep the primary failure reason when available.
+  if (primaryToken) {
+    return verifySessionTokenDetailed(primaryToken);
+  }
+  return verifySessionTokenDetailed(fallbackToken as string);
 }
 
 export async function verifySessionFromCookies(request: NextRequest): Promise<AuthTokenPayload | null> {

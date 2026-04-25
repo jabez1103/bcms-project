@@ -188,7 +188,7 @@ export function RequirementModal({
         <form onSubmit={handleSubmitClick} className="relative bg-white dark:bg-slate-900 w-full max-w-2xl rounded-t-[2.5rem] md:rounded-[3rem] shadow-2xl flex flex-col max-h-[95vh] md:max-h-[90vh] overflow-hidden animate-in slide-in-from-bottom-8 duration-300 border border-transparent dark:border-slate-800">
 
           {/* Header */}
-          <div className="p-6 md:p-8 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50 shrink-0">
+          <div className="p-4 sm:p-5 md:p-8 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50 shrink-0">
             <h2 className="text-xl md:text-2xl font-black text-slate-800 dark:text-slate-100 uppercase tracking-tight">{editingId ? "Update Requirement" : "Define Requirement"}</h2>
             <div className="flex items-center gap-2">
               <button type="button" onClick={() => setShowPreview(true)} className="flex items-center gap-1.5 px-3 py-2 bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-brand-100 dark:hover:bg-brand-500/20 transition-colors">
@@ -198,7 +198,7 @@ export function RequirementModal({
             </div>
           </div>
 
-          <div className="p-6 md:p-8 space-y-6 overflow-y-auto">
+          <div className="p-4 sm:p-5 md:p-8 space-y-4 sm:space-y-5 md:space-y-6 overflow-y-auto">
 
             {/* Format toggle */}
             <div className="flex p-1.5 bg-slate-100 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700">
@@ -342,7 +342,7 @@ export function RequirementModal({
           </div>
 
           {/* Footer */}
-          <div className="p-6 md:p-8 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 shrink-0">
+          <div className="p-4 sm:p-5 md:p-8 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 shrink-0">
             <button type="submit" className="w-full py-4 bg-slate-900 dark:bg-brand-600 text-white rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] shadow-xl hover:bg-slate-800 dark:hover:bg-brand-500 transition-all active:scale-95">
               {editingId ? "Save Modifications" : "Confirm Requirement"}
             </button>

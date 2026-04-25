@@ -1,6 +1,7 @@
 import { SignJWT, jwtVerify, type JWTPayload } from "jose";
 
 export const AUTH_COOKIE_NAME = "token";
+export const AUTH_FALLBACK_COOKIE_NAME = "token_fallback";
 export const AUTH_ISSUER = "bcms-project";
 export const AUTH_AUDIENCE = "bcms-project-app";
 export const DEFAULT_JWT_TTL_SECONDS = 60 * 60 * 12;
@@ -106,8 +107,16 @@ export function isTrustedMutationOrigin(request: { headers: Headers; nextUrl: UR
   const secFetchSite = request.headers.get("sec-fetch-site");
   const expectedOrigin = request.nextUrl.origin.toLowerCase();
   const fallbackProtocol = request.nextUrl.protocol;
+  const hostHeader = request.headers.get("host");
+  const forwardedHostHeader = request.headers.get("x-forwarded-host");
 
   const trustedOrigins = new Set<string>([expectedOrigin]);
+  const headerDerivedOrigins = [hostHeader, forwardedHostHeader]
+    .map((entry) => normalizeOriginCandidate(entry ?? "", fallbackProtocol))
+    .filter((entry): entry is string => Boolean(entry));
+  for (const headerOrigin of headerDerivedOrigins) {
+    trustedOrigins.add(headerOrigin);
+  }
   const extraOrigins = (process.env.ALLOWED_ORIGINS || "")
     .split(",")
     .map((entry) => normalizeOriginCandidate(entry, fallbackProtocol))

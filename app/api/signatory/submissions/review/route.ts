@@ -49,7 +49,10 @@ async function applyConditionalAutoApprovals(
         const scope = resolveRequirementTypePermission(row.department).scope;
         return [signatoryId, scope] as const;
       })
-      .filter(([id]) => Number.isInteger(id)),
+      .filter(
+        ([id]: readonly [number, "normal" | "director_sds" | "dean"]) =>
+          Number.isInteger(id),
+      ),
   );
   const directorSignatoryIds = new Set<number>(
     Array.from(signatoryScopeMap.entries())
