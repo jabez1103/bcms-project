@@ -1,17 +1,29 @@
 import mysql from "mysql2/promise";
 
 async function main() {
-  const required = ["DB_HOST", "DB_USER", "DB_NAME"];
-  const missing = required.filter((key) => !process.env[key]);
+  const host = process.env.DB_HOST || process.env.MYSQLHOST;
+  const user = process.env.DB_USER || process.env.MYSQLUSER;
+  const password = process.env.DB_PASSWORD || process.env.MYSQLPASSWORD;
+  const database = process.env.DB_NAME || process.env.MYSQLDATABASE;
+  const portRaw = process.env.DB_PORT || process.env.MYSQLPORT;
+  const port = portRaw ? Number(portRaw) : undefined;
+
+  const missing = [
+    !host ? "DB_HOST or MYSQLHOST" : null,
+    !user ? "DB_USER or MYSQLUSER" : null,
+    !database ? "DB_NAME or MYSQLDATABASE" : null,
+  ].filter(Boolean);
+
   if (missing.length > 0) {
     throw new Error(`Missing environment variables: ${missing.join(", ")}`);
   }
 
   const db = await mysql.createConnection({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
+    host,
+    user,
+    password,
+    database,
+    ...(Number.isFinite(port) ? { port } : {}),
   });
 
   try {
