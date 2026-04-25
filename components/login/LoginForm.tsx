@@ -71,6 +71,17 @@ export default function LoginForm({ mobile = false }: LoginFormProps) {
     return { ok: false };
   };
 
+  const navigateToRoleHome = (role: string) => {
+    const destination = roleHomePath(role);
+    window.location.replace(destination);
+    // Production fallback: force navigation if replace() is ignored/stalled.
+    window.setTimeout(() => {
+      if (window.location.pathname === "/login") {
+        window.location.assign(destination);
+      }
+    }, 1500);
+  };
+
   const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
     if (loginRequestInFlight.current || isLoading) return;
@@ -116,7 +127,7 @@ export default function LoginForm({ mobile = false }: LoginFormProps) {
         const redirectRole =
           sessionValidation.role ||
           (typeof data.user?.role === "string" ? data.user.role : "");
-        window.location.replace(roleHomePath(redirectRole));
+        navigateToRoleHome(redirectRole);
       } else {
         setError(data.message || "Invalid credentials");
       }
