@@ -36,6 +36,37 @@ export default function LoginForm({ mobile = false }: LoginFormProps) {
     }
   }, [searchParams]);
 
+  const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  const validateSessionOnce = async (): Promise<boolean> => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2000);
+    try {
+      const res = await fetch("/api/session/validate", {
+        method: "GET",
+        credentials: "include",
+        cache: "no-store",
+        signal: controller.signal,
+      });
+      if (!res.ok) return false;
+      const data = (await res.json()) as { ok?: boolean };
+      return Boolean(data?.ok);
+    } catch {
+      return false;
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  };
+
+  const waitForSessionValidation = async (attempts = 5): Promise<boolean> => {
+    for (let i = 0; i < attempts; i++) {
+      const ok = await validateSessionOnce();
+      if (ok) return true;
+      await wait(250);
+    }
+    return false;
+  };
+
   const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
     if (loginRequestInFlight.current || isLoading) return;
@@ -70,8 +101,14 @@ export default function LoginForm({ mobile = false }: LoginFormProps) {
         }
         setSuccess("Login successful! Redirecting...");
         writeAuthTabSync("login", data.user.role);
-
-        // Navigate immediately once login succeeds to reduce race windows.
+        const sessionReady = await waitForSessionValidation();
+        if (!sessionReady) {
+          setSuccess("");
+          setError(
+            "Login succeeded but session validation failed on server. Please try again."
+          );
+          return;
+        }
         window.location.replace(roleHomePath(data.user.role));
       } else {
         setError(data.message || "Invalid credentials");
