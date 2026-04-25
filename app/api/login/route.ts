@@ -134,7 +134,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const role = String(user.role ?? "").toLowerCase();
+    const role = String(user.role ?? "").trim().toLowerCase();
 
     if (role === "student" || role === "signatory") {
       const [activePeriods] = await db.query<RowDataPacket[]>(
@@ -160,7 +160,7 @@ export async function POST(req: NextRequest) {
         user_id: user.user_id,
         full_name: buildFullName(user.first_name, user.middle_name, user.last_name),
         email: user.email,
-        role: user.role,
+        role,
         avatar: user.profile_picture,
         sid,
       },
@@ -173,7 +173,7 @@ export async function POST(req: NextRequest) {
         user_id: user.user_id,
         full_name: buildFullName(user.first_name, user.middle_name, user.last_name),
         email: user.email,
-        role: user.role,
+        role,
         avatar: user.profile_picture,
       },
     });

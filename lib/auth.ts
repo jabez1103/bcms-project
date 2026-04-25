@@ -81,7 +81,8 @@ export function isAllowedRole(userRole: unknown, allowedRoles: UserRole[]) {
     return false;
   }
 
-  return allowedRoles.includes(userRole.toLowerCase() as UserRole);
+  const normalizedRole = userRole.trim().toLowerCase();
+  return allowedRoles.includes(normalizedRole as UserRole);
 }
 
 function normalizeOriginCandidate(value: string, fallbackProtocol?: string) {

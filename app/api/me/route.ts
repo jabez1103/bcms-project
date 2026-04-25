@@ -20,6 +20,10 @@ function buildFullName(firstName: unknown, middleName: unknown, lastName: unknow
     .join(" ");
 }
 
+function normalizeRole(role: unknown) {
+  return String(role ?? "").trim().toLowerCase();
+}
+
 export async function GET(request: NextRequest) {
   const session = await verifySessionFromCookiesDetailed(request);
 
@@ -56,7 +60,7 @@ export async function GET(request: NextRequest) {
         ...session.payload,
         full_name: fullNameFromDb,
         email: row?.email ?? session.payload.email,
-        role: row?.role ?? session.payload.role,
+        role: normalizeRole(row?.role ?? session.payload.role),
         avatar: row?.profile_picture ?? session.payload.avatar ?? null,
         contact_number: contactNumber,
       },
@@ -154,7 +158,7 @@ export async function PATCH(request: NextRequest) {
       user_id: user.user_id,
       full_name: buildFullName(user.first_name, user.middle_name, user.last_name),
       email: user.email,
-      role: user.role,
+      role: normalizeRole(user.role),
       avatar: user.profile_picture,
       sid,
     });
@@ -166,7 +170,7 @@ export async function PATCH(request: NextRequest) {
         user_id: user.user_id,
         full_name: buildFullName(user.first_name, user.middle_name, user.last_name),
         email: user.email,
-        role: user.role,
+        role: normalizeRole(user.role),
         avatar: user.profile_picture,
         contact_number: user.contact_number,
       },

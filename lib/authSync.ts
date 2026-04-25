@@ -8,7 +8,7 @@ export type AuthTabSyncPayload = {
 };
 
 export function roleHomePath(role: string): string {
-  const r = String(role).toLowerCase();
+  const r = String(role).trim().toLowerCase();
   const routes: Record<string, string> = {
     admin: "/admin/home",
     signatory: "/signatory/home",
