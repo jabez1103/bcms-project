@@ -38,7 +38,7 @@ export default function LoginForm({ mobile = false }: LoginFormProps) {
 
   const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-  const validateSessionOnce = async (): Promise<boolean> => {
+  const validateSessionOnce = async (): Promise<{ ok: boolean; role?: string }> => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 2000);
     try {
@@ -48,23 +48,27 @@ export default function LoginForm({ mobile = false }: LoginFormProps) {
         cache: "no-store",
         signal: controller.signal,
       });
-      if (!res.ok) return false;
-      const data = (await res.json()) as { ok?: boolean };
-      return Boolean(data?.ok);
+      if (!res.ok) return { ok: false };
+      const data = (await res.json()) as { ok?: boolean; role?: unknown };
+      if (!data?.ok) return { ok: false };
+      const role = typeof data.role === "string" ? data.role.trim() : "";
+      return { ok: true, ...(role ? { role } : {}) };
     } catch {
-      return false;
+      return { ok: false };
     } finally {
       clearTimeout(timeoutId);
     }
   };
 
-  const waitForSessionValidation = async (attempts = 5): Promise<boolean> => {
+  const waitForSessionValidation = async (
+    attempts = 5
+  ): Promise<{ ok: boolean; role?: string }> => {
     for (let i = 0; i < attempts; i++) {
-      const ok = await validateSessionOnce();
-      if (ok) return true;
+      const result = await validateSessionOnce();
+      if (result.ok) return result;
       await wait(250);
     }
-    return false;
+    return { ok: false };
   };
 
   const handleLogin = async (e: FormEvent) => {
@@ -101,15 +105,18 @@ export default function LoginForm({ mobile = false }: LoginFormProps) {
         }
         setSuccess("Login successful! Redirecting...");
         writeAuthTabSync("login", data.user.role);
-        const sessionReady = await waitForSessionValidation();
-        if (!sessionReady) {
+        const sessionValidation = await waitForSessionValidation();
+        if (!sessionValidation.ok) {
           setSuccess("");
           setError(
             "Login succeeded but session validation failed on server. Please try again."
           );
           return;
         }
-        window.location.replace(roleHomePath(data.user.role));
+        const redirectRole =
+          sessionValidation.role ||
+          (typeof data.user?.role === "string" ? data.user.role : "");
+        window.location.replace(roleHomePath(redirectRole));
       } else {
         setError(data.message || "Invalid credentials");
       }
