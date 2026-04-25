@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { SkeletonDetailView } from "@/components/ui/Skeleton";
+import ProfileAvatar from "@/components/ui/ProfileAvatar";
 
 type SignatoryDetail = {
   id: number;
@@ -204,14 +205,13 @@ export default function SignatoryDetails() {
 
               {/* Signatory */}
               <div className="mt-6 pt-6 border-t border-slate-100 dark:border-slate-800 flex items-center gap-4">
-                {signatory.signatory_avatar ? (
-                  <img src={signatory.signatory_avatar} alt="" className="w-12 h-12 rounded-full object-cover border-2 border-white dark:border-slate-800 shadow-md shrink-0" />
-                ) : (
-                  <div className="w-12 h-12 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-lg shrink-0">
-                    {signatory.signatory_name?.charAt(0) || "S"}
-                  
-                  </div>
-                )}
+                <ProfileAvatar
+                  src={signatory.signatory_avatar}
+                  fullName={signatory.signatory_name}
+                  alt="Signatory profile"
+                  className="w-12 h-12 rounded-full object-cover border-2 border-white dark:border-slate-800 shadow-md shrink-0"
+                  initialsClassName="text-sm border-2 border-white dark:border-slate-800 shadow-md shrink-0"
+                />
                 <div>
                   <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-0.5">Authorized Signatory</p>
                   <p className="text-base font-bold text-slate-900 dark:text-white">{signatory.signatory_name} {signatory.academic_credentials}</p>

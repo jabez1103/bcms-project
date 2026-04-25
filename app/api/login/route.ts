@@ -18,6 +18,13 @@ import {
   registerSuccessfulLogin,
 } from "@/lib/loginRateLimit";
 
+function buildFullName(firstName: unknown, middleName: unknown, lastName: unknown) {
+  return [firstName, middleName, lastName]
+    .map((part) => String(part ?? "").trim())
+    .filter(Boolean)
+    .join(" ");
+}
+
 export async function POST(req: NextRequest) {
   if (!isTrustedMutationOrigin(req)) {
     return NextResponse.json(
@@ -71,6 +78,7 @@ export async function POST(req: NextRequest) {
     type LoginUserRow = RowDataPacket & {
       user_id: number;
       first_name: string;
+      middle_name: string | null;
       last_name: string;
       email: string;
       password: string;
@@ -150,7 +158,7 @@ export async function POST(req: NextRequest) {
     const token = await signToken(
       {
         user_id: user.user_id,
-        full_name: `${user.first_name} ${user.last_name}`,
+        full_name: buildFullName(user.first_name, user.middle_name, user.last_name),
         email: user.email,
         role: user.role,
         avatar: user.profile_picture,
@@ -163,7 +171,7 @@ export async function POST(req: NextRequest) {
       success: true,
       user: {
         user_id: user.user_id,
-        full_name: `${user.first_name} ${user.last_name}`,
+        full_name: buildFullName(user.first_name, user.middle_name, user.last_name),
         email: user.email,
         role: user.role,
         avatar: user.profile_picture,

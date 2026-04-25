@@ -1,6 +1,7 @@
 "use client";
 
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import ProfileAvatar from "@/components/ui/ProfileAvatar";
 import React, { useState, useEffect } from "react";
 import {
   User, Mail, Phone, CreditCard, Edit3, KeyRound, ChevronRight,
@@ -124,7 +125,13 @@ export default function ProfilePage() {
             {/* Profile Avatar */}
             <div className="relative">
               <div className="w-36 h-36 rounded-2xl overflow-hidden border-[6px] border-white dark:border-slate-800 shadow-xl bg-slate-200 dark:bg-slate-800">
-                <img src={user.avatar} alt="Profile" className="w-full h-full object-cover" />
+                <ProfileAvatar
+                  src={user?.avatar}
+                  fullName={user?.full_name as string}
+                  alt="Profile"
+                  className="w-full h-full object-cover"
+                  initialsClassName="w-full h-full text-5xl"
+                />
               </div>
             </div>
             

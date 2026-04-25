@@ -21,6 +21,7 @@ import {
 import { PageType, UserRole } from "@/types/index";
 import { LogoutModal } from "./LogoutModal";
 import SettingsModal from "@/components/settings/page";
+import ProfileAvatar from "@/components/ui/ProfileAvatar";
 import {
   DEFAULT_NOTIFICATION_PREFERENCES,
   getNotificationPreferences,
@@ -168,7 +169,6 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
       setUnreadCount(visibleNotifications.filter((n) => !n.isRead).length);
     }
   }, [visibleNotifications, isNotifOpen]);
-  const userAvatar = user?.avatar || "/default-avatar.png";
 
   useEffect(() => {
     const q = searchValue.trim();
@@ -473,10 +473,12 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
           <div className="relative border-l border-slate-100 pl-2 md:pl-6">
             <button onClick={() => setDropdownOpen(!isDropdownOpen)} className="flex items-center gap-3 group">
               <div className="relative">
-                <img
-                  src={userAvatar}
+                <ProfileAvatar
+                  src={user?.avatar}
+                  fullName={user?.full_name || user?.name}
                   alt="Profile"
                   className="w-9 h-9 md:w-10 md:h-10 rounded-xl object-cover border-2 border-transparent group-hover:border-brand-100 transition-all"
+                  initialsClassName="border-2 border-transparent group-hover:border-brand-100 text-[11px]"
                 />
                 <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full" />
               </div>
@@ -495,13 +497,17 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
                   
                   {/* MOBILE-ONLY PROFILE HEADER */}
                   <div className="md:hidden px-4 py-5 bg-slate-50/50 dark:bg-slate-800/50 border-b border-gray-100 dark:border-slate-800 flex flex-col items-center gap-2">
-                    <img 
-                      src={user.avatar} 
-                      alt="Profile" 
-                      className="w-16 h-16 rounded-xl object-cover border border-brand-100 shadow-sm" 
+                    <ProfileAvatar
+                      src={user?.avatar}
+                      fullName={user?.full_name || user?.name}
+                      alt="Profile"
+                      className="w-16 h-16 rounded-xl object-cover border border-brand-100 shadow-sm"
+                      initialsClassName="text-xl border border-brand-100 shadow-sm"
                     />
                     <div className="text-center mb-1">
-                      <p className="text-sm font-bold text-slate-800 dark:text-slate-200">{user.name}</p>
+                      <p className="text-sm font-bold text-slate-800 dark:text-slate-200">
+                        {user.full_name || user.name}
+                      </p>
                       <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">{role}</p>
                     </div>
                     {/* Centered See Profile Button - Sized to match width constraints */}

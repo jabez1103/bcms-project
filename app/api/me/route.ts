@@ -13,6 +13,13 @@ import {
 import type { RowDataPacket } from "mysql2/promise";
 import { ensureUsersContactNumberColumn } from "@/lib/ensureUsersContactNumberColumn";
 
+function buildFullName(firstName: unknown, middleName: unknown, lastName: unknown) {
+  return [firstName, middleName, lastName]
+    .map((part) => String(part ?? "").trim())
+    .filter(Boolean)
+    .join(" ");
+}
+
 export async function GET(request: NextRequest) {
   const session = await verifySessionFromCookiesDetailed(request);
 
@@ -30,18 +37,27 @@ export async function GET(request: NextRequest) {
     await ensureUsersContactNumberColumn(db);
     const userId = Number(session.payload.user_id);
     const [rows] = await db.query<RowDataPacket[]>(
-      "SELECT contact_number FROM users WHERE user_id = ? LIMIT 1",
+      `SELECT first_name, middle_name, last_name, email, role, profile_picture, contact_number
+       FROM users
+       WHERE user_id = ?
+       LIMIT 1`,
       [userId]
     );
-    const contactNumber =
-      rows.length > 0 && rows[0].contact_number != null
-        ? String(rows[0].contact_number)
-        : null;
+    const row = rows[0];
+    const contactNumber = row?.contact_number != null ? String(row.contact_number) : null;
+    const fullNameFromDb =
+      row != null
+        ? buildFullName(row.first_name, row.middle_name, row.last_name)
+        : String(session.payload.full_name ?? "");
 
     const response = NextResponse.json({
       success: true,
       user: {
         ...session.payload,
+        full_name: fullNameFromDb,
+        email: row?.email ?? session.payload.email,
+        role: row?.role ?? session.payload.role,
+        avatar: row?.profile_picture ?? session.payload.avatar ?? null,
         contact_number: contactNumber,
       },
     });
@@ -99,6 +115,7 @@ export async function PATCH(request: NextRequest) {
     type UserRow = RowDataPacket & {
       user_id: number;
       first_name: string;
+      middle_name: string | null;
       last_name: string;
       email: string;
       role: string;
@@ -135,7 +152,7 @@ export async function PATCH(request: NextRequest) {
     const user = rows[0];
     const refreshedToken = await signToken({
       user_id: user.user_id,
-      full_name: `${user.first_name} ${user.last_name}`,
+      full_name: buildFullName(user.first_name, user.middle_name, user.last_name),
       email: user.email,
       role: user.role,
       avatar: user.profile_picture,
@@ -147,7 +164,7 @@ export async function PATCH(request: NextRequest) {
       message: "Profile updated successfully.",
       user: {
         user_id: user.user_id,
-        full_name: `${user.first_name} ${user.last_name}`,
+        full_name: buildFullName(user.first_name, user.middle_name, user.last_name),
         email: user.email,
         role: user.role,
         avatar: user.profile_picture,

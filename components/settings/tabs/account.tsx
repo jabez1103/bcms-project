@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import ProfileAvatar from "@/components/ui/ProfileAvatar";
 import { ShieldCheck, Lock, UserIcon, Mail, Phone } from "lucide-react";
 import { SkeletonDetailView } from "@/components/ui/Skeleton";
 
@@ -69,10 +70,12 @@ export default function ProfileContent() {
       <div className="flex flex-col sm:flex-row items-center gap-8 p-6 bg-slate-50 dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800">
         <div className="relative group">
           <div className="w-28 h-28 bg-white dark:bg-slate-800 rounded-3xl flex items-center justify-center overflow-hidden border-4 border-white dark:border-slate-700 shadow-xl">
-            <img 
-              src={(user as any).avatar || "/default-avatar.png"} 
-              alt="Profile" 
+            <ProfileAvatar
+              src={(user as any).avatar}
+              fullName={String(user.full_name ?? "")}
+              alt="Profile"
               className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+              initialsClassName="w-full h-full text-3xl"
             />
           </div>
          

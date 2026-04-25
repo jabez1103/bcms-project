@@ -87,15 +87,11 @@ async function applyConditionalAutoApprovals(
          AND (target_year = 'All Years' OR target_year = ?)` ,
       [livePeriodId, studentYearLabel],
     );
-    const requiredInitialSignatoryIds = prerequisiteRequirementRows
-      .map((row: any) => Number(row.signatoryId))
-      .filter((id: number) => {
-        if (!Number.isInteger(id)) return false;
-        const scope = signatoryScopeMap.get(id) ?? "normal";
-        return scope !== "director_sds" && scope !== "dean";
-      });
-
-    const requiredInitialSignatorySet = new Set<number>(requiredInitialSignatoryIds);
+    const requiredInitialSignatorySet = new Set<number>(
+      prerequisiteRequirementRows
+        .map((row: any) => Number(row.signatoryId))
+        .filter((id: number) => Number.isInteger(id)),
+    );
 
     const [allApprovedRows]: any = await db.query(
       `SELECT DISTINCT req.signatory_id AS signatoryId
@@ -132,8 +128,13 @@ async function applyConditionalAutoApprovals(
       let isCleared = false;
 
       if (ownerScope === "director_sds") {
-        // Director SDS stage: requires all initial signatories (excluding Dean and Director SDS) to be approved.
-        const neededIds = Array.from(requiredInitialSignatorySet);
+        // Director SDS stage: requires all initial signatories
+        // except Dean and the Director SDS owner signatory.
+        const neededIds = Array.from(requiredInitialSignatorySet).filter((requiredId) => {
+          if (requiredId === requirementOwnerSignatoryId) return false;
+          const scope = signatoryScopeMap.get(requiredId) ?? "normal";
+          return scope !== "dean";
+        });
         isCleared =
           neededIds.length > 0 &&
           neededIds.every((requiredId) => approvedSignatorySet.has(requiredId));

@@ -33,6 +33,7 @@ npm run dev
 The app reads these values at runtime:
 
 - `DB_HOST`
+- `DB_PORT`
 - `DB_USER`
 - `DB_PASSWORD`
 - `DB_NAME`
@@ -41,6 +42,9 @@ The app reads these values at runtime:
 ## Optional environment variables
 
 - `ALLOWED_ORIGINS` (comma-separated origins for auth/cors checks)
+- `DB_SSL` (`true`/`false`)
+- `DB_SSL_CA` (Aiven CA cert PEM text or base64 PEM)
+- `DB_CONNECT_TIMEOUT_MS`
 - `SYSTEM_LOG_MAX`
 - `MAX_NOTIFICATIONS_PER_USER`
 - `VAPID_PUBLIC_KEY`
@@ -78,6 +82,29 @@ Both commands should pass without errors.
 3. Set build command to `npm run build` (default).
 4. Set start command to `npm run start` if needed for custom runtime configuration.
 5. Deploy.
+
+### Vercel + Aiven MySQL checklist
+
+1. In Aiven, create a MySQL service and allow inbound IPs:
+   - For Vercel, allow `0.0.0.0/0` temporarily, then tighten to known egress addresses if available.
+2. Download the Aiven CA certificate.
+3. Add these Vercel environment variables:
+   - `DB_HOST` = Aiven host
+   - `DB_PORT` = Aiven port
+   - `DB_USER` = Aiven username
+   - `DB_PASSWORD` = Aiven password
+   - `DB_NAME` = your database
+   - `DB_SSL` = `true`
+   - `DB_SSL_CA` = CA cert content (or base64-encoded cert)
+   - `JWT_SECRET` = long random value (32+ chars)
+   - `ALLOWED_ORIGINS` = your production domain(s), comma-separated
+4. Run required schema setup before traffic:
+   - `npm run migrate:session-token`
+   - Use MySQL Workbench (or Aiven console) to apply your remaining SQL migrations/seeds.
+5. Redeploy and verify:
+   - Login works
+   - `/api/me` returns authenticated user
+   - CRUD + submission/review paths work
 
 ### Deploy to your own Node server
 
