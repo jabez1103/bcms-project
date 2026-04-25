@@ -10,6 +10,7 @@ const mockDb = {
 
 const mockVerifyToken = vi.fn();
 const mockVerifySessionFromCookies = vi.fn();
+const mockVerifySessionFromCookiesDetailed = vi.fn();
 const mockSignToken = vi.fn();
 const mockTrustedOrigin = vi.fn();
 const mockLogAuthEvent = vi.fn();
@@ -52,6 +53,8 @@ vi.mock("@/lib/auth", () => ({
 
 vi.mock("@/lib/requestSession", () => ({
   verifySessionFromCookies: (...args: unknown[]) => mockVerifySessionFromCookies(...args),
+  verifySessionFromCookiesDetailed: (...args: unknown[]) =>
+    mockVerifySessionFromCookiesDetailed(...args),
 }));
 
 function makeRequest(options?: {
@@ -87,14 +90,70 @@ describe("API route integration tests (mocked DB/auth)", () => {
     vi.clearAllMocks();
     mockTrustedOrigin.mockReturnValue(true);
     mockSignToken.mockResolvedValue("signed-token");
-    mockVerifyToken.mockResolvedValue({ user_id: 1, role: "admin", email: "admin@bisu.edu.ph" });
+    mockVerifyToken.mockResolvedValue({
+      user_id: 1,
+      role: "admin",
+      email: "admin@bisu.edu.ph",
+      sid: "sid-admin-1",
+    });
     mockBcryptCompare.mockResolvedValue(true);
     mockBcryptHash.mockResolvedValue("hashed");
     mockVerifySessionFromCookies.mockImplementation(async (request: { cookies: { get: (n: string) => { value: string } | undefined } }) => {
       const token = request.cookies.get("token")?.value;
       if (!token) return null;
-      return mockVerifyToken(token);
+      const payload = await mockVerifyToken(token);
+      if (!payload || typeof payload.sid !== "string" || payload.sid.length === 0) return null;
+      return payload;
     });
+    mockVerifySessionFromCookiesDetailed.mockImplementation(
+      async (request: { cookies: { get: (n: string) => { value: string } | undefined } }) => {
+        const token = request.cookies.get("token")?.value;
+        if (!token) return { ok: false, reason: "missing_cookie" as const };
+        const payload = await mockVerifyToken(token);
+        if (!payload) return { ok: false, reason: "invalid_token" as const };
+        if (typeof payload.sid !== "string" || payload.sid.length === 0) {
+          return { ok: false, reason: "missing_sid" as const };
+        }
+        if (payload.sid === "replaced-session") {
+          return { ok: false, reason: "session_replaced" as const };
+        }
+        return { ok: true, payload };
+      }
+    );
+  });
+
+  it("me route returns 401 with missing_cookie reason", async () => {
+    const { GET } = await import("@/app/api/me/route");
+
+    const response = await GET(makeRequest({ cookieToken: undefined }) as never);
+    expect(response.status).toBe(401);
+    const data = await response.json();
+    expect(data.reason).toBe("missing_cookie");
+  });
+
+  it("me route returns 401 with missing_sid reason", async () => {
+    const { GET } = await import("@/app/api/me/route");
+    mockVerifyToken.mockResolvedValueOnce({ user_id: 1, role: "admin", email: "admin@bisu.edu.ph" });
+
+    const response = await GET(makeRequest({ cookieToken: "valid-no-sid" }) as never);
+    expect(response.status).toBe(401);
+    const data = await response.json();
+    expect(data.reason).toBe("missing_sid");
+  });
+
+  it("me route returns 401 with session_replaced reason", async () => {
+    const { GET } = await import("@/app/api/me/route");
+    mockVerifyToken.mockResolvedValueOnce({
+      user_id: 1,
+      role: "admin",
+      email: "admin@bisu.edu.ph",
+      sid: "replaced-session",
+    });
+
+    const response = await GET(makeRequest({ cookieToken: "replaced-token" }) as never);
+    expect(response.status).toBe(401);
+    const data = await response.json();
+    expect(data.reason).toBe("session_replaced");
   });
 
   it("login route returns success and user payload", async () => {
@@ -131,19 +190,26 @@ describe("API route integration tests (mocked DB/auth)", () => {
 
   it("logout route clears session cookie", async () => {
     const { POST } = await import("@/app/api/logout/route");
-    mockVerifyToken.mockResolvedValueOnce({ user_id: 7, role: "student", email: "s@bisu.edu.ph" });
+    mockVerifyToken.mockResolvedValueOnce({
+      user_id: 7,
+      role: "student",
+      email: "s@bisu.edu.ph",
+      sid: "sid-student-7",
+    });
 
     const response = await POST(makeRequest({ cookieToken: "valid-token" }) as never);
     expect(response.status).toBe(200);
     expect(response.headers.get("set-cookie")).toContain("token=");
   });
 
-  it("me route returns 401 for invalid token", async () => {
+  it("me route returns 401 for invalid token reason", async () => {
     const { GET } = await import("@/app/api/me/route");
     mockVerifyToken.mockResolvedValueOnce(null);
 
     const response = await GET(makeRequest({ cookieToken: "expired-token" }) as never);
     expect(response.status).toBe(401);
+    const data = await response.json();
+    expect(data.reason).toBe("invalid_token");
   });
 
   it("users route requires admin auth", async () => {
@@ -156,7 +222,12 @@ describe("API route integration tests (mocked DB/auth)", () => {
   it("change-password route updates password when credentials are valid", async () => {
     const { POST } = await import("@/app/api/users/change-password/route");
 
-    mockVerifyToken.mockResolvedValueOnce({ user_id: 99, role: "student", email: "s@bisu.edu.ph" });
+    mockVerifyToken.mockResolvedValueOnce({
+      user_id: 99,
+      role: "student",
+      email: "s@bisu.edu.ph",
+      sid: "sid-student-99",
+    });
     mockDb.query
       .mockResolvedValueOnce([[{ user_id: 99, password: "existing-hash" }]])
       .mockResolvedValueOnce([{}])
@@ -176,5 +247,24 @@ describe("API route integration tests (mocked DB/auth)", () => {
     const data = await response.json();
     expect(data.success).toBe(true);
     expect(mockBcryptHash).toHaveBeenCalled();
+  });
+
+  it("change-password route rejects session payload without sid", async () => {
+    const { POST } = await import("@/app/api/users/change-password/route");
+    mockVerifyToken.mockResolvedValueOnce({ user_id: 99, role: "student", email: "s@bisu.edu.ph" });
+
+    const response = await POST(
+      makeRequest({
+        cookieToken: "token-without-sid",
+        body: {
+          currentPassword: "oldpassword",
+          newPassword: "newpassword1234",
+        },
+      }) as never
+    );
+
+    expect(response.status).toBe(401);
+    const data = await response.json();
+    expect(data.success).toBe(false);
   });
 });
