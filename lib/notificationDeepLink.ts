@@ -10,7 +10,13 @@ export function getNotificationBasePath(
   targetId?: number | null
 ): string {
   if (type === "password_reset_requested") {
+    if (targetId) {
+      return `/admin/user-accounts?search=${encodeURIComponent(String(targetId))}`;
+    }
     return "/admin/user-accounts";
+  }
+  if (type === "password_reset_completed") {
+    return "/login";
   }
 
   if (role === "student") {

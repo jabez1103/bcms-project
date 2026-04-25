@@ -19,14 +19,19 @@ export function generatedInstitutionalEmail(firstName: string, lastName: string)
   return `${normalizeNameTokenForEmail(firstName)}.${normalizeNameTokenForEmail(lastName)}@bisu.edu.ph`;
 }
 
+/** Password last-name format: preserve casing from source, no spaces. */
+export function normalizeLastNameTokenForPassword(lastName: string): string {
+  return String(lastName ?? "")
+    .trim()
+    .replace(/\s+/g, "");
+}
+
 /**
  * Default password: last name (no whitespace) + user id.
  * If shorter than {@link MIN_PASSWORD_LENGTH}, append `user_id` (or last name) until long enough.
  */
 export function defaultImportedPassword(lastName: string, userId: string | number): string {
-  const last = String(lastName ?? "")
-    .trim()
-    .replace(/\s+/g, "");
+  const last = normalizeLastNameTokenForPassword(lastName);
   const id = String(userId ?? "").trim();
   let base = `${last}${id}`;
   const pad = id || last || "0";

@@ -149,7 +149,11 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
     fetch("/api/notifications")
       .then((r) => r.json())
       .then((data) => {
-        if (data.success) setNotifications(data.notifications);
+        if (data.success) {
+          const nextNotifications = Array.isArray(data.notifications) ? data.notifications : [];
+          setNotifications(nextNotifications);
+          setUnreadCount(nextNotifications.filter((n: Notification) => !n.isRead).length);
+        }
       })
       .catch(() => {})
       .finally(() => setNotifLoading(false));
@@ -160,8 +164,10 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
   const filteredNotifs = visibleNotifications.filter((n) => (activeTab === "all" ? true : !n.isRead));
 
   useEffect(() => {
-    setUnreadCount(visibleNotifications.filter((n) => !n.isRead).length);
-  }, [visibleNotifications]);
+    if (isNotifOpen) {
+      setUnreadCount(visibleNotifications.filter((n) => !n.isRead).length);
+    }
+  }, [visibleNotifications, isNotifOpen]);
   const userAvatar = user?.avatar || "/default-avatar.png";
 
   useEffect(() => {
@@ -378,7 +384,7 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
               }`}
             >
               <Bell size={20} fill={isNotifOpen ? "currentColor" : "none"} className={isNotifOpen ? "opacity-20" : ""} />
-              {unreadCount > 0 && (
+              {!isNotifOpen && unreadCount > 0 && (
                 <span className="absolute top-2 right-2 flex h-4 w-4">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
                   <span className="relative inline-flex items-center justify-center rounded-full h-4 w-4 bg-rose-500 border-2 border-white text-[9px] text-white font-bold">

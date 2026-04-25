@@ -1,6 +1,10 @@
 import { Connection } from "mysql2/promise";
 
-export type AuthEventType = "login" | "logout" | "password_changed";
+export type AuthEventType =
+  | "login"
+  | "logout"
+  | "password_changed"
+  | "password_reset_by_admin";
 
 /**
  * Inserts a single row into auth_events.

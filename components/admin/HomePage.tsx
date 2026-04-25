@@ -278,7 +278,7 @@ export default function AdminHomePage() {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200/60 dark:border-slate-800 shadow-sm overflow-hidden">
+        <section className="bg-white dark:bg-slate-900 rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 overflow-hidden">
           <div className="p-6 sm:p-8 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 bg-slate-50/50 dark:bg-slate-800/50">
             <div className="flex items-center gap-4">
               <div className="hidden sm:flex p-3.5 bg-slate-900 rounded-2xl text-white">
@@ -321,27 +321,24 @@ export default function AdminHomePage() {
               Array.from({ length: 5 }).map((_, i) => <SkeletonMobileCard key={i} />)
             ) : (
               paginatedData.map((s) => (
-                <div key={s.student_id} className="p-5 space-y-4">
-                  <div className="flex items-center gap-4">
-                    <div className={`w-12 h-12 rounded-2xl ${avatarColor(s.student_id)} flex items-center justify-center font-black text-sm shadow-sm shrink-0`}>
-                      {getInitials(s.first_name, s.last_name)}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="font-black text-sm text-slate-800 dark:text-slate-200 truncate">{s.first_name} {s.middle_name} {s.last_name}</p>
-                      <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 mt-0.5 tracking-tight">
-                        {s.user_id} • {yearLabel(s.year_level)}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex justify-between items-end">
-                    <div className="space-y-1.5">
-                      <p className="text-xs font-bold text-slate-600 dark:text-slate-300">{s.program || "No Program"}</p>
+                <div key={s.student_id} className="p-6 space-y-4 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="font-bold text-slate-800 dark:text-slate-200">{s.first_name} {s.middle_name} {s.last_name}</p>
+                      <p className="text-xs font-medium text-slate-400">ID: {s.user_id}</p>
                     </div>
                     <StatusBadge status={s.status} />
                   </div>
+
+                  <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-800 space-y-1.5">
+                    <p className="text-xs font-bold text-slate-600 dark:text-slate-300">{s.program || "No Program"}</p>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">
+                      {yearLabel(s.year_level)}
+                    </p>
+                  </div>
                   <button
                     onClick={() => setSelectedStudent(s)}
-                    className="w-full inline-flex items-center justify-center px-6 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-[10px] font-black uppercase"
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300"
                   >
                     <Eye size={14} className="mr-2" /> View Details
                   </button>
@@ -351,46 +348,38 @@ export default function AdminHomePage() {
           </div>
 
           <div className="hidden xl:block overflow-x-auto">
-            <table className="w-full text-left min-w-[800px]">
+            <table className="w-full text-left border-collapse min-w-[800px]">
               <thead>
-                <tr className="border-b border-slate-100 dark:border-slate-800">
-                  <th className="px-8 py-6 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Student Information</th>
-                  <th className="px-8 py-6 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Program</th>
-                  <th className="px-8 py-6 text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Status</th>
-                  <th className="px-8 py-6 text-right text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Action</th>
+                <tr className="bg-slate-50/50 dark:bg-slate-800/50">
+                  <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Student</th>
+                  <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Year / Program</th>
+                  <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
+                  <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
+              <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
                 {loading ? (
                   Array.from({ length: 5 }).map((_, i) => <SkeletonTableRow key={i} cols={4} />)
                 ) : (
                   paginatedData.map((s) => (
-                    <tr key={s.student_id} className="group hover:bg-slate-50/80 dark:hover:bg-slate-800/80 transition-all">
+                    <tr key={s.student_id} className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
                       <td className="px-8 py-6">
-                        <div className="flex items-center gap-4">
-                          <div className={`w-11 h-11 rounded-2xl ${avatarColor(s.student_id)} flex items-center justify-center font-black text-xs shadow-sm`}>
-                            {getInitials(s.first_name, s.last_name)}
-                          </div>
-                          <div>
-                            <p className="font-black text-sm text-slate-800 dark:text-slate-200 group-hover:text-brand-600 transition-colors">
-                              {s.first_name} {s.middle_name} {s.last_name}
-                            </p>
-                            <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 mt-0.5 tracking-tight">
-                              {s.user_id} • {yearLabel(s.year_level)}
-                            </p>
-                          </div>
-                        </div>
+                        <p className="font-bold text-slate-800 dark:text-slate-200">{s.first_name} {s.middle_name} {s.last_name}</p>
+                        <p className="text-xs font-medium text-slate-400">ID: {s.user_id}</p>
                       </td>
-                      <td className="px-8 py-6 text-xs font-bold text-slate-600 dark:text-slate-300">{s.program || "No Program"}</td>
+                      <td className="px-8 py-6">
+                        <p className="text-sm font-bold text-slate-600 dark:text-slate-300">{yearLabel(s.year_level)}</p>
+                        <p className="text-xs text-slate-400">{s.program || "No Program"}</p>
+                      </td>
                       <td className="px-8 py-6">
                         <StatusBadge status={s.status} />
                       </td>
-                      <td className="px-8 py-6 text-right">
+                      <td className="px-8 py-6">
                         <button
                           onClick={() => setSelectedStudent(s)}
-                          className="inline-flex items-center justify-center px-6 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-[10px] font-black uppercase"
+                          className="px-3 py-1 rounded-lg border border-slate-200 dark:border-slate-700 text-[9px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300"
                         >
-                          <Eye size={14} className="mr-2" /> View
+                          View Details
                         </button>
                       </td>
                     </tr>
@@ -400,47 +389,29 @@ export default function AdminHomePage() {
             </table>
           </div>
 
-          <div className="p-8 border-t border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-800/30 flex flex-col lg:flex-row justify-between items-center gap-6">
-            <div className="flex items-center gap-6">
-              <div className="flex items-center gap-3">
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Rows per page</span>
-                <select
-                  value={itemsPerPage}
-                  onChange={(e) => setItemsPerPage(Number(e.target.value))}
-                  className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-[11px] font-black"
-                >
-                  {[5, 10, 20, 50].map((v) => (
-                    <option key={v} value={v}>
-                      {v}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
-                Showing {paginatedData.length} of {tableResults.length} results
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
+          <div className="px-8 py-4 bg-slate-50/30 dark:bg-slate-800/30 border-t border-slate-50 dark:border-slate-800/50 flex justify-between items-center text-xs font-bold text-slate-400">
+            <p>
+              Showing {Math.min((currentPage - 1) * itemsPerPage + 1, tableResults.length)}–
+              {Math.min(currentPage * itemsPerPage, tableResults.length)} of {tableResults.length} records
+            </p>
+            <div className="flex gap-2">
               <button
-                onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
                 disabled={currentPage === 1}
-                className="p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl disabled:opacity-30"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                className="px-3 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md shadow-sm hover:text-brand-600 transition-colors disabled:opacity-40"
               >
-                <ChevronLeft size={16} />
+                Prev
               </button>
-              <span className="text-[11px] font-black text-slate-500 dark:text-slate-400 px-2">
-                {currentPage} / {totalPages}
-              </span>
               <button
-                onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
                 disabled={currentPage === totalPages}
-                className="p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl disabled:opacity-30"
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                className="px-3 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md shadow-sm hover:text-brand-600 transition-colors disabled:opacity-40"
               >
-                <ChevronRight size={16} />
+                Next
               </button>
             </div>
           </div>
-        </div>
+        </section>
       </main>
 
       {selectedStudent && (

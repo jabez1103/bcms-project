@@ -6,4 +6,5 @@ export type NotificationType =
   | "submission_rejected"
   | "period_opened"
   | "period_closed"
-  | "password_reset_requested";
+  | "password_reset_requested"
+  | "password_reset_completed";

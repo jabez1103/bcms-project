@@ -194,7 +194,8 @@ export async function POST(request: NextRequest) {
       errors,
       credentialNote:
         `Default login: institutional email (firstname.lastname@bisu.edu.ph unless an email column is set) ` +
-        `and password = last name (no spaces) + user ID (if shorter than ${MIN_PASSWORD_LENGTH} characters, ` +
+        `and password = formatted last name + user ID (first letter uppercase, remaining letters lowercase, no spaces; ` +
+        `if shorter than ${MIN_PASSWORD_LENGTH} characters, ` +
         `the ID is repeated until it meets the minimum). Optional columns: email (@bisu.edu.ph), ` +
         `password (at least ${MIN_PASSWORD_LENGTH} characters).`,
     });

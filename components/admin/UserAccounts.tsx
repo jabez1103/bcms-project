@@ -408,6 +408,15 @@ export default function UserAccounts() {
     fetchUsers();
   }, []);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const searchFromUrl = new URLSearchParams(window.location.search).get("search");
+    if (searchFromUrl && searchFromUrl !== searchQuery) {
+      setSearchQuery(searchFromUrl);
+      setCurrentPage(1);
+    }
+  }, [searchQuery]);
+
   const filteredUsers = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     return users.filter((u) => {
