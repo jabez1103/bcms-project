@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
-import { createConnection } from "@/lib/db";
 import { isTrustedMutationOrigin } from "@/lib/auth";
-import { MIN_PASSWORD_LENGTH } from "@/lib/passwordPolicy";
-import { logAuthEvent } from "@/lib/authEvents";
+import { createConnection } from "@/lib/db";
+import { createNotificationBulk } from "@/lib/notifications";
 import type { RowDataPacket } from "mysql2/promise";
 
 export async function POST(request: NextRequest) {
@@ -14,70 +12,50 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const body = await request.json();
-  const email = String(body?.email ?? "").trim().toLowerCase();
-  const newPassword = String(body?.newPassword ?? "");
-
-  if (!email || !newPassword) {
-    return NextResponse.json(
-      { success: false, message: "Email and new password are required." },
-      { status: 400 },
-    );
+  let email = "";
+  try {
+    const body = (await request.json()) as { email?: unknown };
+    email = String(body?.email ?? "").trim().toLowerCase();
+  } catch {
+    email = "";
   }
 
-  if (!/^[a-z0-9._%+-]+@bisu\.edu\.ph$/.test(email)) {
+  if (!email || !/^[a-z0-9._%+-]+@bisu\.edu\.ph$/.test(email)) {
     return NextResponse.json(
-      { success: false, message: "Use your institutional @bisu.edu.ph email." },
-      { status: 400 },
-    );
-  }
-
-  if (newPassword.length < MIN_PASSWORD_LENGTH) {
-    return NextResponse.json(
-      { success: false, message: `Password must be at least ${MIN_PASSWORD_LENGTH} characters.` },
+      {
+        success: false,
+        message: "Please provide a valid institutional email.",
+      },
       { status: 400 },
     );
   }
 
   const db = await createConnection();
-
   try {
-    type UserRow = RowDataPacket & { user_id: number; email: string };
-    const [rows] = await db.query<UserRow[]>(
-      "SELECT user_id, email FROM users WHERE email = ? LIMIT 1",
-      [email],
+    type AdminRow = RowDataPacket & { user_id: number };
+    const [admins] = await db.query<AdminRow[]>(
+      "SELECT user_id FROM users WHERE LOWER(role) = 'admin' AND LOWER(account_status) = 'active'",
     );
 
-    if (rows.length === 0) {
-      return NextResponse.json(
-        { success: false, message: "No account found for this email." },
-        { status: 404 },
-      );
-    }
-
-    const user = rows[0];
-    const hashed = await bcrypt.hash(newPassword, 10);
-    await db.query("UPDATE users SET password = ? WHERE user_id = ?", [hashed, user.user_id]);
-
-    try {
-      const ip =
-        request.headers.get("x-forwarded-for")?.split(",")[0].trim() ??
-        request.headers.get("x-real-ip") ??
-        null;
-      const ua = request.headers.get("user-agent") ?? null;
-      await logAuthEvent(db, user.user_id, "password_changed", ip, ua);
-    } catch {}
-
-    return NextResponse.json({
-      success: true,
-      message: "Password has been reset. You can now log in.",
-    });
+    await createNotificationBulk(
+      db,
+      admins.map((row) => ({ userId: Number(row.user_id), role: "admin" as const })),
+      "password_reset_requested",
+      "Password Reset Request",
+      `A user requested a password reset for ${email}. Please review and reset the account if verified.`,
+    );
   } catch {
-    return NextResponse.json(
-      { success: false, message: "Failed to reset password." },
-      { status: 500 },
-    );
+    // Avoid leaking internal errors to public endpoint callers.
   } finally {
     await db.end();
   }
+
+  return NextResponse.json(
+    {
+      success: true,
+      message:
+        "Reset request sent. Please contact an administrator to reset your account.",
+    },
+    { status: 200 },
+  );
 }

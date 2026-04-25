@@ -4,7 +4,6 @@ import { useState, FormEvent, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 import { roleHomePath, writeAuthTabSync } from "@/lib/authSync";
-import { MIN_PASSWORD_LENGTH } from "@/lib/passwordPolicy";
 
 interface LoginFormProps {
   mobile?: boolean;
@@ -24,8 +23,6 @@ export default function LoginForm({ mobile = false }: LoginFormProps) {
   const [success, setSuccess] = useState("");
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
-  const [forgotPassword, setForgotPassword] = useState("");
-  const [forgotConfirmPassword, setForgotConfirmPassword] = useState("");
   const [forgotLoading, setForgotLoading] = useState(false);
   const [forgotMessage, setForgotMessage] = useState("");
   const [sessionNotice, setSessionNotice] = useState("");
@@ -90,16 +87,12 @@ export default function LoginForm({ mobile = false }: LoginFormProps) {
   const handleForgotPassword = async () => {
     setForgotMessage("");
 
-    if (!forgotEmail || !forgotPassword || !forgotConfirmPassword) {
-      setForgotMessage("Please complete all fields.");
+    if (!forgotEmail) {
+      setForgotMessage("Please enter your institutional email.");
       return;
     }
-    if (forgotPassword.length < MIN_PASSWORD_LENGTH) {
-      setForgotMessage(`New password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
-      return;
-    }
-    if (forgotPassword !== forgotConfirmPassword) {
-      setForgotMessage("Passwords do not match.");
+    if (!/^[a-z0-9._%+-]+@bisu\.edu\.ph$/i.test(forgotEmail.trim())) {
+      setForgotMessage("Use your institutional @bisu.edu.ph email.");
       return;
     }
 
@@ -108,23 +101,16 @@ export default function LoginForm({ mobile = false }: LoginFormProps) {
       const res = await fetch("/api/users/forgot-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: forgotEmail, newPassword: forgotPassword }),
+        body: JSON.stringify({ email: forgotEmail }),
       });
       const data = await res.json();
-      if (!res.ok || !data.success) {
-        setForgotMessage(data.message || "Failed to reset password.");
-        return;
-      }
-
-      setForgotMessage("Password reset successful. You can now sign in.");
+      setForgotMessage(
+        data.message ||
+          "Please contact an administrator to reset your password."
+      );
       setEmail(forgotEmail);
-      setTimeout(() => {
-        setShowForgotPassword(false);
-        setForgotPassword("");
-        setForgotConfirmPassword("");
-      }, 1000);
     } catch {
-      setForgotMessage("Network error. Please try again.");
+      setForgotMessage("Unable to submit request. Please try again.");
     } finally {
       setForgotLoading(false);
     }
@@ -293,22 +279,9 @@ export default function LoginForm({ mobile = false }: LoginFormProps) {
           placeholder="Institutional Email"
           className="h-11 w-full rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 px-4 text-sm text-slate-900 dark:text-white outline-none transition focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-brand-500/5"
         />
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <input
-            type="password"
-            value={forgotPassword}
-            onChange={(e) => setForgotPassword(e.target.value)}
-            placeholder="New password"
-            className="h-11 w-full rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 px-4 text-sm text-slate-900 dark:text-white outline-none transition focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-brand-500/5"
-          />
-          <input
-            type="password"
-            value={forgotConfirmPassword}
-            onChange={(e) => setForgotConfirmPassword(e.target.value)}
-            placeholder="Confirm"
-            className="h-11 w-full rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 px-4 text-sm text-slate-900 dark:text-white outline-none transition focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-brand-500/5"
-          />
-        </div>
+        <p className="text-[11px] text-slate-500 dark:text-slate-400">
+          For security, password resets are handled by an administrator.
+        </p>
       </div>
 
       {forgotMessage && (
@@ -323,7 +296,7 @@ export default function LoginForm({ mobile = false }: LoginFormProps) {
         disabled={forgotLoading}
         className="mt-4 w-full h-11 rounded-xl bg-brand-600 text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-brand-500/20 hover:bg-brand-700 active:scale-95 transition-all disabled:opacity-50"
       >
-        {forgotLoading ? "Processing..." : "Submit Reset Request"}
+        {forgotLoading ? "Processing..." : "Send Reset Request"}
       </button>
     </div>
   </div>

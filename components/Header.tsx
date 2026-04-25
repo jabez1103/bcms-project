@@ -66,6 +66,7 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
     message: string;
     isRead: boolean;
     createdAt: string;
+    href?: string;
     targetId?: number | null;
   }
 
@@ -90,6 +91,9 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
       }
       if (t === "submission_received") {
         return notificationPrefs.status;
+      }
+      if (t === "password_reset_requested") {
+        return notificationPrefs.system;
       }
       return notificationPrefs.system;
     },
@@ -247,24 +251,13 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
     setNotifOpen(false);
   };
 
-  /** Navigate based on notification type + role */
+  /** Navigate using backend-provided deep link when available. */
   const handleNotifClick = async (notif: Notification) => {
     await markAsRead(notif.id);
     setNotifOpen(false);
 
-    if (role === "student" && notif.targetId) {
-      if (notif.type === "submission_rejected" || notif.type === "submission_approved") {
-        router.push(`/student/signatories/${notif.targetId}`);
-        return;
-      }
-      if (notif.type === "period_opened") {
-        router.push("/student/home");
-        return;
-      }
-    }
-
-    if (role === "signatory" && notif.type === "submission_received") {
-      router.push("/signatory/home");
+    if (typeof notif.href === "string" && notif.href.trim().length > 0) {
+      router.push(notif.href);
       return;
     }
 

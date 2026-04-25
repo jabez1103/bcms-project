@@ -9,6 +9,10 @@ export function getNotificationBasePath(
   type: NotificationType,
   targetId?: number | null
 ): string {
+  if (type === "password_reset_requested") {
+    return "/admin/user-accounts";
+  }
+
   if (role === "student") {
     if (
       (type === "submission_approved" || type === "submission_rejected") &&

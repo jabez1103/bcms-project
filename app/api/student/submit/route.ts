@@ -6,6 +6,8 @@ import { createNotification } from "@/lib/notifications";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 
+const allowLocalUploadsInProduction =
+  process.env.ALLOW_LOCAL_UPLOADS_IN_PRODUCTION === "true";
 
 export async function POST(request: NextRequest) {
     const payload = await verifySessionFromCookies(request) as any;
@@ -80,6 +82,16 @@ export async function POST(request: NextRequest) {
 
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
+
+    if (process.env.NODE_ENV === "production" && !allowLocalUploadsInProduction) {
+        return NextResponse.json(
+            {
+                error:
+                    "File uploads are not configured for production. Configure managed storage or explicitly allow local uploads.",
+            },
+            { status: 503 }
+        );
+    }
 
     const uploadDir = path.join(process.cwd(), "public", "uploads", "submissions");
     await mkdir(uploadDir, { recursive: true });

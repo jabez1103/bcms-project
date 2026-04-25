@@ -5,4 +5,5 @@ export type NotificationType =
   | "submission_approved"
   | "submission_rejected"
   | "period_opened"
-  | "period_closed";
+  | "period_closed"
+  | "password_reset_requested";

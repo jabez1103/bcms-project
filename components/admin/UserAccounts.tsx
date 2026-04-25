@@ -47,6 +47,7 @@ type ApiResponse = {
   data?: User[];
   message?: string;
   error?: string;
+  temporaryPassword?: string;
   details?: Record<string, string>;
 };
 
@@ -682,6 +683,46 @@ export default function UserAccounts() {
     }
   };
 
+  const resetPassword = async (user: User) => {
+    const confirmed = confirm(
+      `Reset password for ${user.first_name} ${user.last_name}? A temporary password will be generated.`,
+    );
+    if (!confirmed) return;
+
+    setBusyUserId(user.user_id);
+    setNotice(null);
+    try {
+      const res = await fetch("/api/admin/users/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user.user_id }),
+      });
+      const data = await readJsonSafely(res);
+      if (!res.ok || !data?.success) {
+        setNotice({
+          type: "error",
+          message: data?.message || data?.error || "Unable to reset password.",
+        });
+        return;
+      }
+
+      const tempPassword = String(data.temporaryPassword ?? "");
+      setNotice({
+        type: "success",
+        message:
+          `Temporary password for ${user.first_name} ${user.last_name}: ${tempPassword}. ` +
+          "Share it securely and require immediate change after login.",
+      });
+    } catch {
+      setNotice({
+        type: "error",
+        message: "Unable to reset password.",
+      });
+    } finally {
+      setBusyUserId(null);
+    }
+  };
+
   // IMPORT FUNCTIONS HERE BOSS
   function parseCSV(text: string): any[] {
     const lines = text.trim().split("\n").filter(l => l.trim());
@@ -976,6 +1017,14 @@ export default function UserAccounts() {
                         <ProtectedActionButton
                           disabled={busyUserId === u.user_id || isProtectedAdminAction(u)}
                           tooltip={SELF_PROTECTION_MESSAGE}
+                          onClick={() => resetPassword(u)}
+                          className="text-amber-600 dark:text-amber-400 font-bold text-xs uppercase disabled:opacity-50"
+                        >
+                          {busyUserId === u.user_id ? "Working..." : "Reset Password"}
+                        </ProtectedActionButton>
+                        <ProtectedActionButton
+                          disabled={busyUserId === u.user_id || isProtectedAdminAction(u)}
+                          tooltip={SELF_PROTECTION_MESSAGE}
                           onClick={() => toggleStatus(u)}
                           className="text-slate-600 dark:text-slate-400 font-bold text-xs uppercase disabled:opacity-50"
                         >
@@ -1105,6 +1154,14 @@ export default function UserAccounts() {
                       </td>
 
                       <td className="px-8 py-5 text-right space-x-3">
+                        <ProtectedActionButton
+                          disabled={busyUserId === u.user_id || isProtectedAdminAction(u)}
+                          tooltip={SELF_PROTECTION_MESSAGE}
+                          onClick={() => resetPassword(u)}
+                          className="text-amber-600 dark:text-amber-400 font-bold text-xs hover:underline uppercase tracking-wider disabled:opacity-50"
+                        >
+                          {busyUserId === u.user_id ? "Working..." : "Reset Password"}
+                        </ProtectedActionButton>
                         <ProtectedActionButton
                           disabled={busyUserId === u.user_id || isProtectedAdminAction(u)}
                           tooltip={SELF_PROTECTION_MESSAGE}

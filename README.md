@@ -46,6 +46,17 @@ The app reads these values at runtime:
 - `VAPID_PUBLIC_KEY`
 - `VAPID_PRIVATE_KEY`
 - `VAPID_SUBJECT`
+- `ALLOW_LOCAL_UPLOADS_IN_PRODUCTION` (default `false`; keep disabled for cloud deployments)
+
+## Required one-time migration
+
+Before first production startup, ensure the session column exists:
+
+```bash
+npm run migrate:session-token
+```
+
+This app now verifies required schema at runtime and no longer performs `ALTER TABLE` automatically in request paths.
 
 ## Production readiness checks
 
@@ -89,3 +100,4 @@ npm run start
 - Keep `.env.local` out of version control.
 - Do not commit secrets.
 - Build output under `.next/` should not be committed.
+- Self-service forgot-password is intentionally disabled for security hardening; use admin-assisted resets.
