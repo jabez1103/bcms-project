@@ -1,7 +1,12 @@
+import { verifySessionFromCookies } from "@/lib/requestSession";
 import { NextRequest, NextResponse } from "next/server";
-import { verifyToken } from "@/lib/auth";
+import type { ResultSetHeader } from "mysql2/promise";
+
 import { createConnection } from "@/lib/db";
-import { createNotificationBulk } from "@/lib/notifications";
+import {
+  notifyClearancePeriodLive,
+  syncLiveClearancePeriodNotifications,
+} from "@/lib/liveClearanceNotify";
 
 type PeriodStatus = "live" | "scheduled" | "ended";
 type DbConnection = Awaited<ReturnType<typeof createConnection>>;
@@ -29,10 +34,6 @@ type ActivePeriodRow = {
   active_end_date: string;
 };
 
-type UserIdRow = {
-  user_id: number;
-};
-
 function normalizeScheduleDate(value: string, isEnd = false) {
   if (!value) return null;
 
@@ -46,17 +47,15 @@ function normalizeScheduleDate(value: string, isEnd = false) {
 }
 
 async function getAdminContext(request: NextRequest): Promise<AdminContext> {
-  const token = request.cookies.get("token")?.value;
+  const payload = (await verifySessionFromCookies(request)) as TokenPayload;
 
-  if (!token) {
+  if (!payload) {
     return {
       response: NextResponse.json({ error: "Not logged in" }, { status: 401 }),
     };
   }
 
-  const payload = (await verifyToken(token)) as TokenPayload;
-
-  if (!payload || String(payload.role).toLowerCase() !== "admin") {
+  if (String(payload.role).toLowerCase() !== "admin") {
     return {
       response: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
     };
@@ -166,6 +165,7 @@ export async function GET(request: NextRequest) {
     db = context.db;
 
     await normalizePeriodStatuses(db);
+    await syncLiveClearancePeriodNotifications(db);
 
     const [rows] = (await db.query(`
       SELECT cp.*, CONCAT(u.first_name, ' ', u.last_name) AS set_by
@@ -273,7 +273,7 @@ export async function POST(request: NextRequest) {
 
     const period_status = statusResult[0].period_status;
 
-    await db.query(
+    const [insertHeader] = await db.query<ResultSetHeader>(
       `INSERT INTO clearance_periods (
         academic_year,
         semester,
@@ -287,27 +287,21 @@ export async function POST(request: NextRequest) {
 
     await db.commit();
 
-    try {
-      const [studentUsers] = (await db.query(
-        `SELECT u.user_id FROM students st JOIN users u ON st.user_id = u.user_id`,
-      )) as [UserIdRow[], unknown];
-
-      const [signatoryUsers] = (await db.query(
-        `SELECT u.user_id FROM signatories sg JOIN users u ON sg.user_id = u.user_id`,
-      )) as [UserIdRow[], unknown];
-
-      const periodLabel = `${academic_year}${semester ? " — " + semester : ""}`;
-      const title = "🎓 Clearance Period Started";
-      const message = `A new clearance period (${periodLabel}) has been opened. Submit your requirements now.`;
-
-      const recipients = [
-        ...studentUsers.map((u) => ({ userId: u.user_id, role: "student" as const })),
-        ...signatoryUsers.map((u) => ({ userId: u.user_id, role: "signatory" as const })),
-      ];
-
-      await createNotificationBulk(db, recipients, "period_opened", title, message);
-    } catch {
-      // Non-critical notification failure
+    if (period_status === "live") {
+      try {
+        const periodId = insertHeader.insertId;
+        const startDay = String(start_date).split("T")[0];
+        const endDay = String(end_date).split("T")[0];
+        await notifyClearancePeriodLive(db, {
+          periodId,
+          academicYear: academic_year,
+          semester: semester || null,
+          startDate: startDay,
+          endDate: endDay,
+        });
+      } catch {
+        // Non-critical notification failure
+      }
     }
 
     return NextResponse.json({ success: true, message: "Period created!" });

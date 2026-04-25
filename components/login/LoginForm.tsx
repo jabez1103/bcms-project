@@ -1,8 +1,10 @@
 "use client";
 
-import { useState, FormEvent } from "react";
-import { useRouter } from "next/navigation";
-import { Eye, EyeOff } from "lucide-react"; // Install with: npm install lucide-react
+import { useState, FormEvent, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Eye, EyeOff } from "lucide-react";
+import { roleHomePath, writeAuthTabSync } from "@/lib/authSync";
+import { MIN_PASSWORD_LENGTH } from "@/lib/passwordPolicy";
 
 interface LoginFormProps {
   mobile?: boolean;
@@ -10,14 +12,32 @@ interface LoginFormProps {
 
 export default function LoginForm({ mobile = false }: LoginFormProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false); // New state
+  const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotPassword, setForgotPassword] = useState("");
+  const [forgotConfirmPassword, setForgotConfirmPassword] = useState("");
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotMessage, setForgotMessage] = useState("");
+  const [sessionNotice, setSessionNotice] = useState("");
+
+  useEffect(() => {
+    const reason = searchParams.get("reason");
+    if (reason === "session-replaced") {
+      setSessionNotice(
+        "Your session was closed because your account is active on another device"
+      );
+    }
+  }, [searchParams]);
 
   const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
@@ -29,7 +49,7 @@ export default function LoginForm({ mobile = false }: LoginFormProps) {
       const res = await fetch("/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, rememberMe }),
       });
 
       const data = await res.json();
@@ -37,14 +57,10 @@ export default function LoginForm({ mobile = false }: LoginFormProps) {
       if (data.success) {
         setSuccess("Login successful! Redirecting...");
         localStorage.setItem("user", JSON.stringify(data.user));
+        writeAuthTabSync("login", data.user.role);
 
         setTimeout(() => {
-          const routes: Record<string, string> = {
-            admin: "/admin/home",
-            signatory: "/signatory/home",
-            student: "/student/home",
-          };
-          router.push(routes[data.user.role] || "/student");
+          router.push(roleHomePath(data.user.role));
         }, 1200);
       } else {
         setError(data.message || "Invalid credentials");
@@ -56,29 +72,81 @@ export default function LoginForm({ mobile = false }: LoginFormProps) {
     }
   };
 
+  const handleForgotPassword = async () => {
+    setForgotMessage("");
+
+    if (!forgotEmail || !forgotPassword || !forgotConfirmPassword) {
+      setForgotMessage("Please complete all fields.");
+      return;
+    }
+    if (forgotPassword.length < MIN_PASSWORD_LENGTH) {
+      setForgotMessage(`New password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
+      return;
+    }
+    if (forgotPassword !== forgotConfirmPassword) {
+      setForgotMessage("Passwords do not match.");
+      return;
+    }
+
+    setForgotLoading(true);
+    try {
+      const res = await fetch("/api/users/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: forgotEmail, newPassword: forgotPassword }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        setForgotMessage(data.message || "Failed to reset password.");
+        return;
+      }
+
+      setForgotMessage("Password reset successful. You can now sign in.");
+      setEmail(forgotEmail);
+      setTimeout(() => {
+        setShowForgotPassword(false);
+        setForgotPassword("");
+        setForgotConfirmPassword("");
+      }, 1000);
+    } catch {
+      setForgotMessage("Network error. Please try again.");
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
   return (
   <form
   onSubmit={handleLogin}
   className={`
-    flex flex-col items-center font-body z-10 transition-all duration-500
-    rounded-2xl border border-purple-100 dark:border-slate-800 bg-white dark:bg-slate-900 
-    p-6 sm:p-10 shadow-2xl          
-    w-[92%] sm:w-full max-w-[440px] mx-auto  
-    ${mobile ? "my-6" : "relative"}
+    flex flex-col items-center font-body z-10 transition-all duration-700
+    rounded-[2rem] border border-slate-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl
+    p-8 ${mobile ? "sm:p-8 px-6" : "sm:p-12"} shadow-[0_32px_64px_-12px_rgba(0,0,0,0.08)]          
+    w-[94%] sm:w-full max-w-[460px] mx-auto animate-fade-in-up
+    ${mobile ? "my-4" : "relative"}
   `}
 >
   {/* Branding Logo */}
-  <div className="mb-4 flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-2xl bg-purple-50 dark:bg-purple-900/30 p-3">
-    <img src="/logo.png" className="h-full w-full object-contain" alt="BCMS Logo" />
-  </div>
+    <div className={`
+      ${mobile ? "mb-4 h-14 w-14" : "mb-6 h-16 w-16"} 
+      flex items-center justify-center rounded-2xl bg-slate-50 dark:bg-slate-800 p-4 shadow-sm
+    `}>
+      <img src="/logo.png" className="h-full w-full object-contain grayscale hover:grayscale-0 transition-all duration-500" alt="BCMS Logo" />
+    </div>
 
-  <h2 className="font-heading text-[clamp(1.5rem,3vw,1.875rem)] font-bold tracking-tight text-gray-900 dark:text-white text-center">
-    Welcome Back
-  </h2>
-  
-  <p className="mt-2 px-2 text-center text-[clamp(0.75rem,2vw,0.875rem)] text-gray-500 dark:text-slate-400">
-    Enter your credentials to access the Clearance System
-  </p>
+    <h2 className={`
+      ${mobile ? "text-2xl" : "text-3xl"} 
+      font-heading font-black tracking-tighter text-slate-900 dark:text-white text-center
+    `}>
+      Portal Login
+    </h2>
+    
+    <p className={`
+      ${mobile ? "text-[11px]" : "text-[clamp(0.75rem,2vw,0.875rem)]"} 
+      mt-2 px-2 text-center text-gray-500 dark:text-slate-400
+    `}>
+      Enter your credentials to access the Clearance System
+    </p>
 
   {/* INPUTS */}
   <div className="mt-6 sm:mt-8 w-full space-y-4 sm:space-y-5">
@@ -90,8 +158,8 @@ export default function LoginForm({ mobile = false }: LoginFormProps) {
       <input
         type="email"
         required
-        placeholder="firstname.lastname@bisu.edu.ph"
-        className="h-11 sm:h-12 w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 text-sm sm:text-base text-gray-900 dark:text-white outline-none transition focus:border-purple-500 focus:ring-2 focus:ring-purple-100 dark:focus:ring-purple-500/20"
+        placeholder="institutional-email@bisu.edu.ph"
+        className="h-12 w-full rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 px-5 text-sm text-slate-900 dark:text-white outline-none transition focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-brand-500/5 dark:focus:ring-brand-400/10"
         value={email}
         onChange={(e) => {
           setEmail(e.target.value);
@@ -110,7 +178,7 @@ export default function LoginForm({ mobile = false }: LoginFormProps) {
           type={showPassword ? "text" : "password"} 
           required
           placeholder="•••••••••••••"
-          className="h-11 sm:h-12 w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 pr-12 text-sm sm:text-base text-gray-900 dark:text-white outline-none transition focus:border-purple-500 focus:ring-2 focus:ring-purple-100 dark:focus:ring-purple-500/20"
+          className="h-12 w-full rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 px-5 pr-12 text-sm text-slate-900 dark:text-white outline-none transition focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-brand-500/5 dark:focus:ring-brand-400/10"
           value={password}
           onChange={(e) => {
             setPassword(e.target.value);
@@ -120,7 +188,7 @@ export default function LoginForm({ mobile = false }: LoginFormProps) {
         <button
           type="button"
           onClick={() => setShowPassword(!showPassword)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-gray-400 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+          className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-gray-400 dark:text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
           aria-label={showPassword ? "Hide password" : "Show password"}
         >
           {showPassword ? (
@@ -138,7 +206,9 @@ export default function LoginForm({ mobile = false }: LoginFormProps) {
     <label className="group flex cursor-pointer items-center gap-2">
       <input
         type="checkbox"
-        className="h-4 w-4 rounded border-gray-300 dark:border-slate-600 text-purple-600 focus:ring-purple-500"
+        checked={rememberMe}
+        onChange={(e) => setRememberMe(e.target.checked)}
+        className="h-4 w-4 rounded border-gray-300 dark:border-slate-600 text-brand-600 focus:ring-brand-500"
       />
       <span className="text-[11px] sm:text-xs font-medium text-gray-500 dark:text-slate-400 transition-colors group-hover:text-gray-800 dark:group-hover:text-white">
         Remember me
@@ -146,14 +216,85 @@ export default function LoginForm({ mobile = false }: LoginFormProps) {
     </label>
     <button
       type="button"
-      className="text-[11px] sm:text-xs font-semibold text-purple-600 dark:text-purple-400 transition-colors hover:text-purple-800 dark:hover:text-purple-300 hover:underline"
+      onClick={() => {
+        setForgotEmail(email);
+        setForgotMessage("");
+        setShowForgotPassword((prev) => !prev);
+      }}
+      className="text-[11px] sm:text-xs font-semibold text-brand-600 dark:text-brand-400 transition-colors hover:text-brand-800 dark:hover:text-brand-300 hover:underline"
     >
       Forgot Password?
     </button>
   </div>
 
+  {showForgotPassword && (
+    <div className="mt-6 w-full space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
+      <div className="h-px bg-slate-100 dark:bg-slate-800 w-full" />
+      <div className="space-y-3.5">
+        <div className="flex items-center justify-between">
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-600 dark:text-brand-400">
+            Reset Password
+          </p>
+          <button 
+            onClick={() => setShowForgotPassword(false)}
+            className="text-[10px] font-bold text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors uppercase tracking-widest"
+          >
+            Cancel
+          </button>
+        </div>
+        
+        <div className="space-y-3">
+          <input
+            type="email"
+            value={forgotEmail}
+            onChange={(e) => setForgotEmail(e.target.value)}
+            placeholder="Institutional Email"
+            className="h-11 w-full rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 px-4 text-sm text-slate-900 dark:text-white outline-none transition focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-brand-500/5"
+          />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <input
+              type="password"
+              value={forgotPassword}
+              onChange={(e) => setForgotPassword(e.target.value)}
+              placeholder="New password"
+              className="h-11 w-full rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 px-4 text-sm text-slate-900 dark:text-white outline-none transition focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-brand-500/5"
+            />
+            <input
+              type="password"
+              value={forgotConfirmPassword}
+              onChange={(e) => setForgotConfirmPassword(e.target.value)}
+              placeholder="Confirm"
+              className="h-11 w-full rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 px-4 text-sm text-slate-900 dark:text-white outline-none transition focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-brand-500/5"
+            />
+          </div>
+        </div>
+
+        {forgotMessage && (
+          <p className={`text-[11px] font-semibold text-center ${forgotMessage.includes("success") ? "text-emerald-500" : "text-red-500"}`}>
+            {forgotMessage}
+          </p>
+        )}
+        
+        <button
+          type="button"
+          onClick={handleForgotPassword}
+          disabled={forgotLoading}
+          className="w-full h-11 rounded-xl bg-brand-600 text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-brand-500/20 hover:bg-brand-700 active:scale-95 transition-all disabled:opacity-50"
+        >
+          {forgotLoading ? "Processing..." : "Submit Reset Request"}
+        </button>
+      </div>
+      <div className="h-px bg-slate-100 dark:bg-slate-800 w-full" />
+    </div>
+  )}
+
   {/* Status Messages */}
   <div className="mt-4 min-h-[20px] text-center  ">
+    {sessionNotice && (
+      <p className="text-xs sm:text-sm font-medium text-amber-600 dark:text-amber-400">
+        {sessionNotice}
+      </p>
+    )}
     {success && <p className="text-xs sm:text-sm font-medium text-green-600">{success}</p>}
     {error && <p className="animate-bounce text-xs sm:text-sm font-medium text-red-500">{error}</p>}
   </div>
@@ -162,12 +303,12 @@ export default function LoginForm({ mobile = false }: LoginFormProps) {
   <button
     type="submit"
     disabled={isLoading}
-    className="group relative mt-2 flex h-11 sm:h-13 w-full items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-purple-600 to-indigo-500 p-3 font-heading font-bold tracking-wide text-white shadow-lg transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-70"
+    className="group relative mt-4 flex h-13 w-full items-center justify-center overflow-hidden rounded-2xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold tracking-widest text-[10px] uppercase transition-all hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-70"
   >
     {isLoading ? (
-      <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+      <div className="h-5 w-5 animate-spin rounded-full border-2 border-slate-400 border-t-slate-100" />
     ) : (
-      <span className="text-sm sm:text-base">Sign In</span>
+      <span>Sign In to System</span>
     )}
   </button>
 </form>

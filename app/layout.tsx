@@ -1,6 +1,9 @@
 import { Poppins, Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { AuthCrossTabSync } from "@/components/AuthCrossTabSync";
+import { RouteDocumentTitle } from "@/components/RouteDocumentTitle";
+import { AppearancePreferenceBootstrap } from "@/components/AppearancePreferenceBootstrap";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -27,6 +30,9 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange={false}
         >
+          <AppearancePreferenceBootstrap />
+          <RouteDocumentTitle />
+          <AuthCrossTabSync />
           {children}
         </ThemeProvider>
       </body>

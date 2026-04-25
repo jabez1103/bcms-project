@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyToken } from "@/lib/auth";
 import { createConnection } from "@/lib/db";
+import type { AuthTokenPayload } from "@/lib/auth";
+import { verifySessionFromCookies } from "@/lib/requestSession";
 
 /**
  * PATCH /api/notifications/read
@@ -10,11 +11,8 @@ import { createConnection } from "@/lib/db";
  *   { notificationId: number }     → mark a single notification as read
  */
 export async function PATCH(request: NextRequest) {
-  const token = request.cookies.get("token")?.value;
-  if (!token) return NextResponse.json({ error: "Not logged in" }, { status: 401 });
-
-  const payload = await verifyToken(token) as any;
-  if (!payload) return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+  const payload: AuthTokenPayload | null = await verifySessionFromCookies(request);
+  if (!payload) return NextResponse.json({ error: "Not logged in" }, { status: 401 });
 
   const body = await request.json();
   const db = await createConnection();
@@ -35,8 +33,9 @@ export async function PATCH(request: NextRequest) {
     }
 
     return NextResponse.json({ success: true });
-  } catch (err: any) {
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Failed to update notifications";
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
   } finally {
     await db.end();
   }

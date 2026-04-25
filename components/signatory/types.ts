@@ -1,5 +1,5 @@
 export type ReqStatus = "active" | "draft" | "archived";
-export type RequirementFormat = "Physical" | "Digital";
+export type RequirementFormat = "Physical" | "Digital" | "Conditional";
 
 export interface Requirement {
   id: string;
@@ -19,6 +19,8 @@ export interface Requirement {
   officerName?: string;
   availableSchedule?: string;
   requiredDocuments?: string;
+  conditionalSignatoryIds?: number[];
+  conditionalPolicy?: "manual_signatories" | "director_sds" | null;
   // Meta
   reqStatus: ReqStatus;
 }
@@ -30,5 +32,8 @@ export const DEFAULT_FORM: Omit<Requirement, "id"> = {
   targetYear: "All Years",
   startDate: "", endDate: "", location: "", itemsToBring: "",
   officeLocation: "", roomNumber: "", officerName: "",
-  availableSchedule: "", requiredDocuments: "", reqStatus: "draft"
+  availableSchedule: "", requiredDocuments: "",
+  conditionalSignatoryIds: [],
+  conditionalPolicy: null,
+  reqStatus: "draft"
 };

@@ -83,10 +83,10 @@ export default function SignatoriesPage() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {signatories.map((sig) => (
           <Link key={sig.id} href={`/student/signatories/${sig.id}`}>
-            <div className="border border-slate-100 dark:border-slate-800 rounded-xl p-5 hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-500/50 transition-all cursor-pointer bg-white dark:bg-slate-900 group flex flex-col h-full">
+            <div className="border border-slate-100 dark:border-slate-800 rounded-xl p-5 hover:shadow-md hover:border-brand-200 dark:hover:border-brand-500/50 transition-all cursor-pointer bg-white dark:bg-slate-900 group flex flex-col h-full">
 
               <div className="mb-4">
-                <p className="font-bold text-slate-800 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors uppercase text-[14px]">
+                <p className="font-bold text-slate-800 dark:text-slate-200 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors uppercase text-[14px]">
                   {sig.role}
                 </p>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
@@ -103,7 +103,7 @@ export default function SignatoriesPage() {
 
               <div className="mt-auto flex justify-between items-center pt-4 border-t border-slate-50 dark:border-slate-800">
                 <StatusBadge status={sig.status} />
-                <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors flex items-center gap-1">DETAILS &rarr;</span>
+                <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors flex items-center gap-1">DETAILS &rarr;</span>
               </div>
 
             </div>

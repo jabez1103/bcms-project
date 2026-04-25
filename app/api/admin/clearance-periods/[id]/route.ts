@@ -1,6 +1,8 @@
+import { verifySessionFromCookies } from "@/lib/requestSession";
 import { NextRequest, NextResponse } from "next/server";
-import { verifyToken } from "@/lib/auth";
+
 import { createConnection } from "@/lib/db";
+import { notifyClearancePeriodLive } from "@/lib/liveClearanceNotify";
 
 type DbConnection = Awaited<ReturnType<typeof createConnection>>;
 type TokenPayload = {
@@ -69,15 +71,13 @@ async function findLivePeriodConflict(
 }
 
 async function requireAdmin(request: NextRequest): Promise<AdminContext> {
-  const token = request.cookies.get("token")?.value;
+  const payload = (await verifySessionFromCookies(request)) as TokenPayload;
 
-  if (!token) {
+  if (!payload) {
     return { response: NextResponse.json({ error: "Not logged in" }, { status: 401 }) };
   }
 
-  const payload = (await verifyToken(token)) as TokenPayload;
-
-  if (!payload || String(payload.role).toLowerCase() !== "admin") {
+  if (String(payload.role).toLowerCase() !== "admin") {
     return { response: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
   }
 
@@ -159,6 +159,18 @@ export async function PUT(
 
     await db.beginTransaction();
 
+    const [existingRows] = (await db.query(
+      `SELECT period_status FROM clearance_periods WHERE period_id = ? FOR UPDATE`,
+      [id],
+    )) as [StatusRow[], unknown];
+
+    if (existingRows.length === 0) {
+      await db.rollback();
+      return NextResponse.json({ error: "Period not found" }, { status: 404 });
+    }
+
+    const previousStatus = existingRows[0].period_status;
+
     const liveConflict = await findLivePeriodConflict(db, start_date, end_date, id);
 
     if (liveConflict.length > 0) {
@@ -193,6 +205,23 @@ export async function PUT(
     );
 
     await db.commit();
+
+    if (period_status === "live" && previousStatus !== "live") {
+      try {
+        const startDay = String(start_date).split("T")[0];
+        const endDay = String(end_date).split("T")[0];
+        await notifyClearancePeriodLive(db, {
+          periodId: Number(id),
+          academicYear: academic_year,
+          semester: semester || null,
+          startDate: startDay,
+          endDate: endDay,
+        });
+      } catch (err) {
+        console.error("[clearance-periods PUT] notify live failed", err);
+      }
+    }
+
     return NextResponse.json({ success: true, message: "Period updated!" });
   } catch (error) {
     try {

@@ -1,16 +1,10 @@
 "use client";
-import { useState } from "react";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useEffect, useState } from "react";
 import {
   ShieldCheck,
-  Smartphone,
-  LogOut,
   Clock,
   KeyRound,
-  Monitor,
-  Fingerprint,
   Bell,
-  History,
   ChevronRight,
   X,
   Eye,
@@ -18,6 +12,11 @@ import {
   CheckCircle2,
   AlertCircle,
 } from "lucide-react";
+import {
+  DEFAULT_SECURITY_PREFERENCES,
+  getSecurityPreferences,
+  setSecurityPreferences,
+} from "@/lib/userPreferences";
 
 /* ── Change-Password sub-panel ───────────────────────────────── */
 function ChangePasswordPanel({ onClose }: { onClose: () => void }) {
@@ -108,7 +107,7 @@ function ChangePasswordPanel({ onClose }: { onClose: () => void }) {
               onChange={e => setter(e.target.value)}
               placeholder="••••••••"
               required
-              className="w-full pr-10 pl-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-sm text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:ring-4 focus:ring-purple-500/10 focus:border-purple-400 transition-all"
+              className="w-full pr-10 pl-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-sm text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:ring-4 focus:ring-brand-500/10 focus:border-brand-400 transition-all"
             />
             <button
               type="button"
@@ -124,7 +123,7 @@ function ChangePasswordPanel({ onClose }: { onClose: () => void }) {
       <button
         type="submit"
         disabled={loading}
-        className="w-full py-3 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white font-black rounded-2xl text-sm uppercase tracking-wider transition-all active:scale-[0.98]"
+        className="w-full py-3 bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white font-black rounded-2xl text-sm uppercase tracking-wider transition-all active:scale-[0.98]"
       >
         {loading ? "Saving…" : "Update Password"}
       </button>
@@ -134,9 +133,19 @@ function ChangePasswordPanel({ onClose }: { onClose: () => void }) {
 
 /* ── Main Security Settings ──────────────────────────────────── */
 export default function SecuritySettings() {
-  const [is2FAEnabled, setIs2FAEnabled] = useState(false);
-  const [autoLogout, setAutoLogout] = useState("30m");
+  const [autoLogout, setAutoLogout] = useState<"15m" | "30m" | "1h">(DEFAULT_SECURITY_PREFERENCES.autoLogout);
+  const [securityAlerts, setSecurityAlerts] = useState(DEFAULT_SECURITY_PREFERENCES.securityAlerts);
   const [showPasswordPanel, setShowPasswordPanel] = useState(false);
+
+  useEffect(() => {
+    const prefs = getSecurityPreferences();
+    setAutoLogout(prefs.autoLogout);
+    setSecurityAlerts(prefs.securityAlerts);
+  }, []);
+
+  const persistSecurity = (next: { autoLogout: "15m" | "30m" | "1h"; securityAlerts: boolean }) => {
+    setSecurityPreferences(next);
+  };
 
   return (
     <div className="max-w-2xl mx-auto py-4 px-2 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -151,7 +160,11 @@ export default function SecuritySettings() {
             <h2 className="text-3xl font-bold tracking-tight">Security Score: 85%</h2>
             <p className="text-slate-400 text-sm max-w-xs">Your account is almost fully protected. Just one more step to go!</p>
           </div>
-          <button className="w-full bg-white dark:bg-slate-800 text-slate-900 dark:text-white py-4 rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-slate-100 dark:hover:bg-slate-700 transition-all active:scale-[0.98]">
+          <button
+            type="button"
+            onClick={() => setShowPasswordPanel(true)}
+            className="w-full bg-white dark:bg-slate-800 text-slate-900 dark:text-white py-4 rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-slate-100 dark:hover:bg-slate-700 transition-all active:scale-[0.98]"
+          >
             Complete Security Audit
           </button>
         </div>
@@ -177,7 +190,7 @@ export default function SecuritySettings() {
                   className="w-full flex items-center justify-between p-6 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="p-3 bg-purple-50 text-purple-600 rounded-2xl">
+                    <div className="p-3 bg-brand-50 text-brand-600 rounded-2xl">
                       <KeyRound size={22} />
                     </div>
                     <div className="text-left">
@@ -190,24 +203,6 @@ export default function SecuritySettings() {
               )}
             </div>
 
-            {/* 2FA */}
-            <div className="flex items-center justify-between p-6">
-              <div className="flex items-center gap-4">
-                <div className={`p-3 rounded-2xl transition-colors ${is2FAEnabled ? "bg-emerald-50 text-emerald-600" : "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500"}`}>
-                  <Fingerprint size={22} />
-                </div>
-                <div>
-                  <p className="font-bold text-slate-900 dark:text-slate-200">Two-Factor Auth</p>
-                  <p className="text-xs text-slate-500">Highly recommended</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setIs2FAEnabled(!is2FAEnabled)}
-                className={`w-12 h-6 rounded-full transition-all relative ${is2FAEnabled ? "bg-emerald-500" : "bg-slate-200 dark:bg-slate-700"}`}
-              >
-                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-all ${is2FAEnabled ? "left-7" : "left-1"}`} />
-              </button>
-            </div>
           </div>
         </section>
 
@@ -228,7 +223,11 @@ export default function SecuritySettings() {
               </div>
               <select
                 value={autoLogout}
-                onChange={(e) => setAutoLogout(e.target.value)}
+                onChange={(e) => {
+                  const next = { autoLogout: e.target.value as "15m" | "30m" | "1h", securityAlerts };
+                  setAutoLogout(next.autoLogout);
+                  persistSecurity(next);
+                }}
                 className="bg-slate-100 dark:bg-slate-800 dark:text-white border-none text-xs font-bold py-2 px-3 rounded-xl outline-none"
               >
                 <option value="15m">15m</option>
@@ -247,43 +246,21 @@ export default function SecuritySettings() {
                   <p className="text-xs text-slate-500">Email &amp; Push notifications</p>
                 </div>
               </div>
-              <button className="text-xs font-bold uppercase text-purple-600 dark:text-purple-400 px-4 py-2 bg-purple-50 dark:bg-purple-900/30 rounded-xl hover:bg-purple-100 dark:hover:bg-purple-900/50 transition-colors">
-                Setup
+              <button
+                onClick={() => {
+                  const next = { autoLogout, securityAlerts: !securityAlerts };
+                  setSecurityAlerts(next.securityAlerts);
+                  persistSecurity(next);
+                }}
+                className={`text-xs font-bold uppercase px-4 py-2 rounded-xl transition-colors ${
+                  securityAlerts
+                    ? "text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-900/30 hover:bg-brand-100 dark:hover:bg-brand-900/50"
+                    : "text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700"
+                }`}
+              >
+                {securityAlerts ? "Enabled" : "Disabled"}
               </button>
             </div>
-          </div>
-        </section>
-
-        {/* ACTIVE DEVICES */}
-        <section className="space-y-3">
-          <div className="flex items-center justify-between px-4">
-            <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em]">Active Devices</h4>
-            <button className="text-rose-500 text-[10px] font-bold uppercase tracking-wider hover:underline">Logout All</button>
-          </div>
-
-          <div className="space-y-2">
-            {[
-              { device: "Asus Vivobook",    location: "Clarin, Bohol",  status: "Current", icon: <Monitor size={20} /> },
-              { device: "iPhone 15 Pro",    location: "Tagbilaran",     status: "4h ago",  icon: <Smartphone size={20} /> },
-              { device: "Chrome Windows",   location: "Cebu City",      status: "2d ago",  icon: <History size={20} /> },
-            ].map((session, i) => (
-              <div key={i} className="flex items-center justify-between p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl group transition-all">
-                <div className="flex items-center gap-4">
-                  <div className="text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-100 transition-colors">
-                    {session.icon}
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-slate-900 dark:text-slate-200">{session.device}</p>
-                    <p className="text-[11px] text-slate-400 font-medium">{session.location} • {session.status}</p>
-                  </div>
-                </div>
-                {i !== 0 && (
-                  <button className="p-2 text-slate-300 hover:text-rose-500 transition-colors">
-                    <LogOut size={16} />
-                  </button>
-                )}
-              </div>
-            ))}
           </div>
         </section>
       </div>

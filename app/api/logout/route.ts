@@ -6,7 +6,9 @@ import {
     verifyToken,
 } from "@/lib/auth";
 import { createConnection } from "@/lib/db";
+import { ensureUsersSessionTokenColumn } from "@/lib/ensureSessionTokenColumn";
 import { logAuthEvent } from "@/lib/authEvents";
+import type { AuthTokenPayload } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
     if (!isTrustedMutationOrigin(request)) {
@@ -25,16 +27,25 @@ export async function POST(request: NextRequest) {
     // Log the logout event best-effort
     if (token) {
         try {
-            const payload = await verifyToken(token) as any;
+            const payload: AuthTokenPayload | null = await verifyToken(token);
             if (payload?.user_id) {
+                const userId = Number(payload.user_id);
+                if (!Number.isFinite(userId)) {
+                    return response;
+                }
                 const db = await createConnection();
-                const ip =
-                    request.headers.get("x-forwarded-for")?.split(",")[0].trim() ??
-                    request.headers.get("x-real-ip") ??
-                    null;
-                const ua = request.headers.get("user-agent") ?? null;
-                await logAuthEvent(db, payload.user_id, "logout", ip, ua);
-                await db.end();
+                try {
+                    await ensureUsersSessionTokenColumn(db);
+                    await db.query("UPDATE users SET session_token = NULL WHERE user_id = ?", [userId]);
+                    const ip =
+                        request.headers.get("x-forwarded-for")?.split(",")[0].trim() ??
+                        request.headers.get("x-real-ip") ??
+                        null;
+                    const ua = request.headers.get("user-agent") ?? null;
+                    await logAuthEvent(db, userId, "logout", ip, ua);
+                } finally {
+                    await db.end();
+                }
             }
         } catch { /* non-blocking */ }
     }

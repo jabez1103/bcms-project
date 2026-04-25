@@ -1,6 +1,8 @@
 "use client";
 
+import { Suspense } from "react";
 import { Header } from "@/components/Header";
+import { NotificationQueryAck } from "@/components/NotificationQueryAck";
 import { LogoutModal } from "@/components/LogoutModal";
 import  SettingsModal  from "@/components/settings/page";
 import { Sidebar } from "@/components/Sidebar";
@@ -30,6 +32,9 @@ export default function StudentLayout({
 
   return (
     <div className="flex flex-col h-screen overflow-hidden">
+      <Suspense fallback={null}>
+        <NotificationQueryAck />
+      </Suspense>
       {/* HEADER */}
       <Header
         role="student"

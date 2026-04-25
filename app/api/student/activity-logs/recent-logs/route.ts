@@ -1,5 +1,6 @@
+import { verifySessionFromCookies } from "@/lib/requestSession";
 import { NextRequest, NextResponse } from "next/server";
-import { verifyToken } from "@/lib/auth";
+
 import { createConnection } from "@/lib/db";
 
 /**
@@ -7,11 +8,11 @@ import { createConnection } from "@/lib/db";
  * Returns the student's recent submission events (submit, approve, reject).
  */
 export async function GET(request: NextRequest) {
-  const token = request.cookies.get("token")?.value;
-  if (!token) return NextResponse.json({ error: "Not logged in" }, { status: 401 });
-
-  const payload = await verifyToken(token) as any;
-  if (!payload) return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+  const payload = await verifySessionFromCookies(request) as any;
+  const role = String(payload?.role ?? "").toLowerCase();
+  if (!payload || role !== "student") {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   const db = await createConnection();
 

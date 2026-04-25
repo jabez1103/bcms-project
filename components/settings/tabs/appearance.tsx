@@ -1,22 +1,60 @@
 "use client";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { ShieldCheck, Lock, UserIcon, MapPin, Mail, Phone, Check, Sidebar, Maximize, Languages, Eye, Moon, Sun, Type } from "lucide-react";
+import { Check, Sidebar, Maximize, Languages, Eye, Moon, Sun, Type } from "lucide-react";
+import {
+  DEFAULT_APPEARANCE_PREFERENCES,
+  getAppearancePreferences,
+  setAppearancePreferences,
+  applyAppearancePreferences,
+} from "@/lib/userPreferences";
 
 export default function AppearanceSettings() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
-  const [fontSize, setFontSize] = useState(1); // 0: Small, 1: Standard, 2: Large
-  const [language, setLanguage] = useState('en');
-  const [layout, setLayout] = useState('standard');
+  const [fontSize, setFontSize] = useState(1);
+  const [language, setLanguage] = useState<"en" | "fil">("en");
+  const [layout, setLayout] = useState<"standard" | "compact">("standard");
   const [highContrast, setHighContrast] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   const fontSizes = ["Small", "Standard", "Large"];
 
   useEffect(() => {
     setMounted(true);
+    const prefs = getAppearancePreferences();
+    const index = prefs.fontSize === "small" ? 0 : prefs.fontSize === "large" ? 2 : 1;
+    setFontSize(index);
+    setLanguage(prefs.language);
+    setLayout(prefs.layout);
+    setHighContrast(prefs.highContrast);
+    applyAppearancePreferences(prefs);
   }, []);
+
+  const persistAppearance = (
+    next: Partial<{
+      fontSize: number;
+      language: "en" | "fil";
+      layout: "standard" | "compact";
+      highContrast: boolean;
+    }> = {}
+  ) => {
+    const merged = {
+      fontSize: next.fontSize ?? fontSize,
+      language: next.language ?? language,
+      layout: next.layout ?? layout,
+      highContrast: typeof next.highContrast === "boolean" ? next.highContrast : highContrast,
+    };
+    const prefs = {
+      fontSize: merged.fontSize === 0 ? "small" : merged.fontSize === 2 ? "large" : "standard",
+      language: merged.language,
+      layout: merged.layout,
+      highContrast: merged.highContrast,
+    } as const;
+    setAppearancePreferences(prefs);
+    applyAppearancePreferences(prefs);
+    setSaved(true);
+  };
 
   if (!mounted) return null;
 
@@ -43,7 +81,10 @@ export default function AppearanceSettings() {
               {['light', 'dark', 'system'].map((t) => (
                 <button 
                   key={t}
-                  onClick={() => setTheme(t)}
+                  onClick={() => {
+                    setSaved(false);
+                    setTheme(t);
+                  }}
                   className={`px-4 py-2 text-xs font-bold rounded-xl transition-all capitalize ${theme === t ? 'bg-white dark:bg-slate-700 shadow-md text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`}
                 >
                   {t}
@@ -64,7 +105,12 @@ export default function AppearanceSettings() {
               </div>
             </div>
             <button 
-              onClick={() => setHighContrast(!highContrast)}
+              onClick={() => {
+                const next = !highContrast;
+                setSaved(false);
+                setHighContrast(next);
+                persistAppearance({ highContrast: next });
+              }}
               className={`w-12 h-6 rounded-full transition-all relative ${highContrast ? 'bg-blue-600' : 'bg-slate-200 dark:bg-slate-700'}`}
             >
               <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-all ${highContrast ? 'left-7' : 'left-1'}`} />
@@ -81,7 +127,7 @@ export default function AppearanceSettings() {
           {/* Font Size Stepper */}
           <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-800">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-2xl">
+              <div className="p-3 bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 rounded-2xl">
                 <Type size={22} />
               </div>
               <div>
@@ -92,13 +138,23 @@ export default function AppearanceSettings() {
             <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-800/50 p-1 rounded-xl border border-slate-100 dark:border-slate-800">
               <button 
                 disabled={fontSize === 0}
-                onClick={() => setFontSize(fontSize - 1)}
+                onClick={() => {
+                  const next = Math.max(0, fontSize - 1);
+                  setSaved(false);
+                  setFontSize(next);
+                  persistAppearance({ fontSize: next });
+                }}
                 className="w-8 h-8 flex items-center justify-center rounded-lg bg-white dark:bg-slate-700 dark:text-white shadow-sm disabled:opacity-30 font-bold"
               >–</button>
               <span className="text-xs font-bold w-4 text-center">{fontSize + 1}</span>
               <button 
                 disabled={fontSize === 2}
-                onClick={() => setFontSize(fontSize + 1)}
+                onClick={() => {
+                  const next = Math.min(2, fontSize + 1);
+                  setSaved(false);
+                  setFontSize(next);
+                  persistAppearance({ fontSize: next });
+                }}
                 className="w-8 h-8 flex items-center justify-center rounded-lg bg-white dark:bg-slate-700 dark:text-white shadow-sm disabled:opacity-30 font-bold"
               >+</button>
             </div>
@@ -117,7 +173,12 @@ export default function AppearanceSettings() {
             </div>
             <select 
               value={language}
-              onChange={(e) => setLanguage(e.target.value)}
+              onChange={(e) => {
+                const next = e.target.value as "en" | "fil";
+                setSaved(false);
+                setLanguage(next);
+                persistAppearance({ language: next });
+              }}
               className="bg-slate-100 dark:bg-slate-800 dark:text-white border-none text-xs font-bold py-2 px-4 rounded-xl outline-none appearance-none cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
             >
               <option value="en">English</option>
@@ -137,14 +198,19 @@ export default function AppearanceSettings() {
           ].map((item) => (
             <button
               key={item.id}
-              onClick={() => setLayout(item.id)}
+              onClick={() => {
+                const next = item.id as "standard" | "compact";
+                setSaved(false);
+                setLayout(next);
+                persistAppearance({ layout: next });
+              }}
               className={`p-5 rounded-[2rem] text-left border-2 transition-all space-y-3 relative overflow-hidden ${
                 layout === item.id 
-                ? 'border-purple-500 bg-white dark:bg-slate-800 shadow-md' 
+                ? 'border-brand-500 bg-white dark:bg-slate-800 shadow-md' 
                 : 'border-transparent bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 opacity-70'
               }`}
             >
-              <div className={`p-2 w-fit rounded-lg ${layout === item.id ? 'bg-purple-500 text-white' : 'bg-slate-300 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}`}>
+              <div className={`p-2 w-fit rounded-lg ${layout === item.id ? 'bg-brand-500 text-white' : 'bg-slate-300 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}`}>
                 {item.icon}
               </div>
               <div>
@@ -152,7 +218,7 @@ export default function AppearanceSettings() {
                 <p className="text-[10px] text-slate-500">{item.desc}</p>
               </div>
               {layout === item.id && (
-                <div className="absolute top-4 right-4 text-purple-500">
+                <div className="absolute top-4 right-4 text-brand-500">
                   <Check size={16} strokeWidth={3} />
                 </div>
               )}
@@ -160,6 +226,14 @@ export default function AppearanceSettings() {
           ))}
         </div>
       </section>
+      <div className="pt-2 flex justify-end">
+        <button
+          onClick={() => persistAppearance()}
+          className="px-6 py-2.5 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-[11px] font-black uppercase tracking-widest rounded-xl"
+        >
+          {saved ? "Saved" : "Save Preferences"}
+        </button>
+      </div>
     </div>
   );
 }

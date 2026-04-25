@@ -2,19 +2,15 @@
 
 import { Rnd } from "react-rnd";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { LogOut, AlertCircle, Loader2 } from "lucide-react"; // Added Icons
+import { LogOut, Loader2 } from "lucide-react";
+import { clearClientUserCache, writeAuthTabSync } from "@/lib/authSync";
 
 interface LogoutModalProps {
-  onClose: () => void;
-}
-interface LogoutModalProps {
-  // Renamed for clarity
   isOpen: boolean;
   onClose: () => void;
 }
+
 export function LogoutModal({ onClose, isOpen }: LogoutModalProps) {
-  const router = useRouter();
   const [windowSize, setWindowSize] = useState<{
     width: number;
     height: number;
@@ -55,19 +51,23 @@ export function LogoutModal({ onClose, isOpen }: LogoutModalProps) {
 
   const handleLogout = async () => {
     setIsExiting(true);
-    setTimeout(() => {
-      localStorage.removeItem("token");
-      sessionStorage.removeItem("user");
-      router.push("/");
-    }, 800);
+    try {
+      await fetch("/api/logout", { method: "POST" });
+    } catch {
+      /* still clear client + redirect */
+    }
+    clearClientUserCache();
+    writeAuthTabSync("logout");
+    window.location.assign("/login");
   };
+
   if (!isOpen || (typeof window !== "undefined" && !windowSize)) return null;
 
   return (
     <>
       {/* Premium Backdrop */}
       <div
-        className="fixed inset-0 bg-purple-950/20 backdrop-blur-md z-[200] animate-in fade-in duration-300"
+        className="fixed inset-0 bg-brand-950/20 backdrop-blur-md z-[200] animate-in fade-in duration-300"
         onClick={onClose}
       />
 
@@ -78,7 +78,6 @@ export function LogoutModal({ onClose, isOpen }: LogoutModalProps) {
         onResizeStop={(e, dir, ref, delta, pos) => setPosition(pos)}
         bounds="window"
         minWidth={320}
-        // 2. Increase minHeight to 400
         minHeight={400}
         dragHandleClassName="handle"
         style={{ zIndex: 210, position: "fixed" }}
@@ -87,14 +86,14 @@ export function LogoutModal({ onClose, isOpen }: LogoutModalProps) {
           {/* Draggable Header */}
           <div className="handle bg-gray-50/50 dark:bg-slate-800/50 px-6 py-4 flex text-gray-400 dark:text-slate-500 justify-between items-center cursor-move select-none border-b border-gray-100 dark:border-slate-800">
             <div className="flex items-center gap-2">
-              <div className="h-2 w-2 rounded-full bg-purple-500 animate-pulse" />
+              <div className="h-2 w-2 rounded-full bg-brand-500 animate-pulse" />
               <span className="font-bold text-[10px] uppercase tracking-[0.2em]">
                 Session Security
               </span>
             </div>
             <button
               onClick={onClose}
-              className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-gray-200/50 dark:hover:bg-slate-700/50 text-gray-400 dark:text-slate-500 hover:text-gray-900 dark:hover:text-white transition-colors"
+              className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-gray-200/50 dark:hover:bg-slate-700/50 text-gray-400 dark:text-slate-500 hover:text-gray-900 dark:hover:text-white transition-all"
             >
               ✕
             </button>

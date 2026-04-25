@@ -1,41 +1,41 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyToken } from "@/lib/auth";
 import { createConnection } from "@/lib/db";
+import type { AuthTokenPayload } from "@/lib/auth";
+import { verifySessionFromCookies } from "@/lib/requestSession";
+import { getNotificationBasePath } from "@/lib/notificationDeepLink";
+import type { NotificationRole, NotificationType } from "@/lib/notificationTypes";
+import { fetchLatestNotificationsForUser } from "@/lib/notifications";
 
 /**
  * GET /api/notifications
- * Returns all notifications for the logged-in user, newest first.
+ * Returns the latest notifications for the logged-in user, newest first.
  */
 
 export async function GET(request: NextRequest) {
-  const token = request.cookies.get("token")?.value;
-  if (!token) return NextResponse.json({ error: "Not logged in" }, { status: 401 });
-
-  const payload = await verifyToken(token) as any;
-  if (!payload) return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+  const payload: AuthTokenPayload | null = await verifySessionFromCookies(request);
+  if (!payload) return NextResponse.json({ error: "Not logged in" }, { status: 401 });
 
   const db = await createConnection();
 
   try {
-    const [rows]: any = await db.query(
-      `SELECT
-         notification_id  AS id,
-         type,
-         title,
-         message,
-         target_id        AS targetId,
-         is_read          AS isRead,
-         created_at       AS createdAt
-       FROM notifications
-       WHERE user_id = ?
-       ORDER BY created_at DESC
-       LIMIT 50`,
-      [payload.user_id]
-    );
+    const rows = await fetchLatestNotificationsForUser(db, Number(payload.user_id), 10);
 
-    return NextResponse.json({ success: true, notifications: rows });
-  } catch (err: any) {
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+    const role = payload.role as NotificationRole;
+    const notifications = rows.map((row) => ({
+      id: row.id,
+      type: row.type,
+      title: row.title,
+      message: row.message,
+      targetId: row.targetId,
+      isRead: row.isRead,
+      createdAt: row.timestamp,
+      href: getNotificationBasePath(role, row.type as NotificationType, row.targetId),
+    }));
+
+    return NextResponse.json({ success: true, notifications });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Failed to fetch notifications";
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
   } finally {
     await db.end();
   }

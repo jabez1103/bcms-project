@@ -1,8 +1,11 @@
+import { verifySessionFromCookies } from "@/lib/requestSession";
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import { verifyToken } from "@/lib/auth";
+import { isTrustedMutationOrigin, type AuthTokenPayload } from "@/lib/auth";
+import { MIN_PASSWORD_LENGTH } from "@/lib/passwordPolicy";
 import { createConnection } from "@/lib/db";
 import { logAuthEvent } from "@/lib/authEvents";
+import type { RowDataPacket } from "mysql2/promise";
 
 /**
  * POST /api/users/change-password
@@ -10,11 +13,14 @@ import { logAuthEvent } from "@/lib/authEvents";
  * Requires a valid auth cookie (any role).
  */
 export async function POST(request: NextRequest) {
-    const token = request.cookies.get("token")?.value;
-    if (!token)
-        return NextResponse.json({ success: false, message: "Not logged in." }, { status: 401 });
+    if (!isTrustedMutationOrigin(request)) {
+        return NextResponse.json(
+            { success: false, message: "Untrusted request origin." },
+            { status: 403 }
+        );
+    }
 
-    const payload = await verifyToken(token) as any;
+    const payload: AuthTokenPayload | null = await verifySessionFromCookies(request);
     if (!payload)
         return NextResponse.json({ success: false, message: "Invalid session." }, { status: 401 });
 
@@ -31,9 +37,9 @@ export async function POST(request: NextRequest) {
         );
     }
 
-    if (newPassword.length < 12) {
+    if (newPassword.length < MIN_PASSWORD_LENGTH) {
         return NextResponse.json(
-            { success: false, message: "New password must be at least 6 characters." },
+            { success: false, message: `New password must be at least ${MIN_PASSWORD_LENGTH} characters.` },
             { status: 400 }
         );
     }
@@ -41,7 +47,8 @@ export async function POST(request: NextRequest) {
     const db = await createConnection();
 
     try {
-        const [rows]: any = await db.query(
+        type UserPasswordRow = RowDataPacket & { user_id: number; password: string };
+        const [rows] = await db.query<UserPasswordRow[]>(
             "SELECT user_id, password FROM users WHERE user_id = ? LIMIT 1",
             [payload.user_id]
         );
@@ -74,9 +81,10 @@ export async function POST(request: NextRequest) {
         } catch { /* non-blocking */ }
 
         return NextResponse.json({ success: true, message: "Password changed successfully." });
-    } catch (err: any) {
+    } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : "Failed to change password.";
         return NextResponse.json(
-            { success: false, message: err.message || "Failed to change password." },
+            { success: false, message },
             { status: 500 }
         );
     } finally {

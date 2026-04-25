@@ -119,7 +119,7 @@ export default function SettingsModal({ onClose, isOpen, defaultTab }: SettingsM
                   className="w-full flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-900 rounded-xl active:bg-gray-100 dark:active:bg-slate-800"
                 >
                   <div className="flex items-center gap-3">
-                    <span className="text-purple-600 dark:text-purple-400">{item.icon}</span>
+                    <span className="text-brand-600 dark:text-brand-400">{item.icon}</span>
                     <span className="font-semibold text-gray-700 dark:text-slate-200">{item.label}</span>
                   </div>
                   <ChevronRight size={18} className="text-gray-400" />
@@ -161,7 +161,7 @@ export default function SettingsModal({ onClose, isOpen, defaultTab }: SettingsM
                   onClick={() => setActiveTab(item.id)}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${
                     activeTab === item.id
-                      ? "bg-purple-600 text-white shadow-lg shadow-purple-200 dark:shadow-purple-900/20"
+                      ? "bg-brand-600 text-white shadow-lg shadow-brand-200 dark:shadow-brand-900/20"
                       : "text-gray-500 dark:text-slate-400 hover:bg-gray-200 dark:hover:bg-slate-800"
                   }`}
                 >

@@ -1,30 +1,32 @@
 "use client";
-import { useState } from "react";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { ShieldCheck, Lock, UserIcon, MapPin, Mail, Phone, Megaphone, FileCheck, Activity, Bell, Shield } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Megaphone, FileCheck, Activity, Bell, Shield } from "lucide-react";
+import {
+  DEFAULT_NOTIFICATION_PREFERENCES,
+  getNotificationPreferences,
+  setNotificationPreferences,
+} from "@/lib/userPreferences";
 
 
 
 export default function NotificationSettings() {
-  const [settings, setSettings] = useState({
-    email: true,
-    system: true,
-    status: true,
-    approval: true,
-    announcements: false,
-  });
+  const [settings, setSettings] = useState(DEFAULT_NOTIFICATION_PREFERENCES);
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    setSettings(getNotificationPreferences());
+  }, []);
 
   const toggleSetting = (key: keyof typeof settings) => {
-    setSettings((prev) => ({ ...prev, [key]: !prev[key] }));
+    setSaved(false);
+    setSettings((prev) => {
+      const next = { ...prev, [key]: !prev[key] };
+      setNotificationPreferences(next);
+      return next;
+    });
   };
 
   const notificationOptions = [
-    {
-      id: "email",
-      label: "Email Notifications",
-      desc: "Receive clearance updates via jabez@bisu.edu.ph",
-      icon: <Mail size={18} />,
-    },
     {
       id: "system",
       label: "System Notifications",
@@ -44,8 +46,8 @@ export default function NotificationSettings() {
       icon: <FileCheck size={18} />,
     },
     {
-      id: "announcements",
-      label: "Announcement Alerts",
+      id: "adminAnnouncements",
+      label: "Admin Announcements",
       desc: "Important campus-wide news and policy changes",
       icon: <Megaphone size={18} />,
     },
@@ -66,12 +68,12 @@ export default function NotificationSettings() {
           <div 
             key={opt.id}
             onClick={() => toggleSetting(opt.id as keyof typeof settings)}
-            className="group flex items-center justify-between p-4 md:p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl hover:border-purple-200 dark:hover:border-purple-500/50 transition-all cursor-pointer shadow-sm hover:shadow-md"
+            className="group flex items-center justify-between p-4 md:p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl hover:border-brand-200 dark:hover:border-brand-500/50 transition-all cursor-pointer shadow-sm hover:shadow-md"
           >
             <div className="flex items-center gap-4">
               <div className={`p-3 rounded-xl transition-all ${
                 settings[opt.id as keyof typeof settings] 
-                ? 'bg-purple-600 text-white shadow-lg shadow-purple-100' 
+                ? 'bg-brand-600 text-white shadow-lg shadow-brand-100' 
                 : 'bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-500'
               }`}>
                 {opt.icon}
@@ -84,7 +86,7 @@ export default function NotificationSettings() {
 
             {/* TOGGLE SWITCH */}
             <div className={`w-11 h-6 rounded-full transition-all relative shrink-0 ${
-              settings[opt.id as keyof typeof settings] ? 'bg-purple-600' : 'bg-slate-200 dark:bg-slate-700'
+              settings[opt.id as keyof typeof settings] ? 'bg-brand-600' : 'bg-slate-200 dark:bg-slate-700'
             }`}>
               <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all shadow-sm ${
                 settings[opt.id as keyof typeof settings] ? 'left-6' : 'left-1'
@@ -100,8 +102,14 @@ export default function NotificationSettings() {
           <Shield size={14} />
           <span className="text-[10px] font-bold uppercase tracking-widest">Privacy Protected</span>
         </div>
-        <button className="px-8 py-3 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-[11px] font-black uppercase tracking-widest rounded-xl hover:bg-slate-800 dark:hover:bg-slate-200 active:scale-95 transition-all shadow-lg shadow-slate-200 dark:shadow-none">
-          Save Preferences
+        <button
+          onClick={() => {
+            setNotificationPreferences(settings);
+            setSaved(true);
+          }}
+          className="px-8 py-3 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-[11px] font-black uppercase tracking-widest rounded-xl hover:bg-slate-800 dark:hover:bg-slate-200 active:scale-95 transition-all shadow-lg shadow-slate-200 dark:shadow-none"
+        >
+          {saved ? "Saved" : "Save Preferences"}
         </button>
       </div>
     </div>

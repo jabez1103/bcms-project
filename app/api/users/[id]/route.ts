@@ -1,27 +1,26 @@
+import { verifySessionFromCookies } from "@/lib/requestSession";
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { createConnection } from "@/lib/db";
-import { AUTH_COOKIE_NAME, verifyToken } from "@/lib/auth";
 import {
   createErrorResponse,
   parseUserIdParam,
   syncRoleRecords,
   validateUserPayload,
 } from "../user-utils";
+import type { RowDataPacket } from "mysql2/promise";
 
 const SELF_PROTECTION_MESSAGE =
   "System Protection: You cannot modify your own administrative status";
 
 async function getAdminPayload(request: NextRequest) {
-  const token = request.cookies.get(AUTH_COOKIE_NAME)?.value;
+  const payload = await verifySessionFromCookies(request);
 
-  if (!token) {
+  if (!payload) {
     return { response: createErrorResponse("Not logged in.", 401) } as const;
   }
 
-  const payload = await verifyToken(token);
-
-  if (!payload || String(payload.role).toLowerCase() !== "admin") {
+  if (String(payload.role).toLowerCase() !== "admin") {
     return { response: createErrorResponse("Unauthorized.", 401) } as const;
   }
 
@@ -73,7 +72,8 @@ export async function PUT(
 
     const payload = validation.data;
 
-    const [existingUsers]: any = await db.query(
+    type UserIdRow = RowDataPacket & { user_id: number };
+    const [existingUsers] = await db.query<UserIdRow[]>(
       "SELECT user_id FROM users WHERE user_id = ? LIMIT 1",
       [userId],
     );
@@ -82,7 +82,7 @@ export async function PUT(
       return createErrorResponse("User not found.", 404);
     }
 
-    const [emailConflict]: any = await db.query(
+    const [emailConflict] = await db.query<UserIdRow[]>(
       "SELECT user_id FROM users WHERE email = ? AND user_id <> ? LIMIT 1",
       [payload.email, userId],
     );
@@ -99,13 +99,14 @@ export async function PUT(
       const hashedPassword = await bcrypt.hash(payload.password, 10);
       await db.query(
         `UPDATE users
-         SET first_name = ?, middle_name = ?, last_name = ?, email = ?,
+         SET first_name = ?, middle_name = ?, last_name = ?, suffix = ?, email = ?,
              password = ?, role = ?, account_status = ?, profile_picture = ?
          WHERE user_id = ?`,
         [
           payload.first_name,
           payload.middle_name,
           payload.last_name,
+          payload.suffix || null,
           payload.email,
           hashedPassword,
           payload.role,
@@ -117,13 +118,14 @@ export async function PUT(
     } else {
       await db.query(
         `UPDATE users
-         SET first_name = ?, middle_name = ?, last_name = ?, email = ?,
+         SET first_name = ?, middle_name = ?, last_name = ?, suffix = ?, email = ?,
              role = ?, account_status = ?, profile_picture = ?
          WHERE user_id = ?`,
         [
           payload.first_name,
           payload.middle_name,
           payload.last_name,
+          payload.suffix || null,
           payload.email,
           payload.role,
           payload.account_status,
@@ -141,7 +143,7 @@ export async function PUT(
       success: true,
       message: "User account updated successfully.",
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     try {
       await db.rollback();
     } catch {}
@@ -178,7 +180,8 @@ export async function DELETE(
   const db = await createConnection();
 
   try {
-    const [existingUsers]: any = await db.query(
+    type UserIdRow = RowDataPacket & { user_id: number };
+    const [existingUsers] = await db.query<UserIdRow[]>(
       "SELECT user_id FROM users WHERE user_id = ? LIMIT 1",
       [userId],
     );
@@ -198,7 +201,7 @@ export async function DELETE(
       success: true,
       message: "User account deleted successfully.",
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     try {
       await db.rollback();
     } catch {}

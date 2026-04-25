@@ -1,7 +1,7 @@
 "use client";
 
 import { useCurrentUser } from "@/hooks/useCurrentUser";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -21,6 +21,11 @@ import {
 import { PageType, UserRole } from "@/types/index";
 import { LogoutModal } from "./LogoutModal";
 import SettingsModal from "@/components/settings/page";
+import {
+  DEFAULT_NOTIFICATION_PREFERENCES,
+  getNotificationPreferences,
+  type NotificationPreferences,
+} from "@/lib/userPreferences";
 
 interface HeaderProps {
   role: UserRole;
@@ -40,7 +45,19 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
   const [isLogoutOpen, setLogoutOpen] = useState(false);
 
   const [searchValue, setSearchValue] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchResults, setSearchResults] = useState<
+    Array<{
+      id: string;
+      category: string;
+      title: string;
+      subtitle?: string;
+      href: string;
+    }>
+  >([]);
   const [activeTab, setActiveTab] = useState<"all" | "unread">("unread");
+  const searchRef = useRef<HTMLDivElement | null>(null);
 
   interface Notification {
     id: number;
@@ -55,9 +72,42 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifLoading, setNotifLoading] = useState(false);
+  const [notificationPrefs, setNotificationPrefs] = useState<NotificationPreferences>(
+    DEFAULT_NOTIFICATION_PREFERENCES
+  );
 
   const { user, loading } = useCurrentUser();
   const router = useRouter();
+
+  const isNotificationEnabled = useCallback(
+    (type: string) => {
+      const t = type.toLowerCase();
+      if (t === "period_opened" || t === "period_closed") {
+        return notificationPrefs.adminAnnouncements;
+      }
+      if (t === "submission_approved" || t === "submission_rejected") {
+        return notificationPrefs.approval;
+      }
+      if (t === "submission_received") {
+        return notificationPrefs.status;
+      }
+      return notificationPrefs.system;
+    },
+    [notificationPrefs]
+  );
+
+  useEffect(() => {
+    const refreshPrefs = () => setNotificationPrefs(getNotificationPreferences());
+    refreshPrefs();
+    window.addEventListener("storage", refreshPrefs);
+    window.addEventListener("focus", refreshPrefs);
+    window.addEventListener("bcms:prefs-changed", refreshPrefs as EventListener);
+    return () => {
+      window.removeEventListener("storage", refreshPrefs);
+      window.removeEventListener("focus", refreshPrefs);
+      window.removeEventListener("bcms:prefs-changed", refreshPrefs as EventListener);
+    };
+  }, []);
 
   // --- Helpers ---
   const relativeTime = (iso: string) => {
@@ -75,7 +125,10 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
     try {
       const res = await fetch("/api/notifications/unread-count");
       const data = await res.json();
-      if (data.success) setUnreadCount(data.count);
+      if (data.success) {
+        // Fallback count from server; final badge count is synchronized from fetched items.
+        setUnreadCount(data.count);
+      }
     } catch (_) {}
   }, []);
 
@@ -99,10 +152,66 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
   }, [isNotifOpen]);
 
   // Derived
-  const filteredNotifs = notifications.filter((n) =>
-    activeTab === "all" ? true : !n.isRead
-  );
+  const visibleNotifications = notifications.filter((n) => isNotificationEnabled(n.type));
+  const filteredNotifs = visibleNotifications.filter((n) => (activeTab === "all" ? true : !n.isRead));
+
+  useEffect(() => {
+    setUnreadCount(visibleNotifications.filter((n) => !n.isRead).length);
+  }, [visibleNotifications]);
   const userAvatar = user?.avatar || "/default-avatar.png";
+
+  useEffect(() => {
+    const q = searchValue.trim();
+    if (q.length < 2) {
+      setSearchResults([]);
+      setSearchLoading(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      setSearchLoading(true);
+      try {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`, {
+          signal: controller.signal,
+          cache: "no-store",
+        });
+        const data = await res.json();
+        if (!cancelled) {
+          setSearchResults(Array.isArray(data?.results) ? data.results : []);
+        }
+      } catch {
+        if (!cancelled) setSearchResults([]);
+      } finally {
+        if (!cancelled) setSearchLoading(false);
+      }
+    }, 150);
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+      clearTimeout(timer);
+    };
+  }, [searchValue]);
+
+  useEffect(() => {
+    const onClickOutside = (event: MouseEvent) => {
+      if (!searchRef.current) return;
+      if (!searchRef.current.contains(event.target as Node)) {
+        setSearchOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onClickOutside);
+    return () => document.removeEventListener("mousedown", onClickOutside);
+  }, []);
+
+  const openSearchResult = (href: string) => {
+    setSearchOpen(false);
+    setSearchValue("");
+    setSearchResults([]);
+    router.push(href);
+  };
 
   const markAsRead = async (id: number) => {
     setNotifications((prev) =>
@@ -149,7 +258,19 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
 
     if (role === "signatory" && notif.type === "submission_received") {
       router.push("/signatory/home");
+      return;
     }
+
+    // Fallback route so notification rows are always actionable.
+    if (role === "admin") {
+      router.push("/admin/home");
+      return;
+    }
+    if (role === "signatory") {
+      router.push("/signatory/home");
+      return;
+    }
+    router.push("/student/home");
   };
    
   
@@ -158,7 +279,7 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
   if (loading) {
     return (
       <header className="h-[10vh] flex items-center justify-center bg-white border-b border-gray-100">
-        <div className="w-8 h-8 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin" />
+        <div className="w-8 h-8 border-4 border-brand-500/20 border-t-brand-500 rounded-full animate-spin" />
       </header>
     );
   }
@@ -193,19 +314,58 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
         {/* RIGHT SIDE: ACTIONS */}
         <div className="flex items-center gap-2 md:gap-6">
           {/* SEARCH BAR */}
-          <div className="relative hidden sm:block">
+          <div ref={searchRef} className="relative hidden sm:block">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
             <input
               type="text"
-              placeholder="Search..."
+              placeholder="Search pages, users, requirements..."
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
-              className="w-48 lg:w-72 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-8 py-2 text-sm text-black dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-indigo-500/5 dark:focus:ring-indigo-400/10 transition-all outline-none"
+              onFocus={() => setSearchOpen(true)}
+              className="w-48 lg:w-72 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-8 py-2 text-sm text-black dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-brand-500/5 dark:focus:ring-brand-400/10 transition-all outline-none"
             />
             {searchValue && (
-              <button onClick={() => setSearchValue("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+              <button
+                onClick={() => {
+                  setSearchValue("");
+                  setSearchResults([]);
+                }}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              >
                 <X size={14} />
               </button>
+            )}
+
+            {searchOpen && (
+              <div className="absolute right-0 mt-2 w-80 lg:w-[30rem] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden z-50">
+                <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                    Global Search
+                  </p>
+                </div>
+                <div className="max-h-80 overflow-y-auto">
+                  {searchLoading ? (
+                    <div className="p-4 text-xs text-slate-500 dark:text-slate-400">Searching...</div>
+                  ) : searchValue.trim().length < 2 ? (
+                    <div className="p-4 text-xs text-slate-500 dark:text-slate-400">Type at least 2 characters.</div>
+                  ) : searchResults.length === 0 ? (
+                    <div className="p-4 text-xs text-slate-500 dark:text-slate-400">No matching results.</div>
+                  ) : (
+                    searchResults.slice(0, 12).map((item) => (
+                      <button
+                        key={item.id}
+                        onClick={() => openSearchResult(item.href)}
+                        className="w-full text-left px-4 py-3 border-b border-slate-50 dark:border-slate-800 last:border-b-0 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors"
+                      >
+                        <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">{item.title}</p>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                          {item.category}{item.subtitle ? ` · ${item.subtitle}` : ""}
+                        </p>
+                      </button>
+                    ))
+                  )}
+                </div>
+              </div>
             )}
           </div>
 
@@ -214,7 +374,7 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
             <button
               onClick={() => setNotifOpen(!isNotifOpen)}
               className={`p-2.5 rounded-xl transition-all relative ${
-                isNotifOpen ? "bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400" : "text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"
+                isNotifOpen ? "bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400" : "text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"
               }`}
             >
               <Bell size={20} fill={isNotifOpen ? "currentColor" : "none"} className={isNotifOpen ? "opacity-20" : ""} />
@@ -248,7 +408,7 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
                             onClick={() => { setSettingsOpen(true); setMenuOpen(false); setNotifOpen(false); }} 
                             className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors text-left"
                           >
-                            <Settings2 size={14} className="text-indigo-500" /> Notification Settings
+                            <Settings2 size={14} className="text-brand-500" /> Notification Settings
                           </button>
                         </div>
                       )}
@@ -261,7 +421,7 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
                         key={tab}
                         onClick={() => setActiveTab(tab as any)}
                         className={`flex-1 py-1.5 rounded-lg text-xs font-bold capitalize transition-all ${
-                          activeTab === tab ? "bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
+                          activeTab === tab ? "bg-white dark:bg-slate-700 text-brand-600 dark:text-brand-400 shadow-sm" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
                         }`}
                       >
                         {tab}
@@ -272,7 +432,7 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
                   <div className="max-h-[400px] overflow-y-auto">
                     {notifLoading ? (
                       <div className="flex items-center justify-center py-12 gap-3">
-                        <div className="w-5 h-5 border-2 border-indigo-200 border-t-indigo-500 rounded-full animate-spin" />
+                        <div className="w-5 h-5 border-2 border-brand-200 border-t-brand-500 rounded-full animate-spin" />
                         <p className="text-xs text-slate-400">Loading...</p>
                       </div>
                     ) : filteredNotifs.length > 0 ? (
@@ -282,13 +442,13 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
                           onClick={() => handleNotifClick(notif)}
                           className="p-4 flex gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors border-b border-slate-50 dark:border-slate-800/50 last:border-0 relative"
                         >
-                          <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${notif.isRead ? "bg-transparent" : "bg-indigo-500"}`} />
+                          <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${notif.isRead ? "bg-transparent" : "bg-brand-500"}`} />
                           <div className="flex-1">
                             <p className={`text-sm leading-snug ${notif.isRead ? "text-slate-500 dark:text-slate-400" : "text-slate-900 dark:text-slate-100 font-semibold"}`}>
                               {notif.title}
                             </p>
                             <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{notif.message}</p>
-                            <p className="text-[10px] text-indigo-500 dark:text-indigo-400 font-bold mt-2 uppercase">{relativeTime(notif.createdAt)}</p>
+                            <p className="text-[10px] text-brand-500 dark:text-brand-400 font-bold mt-2 uppercase">{relativeTime(notif.createdAt)}</p>
                           </div>
                         </div>
                       ))
@@ -310,7 +470,7 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
                 <img
                   src={userAvatar}
                   alt="Profile"
-                  className="w-9 h-9 md:w-10 md:h-10 rounded-xl object-cover border-2 border-transparent group-hover:border-indigo-100 transition-all"
+                  className="w-9 h-9 md:w-10 md:h-10 rounded-xl object-cover border-2 border-transparent group-hover:border-brand-100 transition-all"
                 />
                 <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full" />
               </div>
@@ -332,7 +492,7 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
                     <img 
                       src={user.avatar} 
                       alt="Profile" 
-                      className="w-16 h-16 rounded-xl object-cover border border-purple-100 shadow-sm" 
+                      className="w-16 h-16 rounded-xl object-cover border border-brand-100 shadow-sm" 
                     />
                     <div className="text-center mb-1">
                       <p className="text-sm font-bold text-slate-800 dark:text-slate-200">{user.name}</p>
@@ -342,7 +502,7 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
                     <Link
                       href={`/${role}/profile`}
                       onClick={() => setDropdownOpen(false)}
-                      className="w-full max-w-[140px] py-2 bg-white dark:bg-slate-900 border border-purple-200 dark:border-purple-800/30 text-purple-600 dark:text-purple-400 text-[11px] font-bold rounded-lg hover:bg-purple-50 dark:hover:bg-slate-800 transition-all text-center flex items-center justify-center gap-2"
+                      className="w-full max-w-[140px] py-2 bg-white dark:bg-slate-900 border border-brand-200 dark:border-brand-800/30 text-brand-600 dark:text-brand-400 text-[11px] font-bold rounded-lg hover:bg-brand-50 dark:hover:bg-slate-800 transition-all text-center flex items-center justify-center gap-2"
                     >
                       <UserIcon size={12} />
                       See Profile
@@ -353,14 +513,14 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
                   <Link
                     href={`/${role}/profile`}
                     onClick={() => setDropdownOpen(false)}
-                    className="hidden md:flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-purple-50 dark:hover:bg-slate-800 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+                    className="hidden md:flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-brand-50 dark:hover:bg-slate-800 hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
                   >
                     <UserIcon size={16} />
                     Profile
                   </Link>
                   <button 
                     onClick={() => { setSettingsOpen(true); setDropdownOpen(false); }} 
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-indigo-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors text-left"
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-brand-50 dark:hover:bg-slate-800 hover:text-brand-600 dark:hover:text-brand-400 transition-colors text-left"
                   >
                  
                     <SettingsIcon size={16} /> Settings

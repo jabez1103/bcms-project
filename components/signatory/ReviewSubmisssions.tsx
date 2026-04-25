@@ -27,6 +27,7 @@ interface Student {
   fileUrl: string;
   submittedAt: string;
   studentComment: string;
+  signatoryComment?: string | null;
 }
 
 /* ================= MOCK DATA ================= */
@@ -56,6 +57,7 @@ export default function UltimateClearancePortal() {
 
   const [students, setStudents] = useState<Student[]>([]);
   const [showBulkModal, setShowBulkModal] = useState<"Approve" | "Reject" | null>(null);
+  const [feedback, setFeedback] = useState("");
   const [loading, setLoading] = useState(true);
 
   const [viewMode, setViewMode] = useState<"grid" | "table">("table");
@@ -81,6 +83,14 @@ export default function UltimateClearancePortal() {
     fetchSubmissions();
   }, []);
 
+  useEffect(() => {
+    if (selectedStudent) {
+      setFeedback(selectedStudent.signatoryComment?.trim() || "");
+      return;
+    }
+    setFeedback("");
+  }, [selectedStudent]);
+
   const filteredData = useMemo(() => {
     return students.filter(s => {
       const matchesSearch = s.name.toLowerCase().includes(search.toLowerCase()) || s.id.includes(search);
@@ -105,12 +115,16 @@ export default function UltimateClearancePortal() {
         const res = await fetch("/api/signatory/submissions/review", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ submissionIds: selectedIds, status: showBulkModal.toLowerCase() }),
+            body: JSON.stringify({
+              submissionIds: selectedIds,
+              status: showBulkModal.toLowerCase(),
+              feedback,
+            }),
         });
         const data = await res.json();
         if (data.success) {
             setStudents(prev => prev.map(s => 
-              selectedIds.includes(s.id) ? { ...s, status: newStatus } : s
+              selectedIds.includes(String(s.id)) ? { ...s, status: newStatus } : s
             ));
         }
     } catch (error) {
@@ -118,10 +132,12 @@ export default function UltimateClearancePortal() {
     }
     
     setSelectedIds([]);
+    setFeedback("");
     setShowBulkModal(null);
   };
 
-  const isPageSelected = paginatedData.length > 0 && paginatedData.every(s => selectedIds.includes(s.id));
+  const isPageSelected =
+    paginatedData.length > 0 && paginatedData.every((s) => selectedIds.includes(String(s.id)));
   
   const handleSelectPage = () => {
     const pageIds = paginatedData.map(s => s.id);
@@ -132,8 +148,9 @@ export default function UltimateClearancePortal() {
     }
   };
 
-  const toggleSelect = (id: string) => {
-    setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  const toggleSelect = (id: string | number) => {
+    const normalizedId = String(id);
+    setSelectedIds(prev => prev.includes(normalizedId) ? prev.filter(i => i !== normalizedId) : [...prev, normalizedId]);
   };
 
   return (
@@ -148,10 +165,10 @@ export default function UltimateClearancePortal() {
             </div>
             <div className="space-y-0.5">
               <h1 className="text-xl sm:text-2xl font-black tracking-tight leading-none uppercase">
-                Review <span className="text-indigo-600">Submissions</span>
+                Review <span className="text-brand-600">Submissions</span>
               </h1>
               <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500">
-                <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
+                <span className="w-1.5 h-1.5 rounded-full bg-brand-500 animate-pulse" />
                 <p className="text-[9px] font-black uppercase tracking-[0.2em]">Clearance Audit</p>
               </div>
             </div>
@@ -175,17 +192,17 @@ export default function UltimateClearancePortal() {
             <div className="relative flex-1">
               <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-500" size={18} />
               <input 
-                className="w-full pl-16 pr-6 py-5 bg-white dark:bg-slate-900 border-none rounded-[2rem] text-xs font-bold text-slate-800 dark:text-slate-200 shadow-sm focus:ring-4 ring-indigo-500/5 transition-all outline-none"
+                className="w-full pl-16 pr-6 py-5 bg-white dark:bg-slate-900 border-none rounded-[2rem] text-xs font-bold text-slate-800 dark:text-slate-200 shadow-sm focus:ring-4 ring-brand-500/5 transition-all outline-none"
                 placeholder="Filter submissions..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
             <div className="flex bg-white dark:bg-slate-900 p-2 rounded-[2rem] shadow-sm shrink-0 items-center">
-              <button onClick={() => setViewMode("grid")} className={`px-4 py-3 rounded-2xl flex items-center gap-2 text-xs font-bold transition-all ${viewMode === "grid" ? "bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400" : "text-slate-400 hover:text-slate-600"}`}>
+              <button onClick={() => setViewMode("grid")} className={`px-4 py-3 rounded-2xl flex items-center gap-2 text-xs font-bold transition-all ${viewMode === "grid" ? "bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400" : "text-slate-400 hover:text-slate-600"}`}>
                 <LayoutGrid size={16} /> <span className="hidden sm:inline">Grid</span>
               </button>
-              <button onClick={() => setViewMode("table")} className={`px-4 py-3 rounded-2xl flex items-center gap-2 text-xs font-bold transition-all ${viewMode === "table" ? "bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400" : "text-slate-400 hover:text-slate-600"}`}>
+              <button onClick={() => setViewMode("table")} className={`px-4 py-3 rounded-2xl flex items-center gap-2 text-xs font-bold transition-all ${viewMode === "table" ? "bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400" : "text-slate-400 hover:text-slate-600"}`}>
                 <TableIcon size={16} /> <span className="hidden sm:inline">Table</span>
               </button>
             </div>
@@ -219,14 +236,14 @@ export default function UltimateClearancePortal() {
 
           <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm p-6 rounded-[2rem] border border-slate-50 dark:border-slate-800 shadow-sm flex items-center justify-between sticky top-0 z-10">
             <button onClick={handleSelectPage} className="flex items-center gap-4 text-[10px] font-black uppercase tracking-widest text-slate-700 dark:text-slate-300">
-              <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${isPageSelected ? 'bg-slate-900 dark:bg-indigo-600 border-slate-900 dark:border-indigo-600' : 'border-slate-200 dark:border-slate-700'}`}>
+              <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${isPageSelected ? 'bg-slate-900 dark:bg-brand-600 border-slate-900 dark:border-brand-600' : 'border-slate-200 dark:border-slate-700'}`}>
                 {isPageSelected && <CheckSquare size={14} className="text-white" />}
               </div>
               Select All Page
             </button>
             {selectedIds.length > 0 && (
                 <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                  <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 px-3 py-1.5 rounded-full">{selectedIds.length} Selected</span>
+                  <span className="text-[10px] font-black text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-500/10 px-3 py-1.5 rounded-full">{selectedIds.length} Selected</span>
                   <button onClick={() => setShowBulkModal("Approve")} className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95">Approve</button>
                   <button onClick={() => setShowBulkModal("Reject")} className="px-4 py-2 bg-rose-500 hover:bg-rose-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95">Reject</button>
                 </div>
@@ -249,7 +266,7 @@ export default function UltimateClearancePortal() {
               <div 
                 key={s.id} 
                 className={`bg-white dark:bg-slate-900 rounded-[2rem] border transition-all duration-300 overflow-hidden relative group flex flex-col ${
-                  selectedIds.includes(s.id) ? 'border-indigo-500 ring-4 ring-indigo-50 dark:ring-indigo-500/10' : 'border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-lg'
+                  selectedIds.includes(String(s.id)) ? 'border-brand-500 ring-4 ring-brand-50 dark:ring-brand-500/10' : 'border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-lg'
                 }`}
               >
                 <div className="p-6 md:p-8 space-y-5 flex-1">
@@ -265,9 +282,9 @@ export default function UltimateClearancePortal() {
 
                   <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-700/50 space-y-2">
                      <div className="flex items-center justify-between gap-2">
-                       <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">{s.requirement}</p>
+                       <p className="text-[10px] font-black text-brand-500 uppercase tracking-widest">{s.requirement}</p>
                        {s.studentComment && (
-                         <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 text-[9px] font-black text-indigo-500 uppercase shrink-0">
+                         <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-brand-50 dark:bg-brand-500/10 border border-brand-100 dark:border-brand-500/20 text-[9px] font-black text-brand-500 uppercase shrink-0">
                            <MessageSquare size={9} /> Note
                          </span>
                        )}
@@ -281,7 +298,7 @@ export default function UltimateClearancePortal() {
                 <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex gap-3">
                   <button 
                     onClick={() => setSelectedStudent(s)}
-                    className="flex-1 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-indigo-500 dark:hover:border-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400 text-slate-600 dark:text-slate-300 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
+                    className="flex-1 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-brand-500 dark:hover:border-brand-500 hover:text-brand-600 dark:hover:text-brand-400 text-slate-600 dark:text-slate-300 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
                   >
                     Review
                   </button>
@@ -289,9 +306,9 @@ export default function UltimateClearancePortal() {
 
                 <button 
                   onClick={() => toggleSelect(s.id)}
-                  className={`absolute top-6 right-6 w-5 h-5 rounded border-2 transition-all flex items-center justify-center ${selectedIds.includes(s.id) ? 'bg-indigo-600 border-indigo-600' : 'border-slate-300 dark:border-slate-600 opacity-0 group-hover:opacity-100 hover:border-indigo-400'}`}
+                  className={`absolute top-6 right-6 w-5 h-5 rounded border-2 transition-all flex items-center justify-center ${selectedIds.includes(String(s.id)) ? 'bg-brand-600 border-brand-600' : 'border-slate-300 dark:border-slate-600 opacity-0 group-hover:opacity-100 hover:border-brand-400'}`}
                 >
-                  {selectedIds.includes(s.id) && <CheckSquare size={12} className="text-white" />}
+                  {selectedIds.includes(String(s.id)) && <CheckSquare size={12} className="text-white" />}
                 </button>
               </div>
             ))}
@@ -319,14 +336,14 @@ export default function UltimateClearancePortal() {
                        <SkeletonTableRow cols={5} />
                      </>
                    ) : paginatedData.map((s) => (
-                     <tr key={s.id} className={`group hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors ${selectedIds.includes(s.id) ? 'bg-indigo-50/30 dark:bg-indigo-900/10' : ''}`}>
+                     <tr key={s.id} className={`group hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors ${selectedIds.includes(String(s.id)) ? 'bg-brand-50/30 dark:bg-brand-900/10' : ''}`}>
                        <td className="px-6 py-5">
                          <div className="flex items-center gap-4">
                            <input 
                              type="checkbox" 
-                             checked={selectedIds.includes(s.id)}
+                             checked={selectedIds.includes(String(s.id))}
                              onChange={() => toggleSelect(s.id)}
-                             className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-400 cursor-pointer"
+                             className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-brand-600 focus:ring-brand-500 dark:focus:ring-brand-400 cursor-pointer"
                            />
                            <div>
                              <p className="font-bold text-slate-900 dark:text-slate-100">{s.name}</p>
@@ -343,7 +360,7 @@ export default function UltimateClearancePortal() {
                        <td className="px-6 py-5 text-right">
                          <button 
                            onClick={() => setSelectedStudent(s)} 
-                           className="px-4 py-2 bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 hover:border-indigo-500 dark:hover:border-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all active:scale-95"
+                           className="px-4 py-2 bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 hover:border-brand-500 dark:hover:border-brand-400 hover:text-brand-600 dark:hover:text-brand-400 transition-all active:scale-95"
                          >
                            Review
                          </button>
@@ -377,7 +394,7 @@ export default function UltimateClearancePortal() {
               <button
                 onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
                 disabled={currentPage === 1}
-                className="p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl disabled:opacity-30 hover:bg-slate-900 hover:text-white dark:hover:bg-indigo-600 transition-all text-slate-600 dark:text-slate-400 shadow-sm active:scale-95"
+                className="p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl disabled:opacity-30 hover:bg-slate-900 hover:text-white dark:hover:bg-brand-600 transition-all text-slate-600 dark:text-slate-400 shadow-sm active:scale-95"
               >
                 <ChevronLeft size={16} />
               </button>
@@ -394,8 +411,8 @@ export default function UltimateClearancePortal() {
                       onClick={() => setCurrentPage(p)}
                       className={`w-9 h-9 rounded-xl text-[10px] font-black transition-all ${
                         currentPage === p
-                          ? 'bg-slate-900 dark:bg-indigo-600 text-white shadow-lg shadow-slate-900/20'
-                          : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-900 hover:text-white dark:hover:bg-indigo-600 dark:hover:text-white'
+                          ? 'bg-slate-900 dark:bg-brand-600 text-white shadow-lg shadow-slate-900/20'
+                          : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-slate-900 hover:text-white dark:hover:bg-brand-600 dark:hover:text-white'
                       }`}
                     >
                       {p}
@@ -406,7 +423,7 @@ export default function UltimateClearancePortal() {
               <button
                 onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
                 disabled={currentPage === totalPages || totalPages === 0}
-                className="p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl disabled:opacity-30 hover:bg-slate-900 hover:text-white dark:hover:bg-indigo-600 transition-all text-slate-600 dark:text-slate-400 shadow-sm active:scale-95"
+                className="p-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl disabled:opacity-30 hover:bg-slate-900 hover:text-white dark:hover:bg-brand-600 transition-all text-slate-600 dark:text-slate-400 shadow-sm active:scale-95"
               >
                 <ChevronRight size={16} />
               </button>
@@ -421,7 +438,7 @@ export default function UltimateClearancePortal() {
           <div className="bg-white dark:bg-slate-900 w-full max-w-4xl h-[85vh] rounded-[3rem] shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in duration-300">
             <div className="p-8 border-b border-slate-50 dark:border-slate-800 flex justify-between items-center">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-500/10 rounded-2xl flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-black">JB</div>
+                <div className="w-12 h-12 bg-brand-50 dark:bg-brand-500/10 rounded-2xl flex items-center justify-center text-brand-600 dark:text-brand-400 font-black">JB</div>
                 <div>
                     <h2 className="text-xl font-black text-slate-900 dark:text-slate-100 uppercase tracking-tight">{selectedStudent.name}</h2>
                     <p className="text-[10px] font-black text-slate-400 uppercase">{selectedStudent.id}</p>
@@ -438,10 +455,10 @@ export default function UltimateClearancePortal() {
                 <div className="space-y-4">
                   <h4 className="text-[10px] font-black text-slate-300 dark:text-slate-500 uppercase tracking-widest">Student Note</h4>
                   {selectedStudent.studentComment ? (
-                    <div className="bg-indigo-50 dark:bg-indigo-500/10 rounded-2xl p-4 border border-indigo-100 dark:border-indigo-500/20">
+                    <div className="bg-brand-50 dark:bg-brand-500/10 rounded-2xl p-4 border border-brand-100 dark:border-brand-500/20">
                       <div className="flex items-center gap-2 mb-2">
-                        <MessageSquare size={13} className="text-indigo-500 shrink-0" />
-                        <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Comment from Student</span>
+                        <MessageSquare size={13} className="text-brand-500 shrink-0" />
+                        <span className="text-[10px] font-black text-brand-500 uppercase tracking-widest">Comment from Student</span>
                       </div>
                       <p className="text-sm font-medium text-slate-700 dark:text-slate-200 italic leading-relaxed">
                         "{selectedStudent.studentComment}"
@@ -456,20 +473,65 @@ export default function UltimateClearancePortal() {
                         await fetch("/api/signatory/submissions/review", {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ submissionIds: [selectedStudent.id], status: "approved" }),
+                            body: JSON.stringify({
+                              submissionIds: [selectedStudent.id],
+                              status: "approved",
+                              feedback,
+                            }),
                         });
-                        setStudents(prev => prev.map(s => s.id === selectedStudent.id ? { ...s, status: "Approved" } : s));
+                        setStudents(prev =>
+                          prev.map(s =>
+                            s.id === selectedStudent.id
+                              ? { ...s, status: "Approved", signatoryComment: feedback.trim() || null }
+                              : s
+                          )
+                        );
+                        setFeedback("");
                         setSelectedStudent(null);
-                    }} className="w-full py-5 bg-indigo-600 dark:bg-indigo-500 text-white rounded-3xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-indigo-100 dark:shadow-none">Approve Document</button>
+                    }} className="w-full py-5 bg-brand-600 dark:bg-brand-500 text-white rounded-3xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-brand-100 dark:shadow-none">Approve Document</button>
                     <button onClick={async () => {
                         await fetch("/api/signatory/submissions/review", {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ submissionIds: [selectedStudent.id], status: "rejected" }),
+                            body: JSON.stringify({
+                              submissionIds: [selectedStudent.id],
+                              status: "rejected",
+                              feedback,
+                            }),
                         });
-                        setStudents(prev => prev.map(s => s.id === selectedStudent.id ? { ...s, status: "Rejected" } : s));
+                        setStudents(prev =>
+                          prev.map(s =>
+                            s.id === selectedStudent.id
+                              ? { ...s, status: "Rejected", signatoryComment: feedback.trim() || null }
+                              : s
+                          )
+                        );
+                        setFeedback("");
                         setSelectedStudent(null);
                     }} className="w-full py-5 bg-white dark:bg-slate-900 text-rose-500 dark:text-rose-400 border border-rose-100 dark:border-rose-500/20 rounded-3xl text-[10px] font-black uppercase tracking-widest">Reject</button>
+                </div>
+                <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
+                  {selectedStudent.signatoryComment?.trim() && (
+                    <div className="mb-3 rounded-xl border border-amber-200 dark:border-amber-500/20 bg-amber-50 dark:bg-amber-500/10 p-3">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-amber-700 dark:text-amber-300">
+                        Existing Feedback
+                      </p>
+                      <p className="mt-1 text-xs text-amber-800 dark:text-amber-200">
+                        {selectedStudent.signatoryComment}
+                      </p>
+                    </div>
+                  )}
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                    Feedback (Optional)
+                  </label>
+                  <textarea
+                    value={feedback}
+                    onChange={(e) => setFeedback(e.target.value)}
+                    placeholder="Add optional feedback for this student..."
+                    rows={3}
+                    maxLength={1000}
+                    className="mt-2 w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-700 dark:text-slate-200 outline-none focus:ring-4 focus:ring-brand-500/10 focus:border-brand-400 resize-none"
+                  />
                 </div>
               </div>
             </div>
@@ -492,6 +554,19 @@ export default function UltimateClearancePortal() {
               <button onClick={() => setShowBulkModal(null)} className="py-4 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">Cancel</button>
               <button onClick={handleBulkAction} className={`py-4 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg transition-transform active:scale-95 ${showBulkModal === "Approve" ? "bg-emerald-500 shadow-emerald-500/20 hover:bg-emerald-600" : "bg-rose-500 shadow-rose-500/20 hover:bg-rose-600"}`}>Yes, {showBulkModal}</button>
             </div>
+            <div className="pt-2 text-left">
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                Feedback (Optional)
+              </label>
+              <textarea
+                value={feedback}
+                onChange={(e) => setFeedback(e.target.value)}
+                placeholder="Optional feedback for selected submissions..."
+                rows={3}
+                maxLength={1000}
+                className="mt-2 w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-700 dark:text-slate-200 outline-none focus:ring-4 focus:ring-brand-500/10 focus:border-brand-400 resize-none"
+              />
+            </div>
           </div>
         </div>
       )}
@@ -502,7 +577,7 @@ export default function UltimateClearancePortal() {
 function StatusBadge({ status }: { status: SubmissionStatus }) {
   const styles = {
     Approved: "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-500/20",
-    Pending: "bg-[#EEF2FF] dark:bg-indigo-500/10 text-[#6366F1] dark:text-indigo-400 border-[#E0E7FF] dark:border-indigo-500/20",
+    Pending: "bg-[#EEF2FF] dark:bg-brand-500/10 text-[#6366F1] dark:text-brand-400 border-[#E0E7FF] dark:border-brand-500/20",
     Rejected: "bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-100 dark:border-rose-500/20",
   };
   return (

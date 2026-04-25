@@ -1,5 +1,6 @@
+import { verifySessionFromCookies } from "@/lib/requestSession";
 import { NextRequest, NextResponse } from "next/server";
-import { verifyToken } from "@/lib/auth";
+
 import { createConnection } from "@/lib/db";
 import { createNotification } from "@/lib/notifications";
 import { writeFile, mkdir } from "fs/promises";
@@ -7,31 +8,74 @@ import path from "path";
 
 
 export async function POST(request: NextRequest) {
-    const token = request.cookies.get("token")?.value;
-    if (!token) return NextResponse.json({ error: "Not logged in" }, { status: 401 });
-
-    const payload = await verifyToken(token) as any;
-    if (!payload) return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+    const payload = await verifySessionFromCookies(request) as any;
+    const role = String(payload?.role ?? "").toLowerCase();
+    if (!payload || role !== "student") {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     const db = await createConnection();
 
     const [student]: any = await db.query(
-        "SELECT student_id FROM students WHERE user_id = ?",
+        "SELECT student_id, year_level FROM students WHERE user_id = ?",
         [payload.user_id]
     );
     if (student.length === 0) return NextResponse.json({ error: "Student not found" }, { status: 404 });
 
     const student_id = student[0].student_id;
+    const year_level = Number(student[0].year_level);
+    const yearMap: Record<number, string> = {
+      1: "1st Year",
+      2: "2nd Year",
+      3: "3rd Year",
+      4: "4th Year",
+    };
+    const studentYearLabel = yearMap[year_level] ?? null;
 
     const formData = await request.formData();
     const file = formData.get("file") as File;
     const requirement_id = formData.get("requirement_id") as string;
-    const comment = formData.get("comment") as string || "";
+    const comment = (formData.get("comment") as string) || "";
 
     if (!file || !requirement_id) return NextResponse.json({ error: "File and requirement are required" }, { status: 400 });
 
-    if (!file.type.startsWith("image/")) {
-        return NextResponse.json({ error: "Only image files are allowed." }, { status: 400 });
+    const [requirementRows]: any = await db.query(
+        `SELECT r.requirement_type, r.allow_file_upload, r.allow_comment
+         FROM requirements r
+         JOIN clearance_periods cp ON r.period_id = cp.period_id
+         WHERE r.requirement_id = ?
+           AND cp.period_status = 'live'
+           AND COALESCE(r.req_status, 'active') = 'active'
+           AND (r.target_year = 'All Years' OR r.target_year = ?)
+         LIMIT 1`,
+        [requirement_id, studentYearLabel ?? "All Years"]
+    );
+    const requirement = requirementRows?.[0];
+    if (!requirement) {
+        return NextResponse.json({ error: "Requirement not found." }, { status: 404 });
+    }
+
+    const allowUpload = Boolean(requirement.allow_file_upload);
+    const allowComment = Boolean(requirement.allow_comment);
+
+    if (!allowUpload) {
+        return NextResponse.json(
+            { error: "Upload is disabled for this requirement." },
+            { status: 403 }
+        );
+    }
+
+    if (!allowComment && comment.trim().length > 0) {
+        return NextResponse.json(
+            { error: "Comments are disabled for this requirement." },
+            { status: 403 }
+        );
+    }
+
+    const fileType = (file.type || "").toLowerCase();
+    const isAllowedFileType = fileType.startsWith("image/") || fileType === "application/pdf";
+    if (!isAllowedFileType) {
+        return NextResponse.json({ error: "Only image or PDF files are allowed." }, { status: 400 });
     }
 
     const bytes = await file.arrayBuffer();

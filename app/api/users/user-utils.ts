@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { MIN_PASSWORD_LENGTH } from "@/lib/passwordPolicy";
+import type { Connection } from "mysql2/promise";
 
 export const PROGRAMS: Record<string, number> = {
   BSIT: 4,
@@ -25,6 +27,9 @@ export const DEPARTMENTS = [
   'Head, FSTLP',
   'Director, Student Development Services',
   'Sports Office',
+  'Dean',
+  'Librarian',
+  'Cashier',
 ] as const;
 
 export const VALID_ROLES = ["student", "signatory", "admin"] as const;
@@ -41,6 +46,7 @@ export type ValidatedUserPayload = {
   first_name: string;
   middle_name: string | null;
   last_name: string;
+  suffix: string | null;
   email: string;
   password: string;
   role: (typeof VALID_ROLES)[number];
@@ -90,26 +96,29 @@ export function createErrorResponse(
 }
 
 export function validateUserPayload(
-  input: any,
+  input: unknown,
   { requirePassword = true }: ValidationOptions = {},
 ):
   | { valid: true; data: ValidatedUserPayload }
   | { valid: false; errors: Record<string, string> } {
   const errors: Record<string, string> = {};
+  const source: Record<string, unknown> =
+    typeof input === "object" && input !== null ? (input as Record<string, unknown>) : {};
 
-  const userIdRaw = toTrimmedString(input?.user_id);
-  const first_name = normalizeName(input?.first_name);
-  const middle_name = normalizeOptionalText(input?.middle_name);
-  const last_name = normalizeName(input?.last_name);
-  const email = normalizeEmail(input?.email);
-  const password = toTrimmedString(input?.password);
-  const role = toTrimmedString(input?.role).toLowerCase();
-  const account_status = toTrimmedString(input?.account_status).toLowerCase() || "active";
-  const profile_picture = normalizeOptionalText(input?.profile_picture) || "/avatars/defaultAvatar.jpg";
-  const program = toTrimmedString(input?.program).toUpperCase();
-  const yearLevelRaw = toTrimmedString(input?.year_level);
-  const department = normalizeOptionalText(input?.department);
-  const credentials = normalizeOptionalText(input?.credentials);
+  const userIdRaw = toTrimmedString(source.user_id);
+  const first_name = normalizeName(source.first_name);
+  const middle_name = normalizeOptionalText(source.middle_name);
+  const last_name = normalizeName(source.last_name);
+  const suffix = normalizeOptionalText(source.suffix);
+  const email = normalizeEmail(source.email);
+  const password = toTrimmedString(source.password);
+  const role = toTrimmedString(source.role).toLowerCase();
+  const account_status = toTrimmedString(source.account_status).toLowerCase() || "active";
+  const profile_picture = normalizeOptionalText(source.profile_picture) || "/avatars/defaultAvatar.jpg";
+  const program = toTrimmedString(source.program).toUpperCase();
+  const yearLevelRaw = toTrimmedString(source.year_level);
+  const department = normalizeOptionalText(source.department);
+  const credentials = normalizeOptionalText(source.credentials);
 
   if (!userIdRaw) {
     errors.user_id = "User ID is required.";
@@ -133,6 +142,10 @@ export function validateUserPayload(
     errors.last_name = "Last name contains invalid characters.";
   }
 
+  if (suffix && !isValidName(suffix)) {
+    errors.suffix = "Suffix contains invalid characters.";
+  }
+
   if (!email) {
     errors.email = "Institutional email is required.";
   } else if (!/^[a-z0-9._%+-]+@bisu\.edu\.ph$/.test(email)) {
@@ -142,11 +155,11 @@ export function validateUserPayload(
   if (requirePassword) {
     if (!password) {
       errors.password = "Password is required.";
-    } else if (password.length < 6) {
-      errors.password = "Password must be at least 6 characters.";
+    } else if (password.length < MIN_PASSWORD_LENGTH) {
+      errors.password = `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`;
     }
-  } else if (password && password.length < 6) {
-    errors.password = "Password must be at least 6 characters.";
+  } else if (password && password.length < MIN_PASSWORD_LENGTH) {
+    errors.password = `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`;
   }
 
   if (!VALID_ROLES.includes(role as (typeof VALID_ROLES)[number])) {
@@ -202,6 +215,7 @@ export function validateUserPayload(
       first_name,
       middle_name,
       last_name,
+      suffix,
       email,
       password,
       role: role as (typeof VALID_ROLES)[number],
@@ -224,7 +238,7 @@ export function parseUserIdParam(id: string) {
 }
 
 export async function syncRoleRecords(
-  db: any,
+  db: Connection,
   userId: number,
   payload: Pick<
     ValidatedUserPayload,
@@ -245,8 +259,8 @@ export async function syncRoleRecords(
 
   if (payload.role === "signatory") {
     await db.query(
-      "INSERT INTO signatories (signatory_id, user_id, department, credentials) VALUES (?, ?, ?, ?)",
-      [userId, userId, payload.department, payload.credentials],
+      "INSERT INTO signatories (signatory_id, user_id, department, academic_credentials, contact_number) VALUES (?, ?, ?, ?, ?)",
+      [userId, userId, payload.department, payload.credentials, null],
     );
     return;
   }

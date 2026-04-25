@@ -9,11 +9,9 @@ import {
   ChevronRight,
   Clock,
   FileX,
-  History,
   LayoutGrid,
   PieChart as PieIcon,
   BarChart3,
-  Download,
   GraduationCap,
   MessageSquare
 } from "lucide-react";
@@ -103,6 +101,7 @@ export default function SignatoryDashboard() {
   /* --- SELECTION & BULK STATE --- */
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [showBulkModal, setShowBulkModal] = useState<"Approve" | "Reject" | null>(null);
+  const [feedback, setFeedback] = useState("");
 
   useEffect(() => {
     const fetchSubmissions = async () => {
@@ -171,7 +170,7 @@ export default function SignatoryDashboard() {
   }, [filteredData, currentPage, itemsPerPage]);
 
   const isPageSelected =
-    paginatedData.length > 0 && paginatedData.every(s => selectedIds.includes(s.id));
+    paginatedData.length > 0 && paginatedData.every((s) => selectedIds.includes(String(s.id)));
 
   const handleSelectPage = () => {
     const pageIds = paginatedData.map(s => s.id);
@@ -183,7 +182,8 @@ export default function SignatoryDashboard() {
   };
 
   const toggleSelect = (id: string) => {
-    setSelectedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+    const normalizedId = String(id);
+    setSelectedIds(prev => prev.includes(normalizedId) ? prev.filter(i => i !== normalizedId) : [...prev, normalizedId]);
   };
 
   const handleBulkAction = async () => {
@@ -193,18 +193,23 @@ export default function SignatoryDashboard() {
       const res = await fetch("/api/signatory/submissions/review", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ submissionIds: selectedIds, status: showBulkModal.toLowerCase() }),
+        body: JSON.stringify({
+          submissionIds: selectedIds,
+          status: showBulkModal.toLowerCase(),
+          feedback,
+        }),
       });
       const data = await res.json();
       if (data.success) {
         setSubmissions(prev =>
-          prev.map(s => selectedIds.includes(s.id) ? { ...s, status: newStatus } : s)
+          prev.map(s => selectedIds.includes(String(s.id)) ? { ...s, status: newStatus } : s)
         );
       }
     } catch (err) {
       console.error("Bulk action failed", err);
     }
     setSelectedIds([]);
+    setFeedback("");
     setShowBulkModal(null);
   };
 
@@ -213,7 +218,7 @@ export default function SignatoryDashboard() {
       await fetch("/api/signatory/submissions/review", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ submissionIds: [id], status: newStatus.toLowerCase() }),
+        body: JSON.stringify({ submissionIds: [id], status: newStatus.toLowerCase(), feedback }),
       });
     } catch (err) {
       console.error("Status update failed", err);
@@ -243,14 +248,7 @@ export default function SignatoryDashboard() {
             </div>
           </div>
           
-          <div className="flex items-center gap-3 shrink-0">
-            <button className="flex-1 md:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-[9px] font-black uppercase hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-sm active:scale-95">
-              <History size={14} /> History
-            </button>
-            <button className="flex-1 md:flex-none inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-900 dark:bg-blue-600 text-white rounded-xl text-[9px] font-black uppercase shadow-lg shadow-blue-900/10 hover:bg-blue-600 dark:hover:bg-blue-500 transition-all active:scale-95">
-              <Download size={14} /> Export
-            </button>
-          </div>
+          <div className="flex items-center gap-3 shrink-0" />
         </div>
       </header>
 
@@ -368,7 +366,7 @@ export default function SignatoryDashboard() {
             >
               <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${
                 isPageSelected
-                  ? 'bg-slate-900 dark:bg-indigo-600 border-slate-900 dark:border-indigo-600'
+                  ? 'bg-slate-900 dark:bg-brand-600 border-slate-900 dark:border-brand-600'
                   : 'border-slate-300 dark:border-slate-600'
               }`}>
                 {isPageSelected && <span className="text-white text-[10px] font-black">&#10003;</span>}
@@ -377,7 +375,7 @@ export default function SignatoryDashboard() {
             </button>
             {selectedIds.length > 0 && (
               <div className="flex items-center gap-2">
-                <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 px-3 py-1.5 rounded-full">
+                <span className="text-[10px] font-black text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-500/10 px-3 py-1.5 rounded-full">
                   {selectedIds.length} Selected
                 </span>
                 <button onClick={() => setShowBulkModal("Approve")} className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95">
@@ -396,14 +394,14 @@ export default function SignatoryDashboard() {
               Array.from({ length: 5 }).map((_, i) => <SkeletonMobileCard key={i} />)
             ) : paginatedData.map((s) => (
               <div key={s.id} className={`p-5 space-y-4 transition-colors ${
-                selectedIds.includes(s.id) ? 'bg-indigo-50/30 dark:bg-indigo-900/10' : ''
+                selectedIds.includes(String(s.id)) ? 'bg-brand-50/30 dark:bg-brand-900/10' : ''
               }`}>
                 <div className="flex items-center gap-4">
                   <input
                     type="checkbox"
-                    checked={selectedIds.includes(s.id)}
+                    checked={selectedIds.includes(String(s.id))}
                     onChange={() => toggleSelect(s.id)}
-                    className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-indigo-600 cursor-pointer"
+                    className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-brand-600 cursor-pointer"
                   />
                   <div className={`w-12 h-12 rounded-2xl ${s.color} flex items-center justify-center font-black text-sm shadow-sm shrink-0`}>{s.initials}</div>
                   <div className="min-w-0">
@@ -445,15 +443,15 @@ export default function SignatoryDashboard() {
                   Array.from({ length: 5 }).map((_, i) => <SkeletonTableRow key={i} cols={5} />)
                 ) : paginatedData.map((s) => (
                   <tr key={s.id} className={`group hover:bg-slate-50/80 dark:hover:bg-slate-800/80 transition-all ${
-                    selectedIds.includes(s.id) ? 'bg-indigo-50/30 dark:bg-indigo-900/10' : ''
+                    selectedIds.includes(String(s.id)) ? 'bg-brand-50/30 dark:bg-brand-900/10' : ''
                   }`}>
                     <td className="px-8 py-6">
                       <div className="flex items-center gap-4">
                         <input
                           type="checkbox"
-                          checked={selectedIds.includes(s.id)}
+                          checked={selectedIds.includes(String(s.id))}
                           onChange={() => toggleSelect(s.id)}
-                          className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                          className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-brand-600 focus:ring-brand-500 cursor-pointer"
                         />
                         <div className={`w-11 h-11 rounded-2xl ${s.color} flex items-center justify-center font-black text-xs shadow-sm`}>{s.initials}</div>
                         <div>
@@ -603,10 +601,10 @@ export default function SignatoryDashboard() {
                 <div className="space-y-4">
                   <h4 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Student Note</h4>
                   {selectedSubmission.remarks ? (
-                    <div className="bg-indigo-50 dark:bg-indigo-500/10 rounded-2xl p-4 border border-indigo-100 dark:border-indigo-500/20">
+                    <div className="bg-brand-50 dark:bg-brand-500/10 rounded-2xl p-4 border border-brand-100 dark:border-brand-500/20">
                       <div className="flex items-center gap-2 mb-2">
-                        <MessageSquare size={13} className="text-indigo-500 shrink-0" />
-                        <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Comment from Student</span>
+                        <MessageSquare size={13} className="text-brand-500 shrink-0" />
+                        <span className="text-[10px] font-black text-brand-500 uppercase tracking-widest">Comment from Student</span>
                       </div>
                       <p className="text-sm font-medium text-slate-700 dark:text-slate-200 italic leading-relaxed">
                         "{selectedSubmission.remarks}"
@@ -621,7 +619,7 @@ export default function SignatoryDashboard() {
                 <div className="pt-8 border-t border-slate-100 dark:border-slate-800 grid grid-cols-1 gap-3">
                   <button
                     onClick={() => updateStatus(selectedSubmission.id, "Approved")}
-                    className="w-full py-5 bg-indigo-600 dark:bg-indigo-500 text-white rounded-3xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-indigo-100 dark:shadow-none hover:bg-indigo-700 dark:hover:bg-indigo-600 transition-all active:scale-95"
+                    className="w-full py-5 bg-brand-600 dark:bg-brand-500 text-white rounded-3xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-brand-100 dark:shadow-none hover:bg-brand-700 dark:hover:bg-brand-600 transition-all active:scale-95"
                   >
                     Approve Document
                   </button>
@@ -631,6 +629,19 @@ export default function SignatoryDashboard() {
                   >
                     Reject
                   </button>
+                </div>
+                <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                    Feedback (Optional)
+                  </label>
+                  <textarea
+                    value={feedback}
+                    onChange={(e) => setFeedback(e.target.value)}
+                    placeholder="Add optional feedback for this student..."
+                    rows={3}
+                    maxLength={1000}
+                    className="mt-2 w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-700 dark:text-slate-200 outline-none focus:ring-4 focus:ring-brand-500/10 focus:border-brand-400 resize-none"
+                  />
                 </div>
               </div>
             </div>
@@ -676,6 +687,19 @@ export default function SignatoryDashboard() {
               >
                 Yes, {showBulkModal}
               </button>
+            </div>
+            <div className="pt-2 text-left">
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                Feedback (Optional)
+              </label>
+              <textarea
+                value={feedback}
+                onChange={(e) => setFeedback(e.target.value)}
+                placeholder="Optional feedback for selected submissions..."
+                rows={3}
+                maxLength={1000}
+                className="mt-2 w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-700 dark:text-slate-200 outline-none focus:ring-4 focus:ring-brand-500/10 focus:border-brand-400 resize-none"
+              />
             </div>
           </div>
         </div>

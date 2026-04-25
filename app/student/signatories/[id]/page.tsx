@@ -21,7 +21,7 @@ type SignatoryDetail = {
   academic_credentials: string | null;
   signatory_avatar: string | null;
   status: string;
-  rejection_comment: string | null;
+  signatory_feedback: string | null;
   file_path: string | null;
   comment: string | null;
   submission_id: number | null;
@@ -71,6 +71,7 @@ export default function SignatoryDetails() {
   const [comment, setComment]         = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMsg, setSuccessMsg]   = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
 
   useEffect(() => {
     const fetchDetail = async () => {
@@ -113,8 +114,15 @@ export default function SignatoryDetails() {
 
   const isPhysical = signatory.requirement_type?.toLowerCase() === "physical";
   const showCommentBox = selectedFile !== null && Boolean(signatory.allow_comment);
+  const uploadAllowed = Boolean(signatory.allow_file_upload);
+  const commentAllowed = Boolean(signatory.allow_comment);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!uploadAllowed) {
+      setErrorMsg("Upload is disabled for this requirement.");
+      return;
+    }
+    setErrorMsg("");
     const file = e.target.files?.[0] || null;
     setSelectedFile(file);
     if (!file) setComment("");
@@ -125,10 +133,11 @@ export default function SignatoryDetails() {
   const handleSubmit = async () => {
     if (!selectedFile) return;
     setIsSubmitting(true);
+    setErrorMsg("");
     const fd = new FormData();
     fd.append("file", selectedFile);
     fd.append("requirement_id", String(signatory.id));
-    if (showCommentBox && comment.trim()) fd.append("comment", comment.trim());
+    if (commentAllowed && showCommentBox && comment.trim()) fd.append("comment", comment.trim());
 
     const res  = await fetch("/api/student/submit", { method: "POST", body: fd });
     const data = await res.json();
@@ -143,7 +152,7 @@ export default function SignatoryDetails() {
         setComment(updatedData.signatory?.comment ?? "");
       }
     } else {
-      alert(data.error || "Submission failed.");
+      setErrorMsg(data.error || "Submission failed.");
     }
     setIsSubmitting(false);
   };
@@ -253,13 +262,24 @@ export default function SignatoryDetails() {
               </div>
             )}
 
-            {/* Rejection note */}
-            {isRejected && (
+            {errorMsg && (
+              <div className="bg-rose-50 dark:bg-rose-500/10 border-l-4 border-rose-500 p-5 rounded-r-xl flex gap-4">
+                <AlertCircle className="text-rose-500 shrink-0" />
+                <p className="text-sm font-bold text-rose-800 dark:text-rose-300">{errorMsg}</p>
+              </div>
+            )}
+
+            {/* Signatory feedback */}
+            {signatory.signatory_feedback && (
               <div className="bg-rose-50 dark:bg-rose-500/10 border-l-4 border-rose-500 p-5 rounded-r-xl flex gap-4">
                 <AlertCircle className="text-rose-500 shrink-0" />
                 <div>
-                  <h4 className="text-sm font-bold text-rose-900 dark:text-rose-400">Correction Required</h4>
-                  <p className="text-sm text-rose-700 dark:text-rose-300 mt-1 italic">"{signatory.rejection_comment || "Uploaded file is incorrect."}"</p>
+                  <h4 className="text-sm font-bold text-rose-900 dark:text-rose-400">
+                    {isRejected ? "Correction Required" : "Signatory Feedback"}
+                  </h4>
+                  <p className="text-sm text-rose-700 dark:text-rose-300 mt-1 italic">
+                    "{signatory.signatory_feedback}"
+                  </p>
                 </div>
               </div>
             )}
@@ -328,7 +348,9 @@ export default function SignatoryDetails() {
                   </div>
                   <div>
                     <h3 className="font-bold text-slate-900 dark:text-white text-sm">Digital Submission Info</h3>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Upload your file below</p>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                      {uploadAllowed ? "Upload your file below" : "Submission details"}
+                    </p>
                   </div>
                 </div>
                 <div className="p-8 grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -369,7 +391,7 @@ export default function SignatoryDetails() {
             )}
 
             {/* ── UPLOAD CARD ── */}
-            {Boolean(signatory.allow_file_upload) && (
+            {uploadAllowed && (
               <div className="bg-white dark:bg-slate-900 rounded-3xl border-2 border-slate-100 dark:border-slate-800 shadow-xl overflow-hidden">
                 <div className="bg-slate-50 dark:bg-slate-800/50 px-8 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center gap-3">
                   <div className="p-2 bg-slate-800 dark:bg-indigo-600 rounded-lg text-white shadow-sm">
@@ -446,16 +468,34 @@ export default function SignatoryDetails() {
                         </div>
                       )}
 
+                      {!commentAllowed && (
+                        <p className="text-xs font-bold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl px-4 py-3">
+                          Comments are disabled for this requirement.
+                        </p>
+                      )}
+
                       <button
                         onClick={handleSubmit}
                         disabled={!selectedFile || isSubmitting}
-                        className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-indigo-600 dark:bg-indigo-500 text-white font-black rounded-2xl shadow-lg shadow-indigo-200 dark:shadow-none hover:bg-indigo-700 dark:hover:bg-indigo-600 disabled:opacity-50 transition-all active:scale-95"
+                        className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-brand-600 dark:bg-brand-500 text-white font-black rounded-2xl shadow-lg shadow-brand-200 dark:shadow-none hover:bg-brand-700 dark:hover:bg-brand-600 disabled:opacity-50 transition-all active:scale-95"
                       >
                         {isSubmitting ? "Uploading..." : (isPending || isRejected) ? "Resubmit File" : "Submit File"}
                         {!isSubmitting && <Send size={18} />}
                       </button>
                     </>
                   )}
+                </div>
+              </div>
+            )}
+
+            {!uploadAllowed && (
+              <div className="bg-amber-50 dark:bg-amber-500/10 border-l-4 border-amber-500 p-5 rounded-r-xl flex gap-4">
+                <AlertCircle className="text-amber-500 shrink-0" />
+                <div>
+                  <h4 className="text-sm font-bold text-amber-900 dark:text-amber-300">Upload Disabled</h4>
+                  <p className="text-sm text-amber-800 dark:text-amber-200 mt-1">
+                    File upload is disabled for this requirement. Please follow the signatory instructions above.
+                  </p>
                 </div>
               </div>
             )}

@@ -151,7 +151,7 @@ const toSignatoryStatus = (status: SignatoryStatus): ClearanceStatus => {
             </div>
             <div className="space-y-0.5">
               <h1 className="text-xl sm:text-2xl font-black tracking-tight leading-none uppercase">
-                Student <span className="text-indigo-600">Clearance Status</span>
+                Student <span className="text-brand-600">Clearance Status</span>
               </h1>
               <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500">
                 <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
@@ -176,7 +176,7 @@ const toSignatoryStatus = (status: SignatoryStatus): ClearanceStatus => {
                 <button 
                   key={s} 
                   onClick={() => setStatusFilter(s as any)}
-                  className={`flex-1 xl:flex-none px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${statusFilter === s ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+                  className={`flex-1 xl:flex-none px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${statusFilter === s ? 'bg-white dark:bg-slate-700 text-brand-600 dark:text-brand-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
                 >
                   {s}
                 </button>
@@ -190,7 +190,7 @@ const toSignatoryStatus = (status: SignatoryStatus): ClearanceStatus => {
               <input 
                 type="text" 
                 placeholder="Search by student ID or name..." 
-                className="w-full pl-12 pr-6 py-3.5 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-2xl text-sm font-bold outline-none focus:border-indigo-500 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                className="w-full pl-12 pr-6 py-3.5 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-2xl text-sm font-bold outline-none focus:border-brand-500 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -222,7 +222,7 @@ const toSignatoryStatus = (status: SignatoryStatus): ClearanceStatus => {
             ) : paginatedData.map((row) => (
               <div key={row.id} className="p-6 space-y-4 hover:bg-slate-50/80 dark:hover:bg-slate-800/80 transition-all group">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-black text-lg border border-indigo-100 dark:border-indigo-500/20 shrink-0">
+                  <div className="w-12 h-12 rounded-xl bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400 flex items-center justify-center font-black text-lg border border-brand-100 dark:border-brand-500/20 shrink-0">
                     {row.name.charAt(0)}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -253,7 +253,7 @@ const toSignatoryStatus = (status: SignatoryStatus): ClearanceStatus => {
                 <div className="pt-2">
                   <button 
                     onClick={() => setSelectedRecord(row)} 
-                    className="w-full py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 hover:border-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all active:scale-95 shadow-sm"
+                    className="w-full py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 hover:border-brand-500 hover:text-brand-600 dark:hover:text-brand-400 transition-all active:scale-95 shadow-sm"
                   >
                     View Progress
                   </button>
@@ -290,8 +290,8 @@ const toSignatoryStatus = (status: SignatoryStatus): ClearanceStatus => {
                     </td>
                     <td className="px-8 py-5">
                       <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-black text-xs border border-indigo-100 dark:border-indigo-500/20">{row.name.charAt(0)}</div>
-                        <p className="font-bold text-slate-800 dark:text-slate-200 text-sm group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{row.name}</p>
+                        <div className="w-10 h-10 rounded-xl bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400 flex items-center justify-center font-black text-xs border border-brand-100 dark:border-brand-500/20">{row.name.charAt(0)}</div>
+                        <p className="font-bold text-slate-800 dark:text-slate-200 text-sm group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">{row.name}</p>
                       </div>
                     </td>
                     <td className="px-8 py-5">
@@ -300,7 +300,7 @@ const toSignatoryStatus = (status: SignatoryStatus): ClearanceStatus => {
                     </td>
                     <td className="px-8 py-5 text-center"><ClearancePill status={row.status} /></td>
                     <td className="px-8 py-5 text-right">
-                      <button onClick={() => setSelectedRecord(row)} className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 hover:border-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all active:scale-95 shadow-sm">
+                      <button onClick={() => setSelectedRecord(row)} className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 hover:border-brand-500 hover:text-brand-600 dark:hover:text-brand-400 transition-all active:scale-95 shadow-sm">
                         Review
                       </button>
                     </td>
@@ -317,8 +317,8 @@ const toSignatoryStatus = (status: SignatoryStatus): ClearanceStatus => {
                <p className="text-[10px] font-black uppercase tracking-widest">Page {currentPage} of {totalPages || 1}</p>
             </div>
             <div className="flex gap-1">
-              <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} className="p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 disabled:opacity-30 transition-all"><ChevronLeft size={16}/></button>
-              <button disabled={currentPage === totalPages || totalPages === 0} onClick={() => setCurrentPage(p => p + 1)} className="p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 disabled:opacity-30 transition-all"><ChevronRight size={16}/></button>
+              <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} className="p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-400 dark:text-slate-500 hover:text-brand-600 dark:hover:text-brand-400 disabled:opacity-30 transition-all"><ChevronLeft size={16}/></button>
+              <button disabled={currentPage === totalPages || totalPages === 0} onClick={() => setCurrentPage(p => p + 1)} className="p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-400 dark:text-slate-500 hover:text-brand-600 dark:hover:text-brand-400 disabled:opacity-30 transition-all"><ChevronRight size={16}/></button>
             </div>
           </div>
         </div>
@@ -334,13 +334,13 @@ const toSignatoryStatus = (status: SignatoryStatus): ClearanceStatus => {
               <div>
                 <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Clearance Progress</p>
                 <h2 className="text-xl md:text-2xl font-black text-slate-900 dark:text-slate-100 uppercase tracking-tight">{selectedRecord.name}</h2>
-                <p className="text-xs font-bold text-indigo-600 dark:text-indigo-400 mt-0.5">{selectedRecord.studentId} • {selectedRecord.program}</p>
+                <p className="text-xs font-bold text-brand-600 dark:text-brand-400 mt-0.5">{selectedRecord.studentId} • {selectedRecord.program}</p>
               </div>
               <div className="flex items-center gap-2">
                 <button
                   onClick={handleDownload}
                   disabled={loadingProgress || studentProgress.length === 0}
-                  className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-indigo-200 dark:shadow-none"
+                  className="flex items-center gap-2 px-4 py-2.5 bg-brand-600 hover:bg-brand-700 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-brand-200 dark:shadow-none"
                 >
                   <FileDown size={14} />
                   Download Soft Copy
@@ -353,7 +353,7 @@ const toSignatoryStatus = (status: SignatoryStatus): ClearanceStatus => {
             <div className="p-8 flex-1 overflow-y-auto custom-scrollbar">
               {loadingProgress ? (
                 <div className="flex flex-col items-center justify-center py-10 space-y-4">
-                  <div className="w-8 h-8 border-4 border-indigo-200 dark:border-indigo-500/30 border-t-indigo-600 dark:border-t-indigo-400 rounded-full animate-spin"></div>
+                  <div className="w-8 h-8 border-4 border-brand-200 dark:border-brand-500/30 border-t-brand-600 dark:border-t-brand-400 rounded-full animate-spin"></div>
                   <p className="text-xs font-black uppercase tracking-widest text-slate-400">Loading Progress...</p>
                 </div>
               ) : studentProgress.length === 0 ? (
@@ -362,10 +362,10 @@ const toSignatoryStatus = (status: SignatoryStatus): ClearanceStatus => {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {studentProgress.map((sig) => (
-                    <div key={sig.id} className="flex items-center justify-between p-4 rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-sm">
+                  {studentProgress.map((sig, idx) => (
+                    <div key={`${sig.role ?? "role"}-${sig.name ?? "name"}-${idx}`} className="flex items-center justify-between p-4 rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-sm">
                       <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-black text-xs border border-indigo-100 dark:border-indigo-500/20">
+                        <div className="w-10 h-10 rounded-xl bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400 flex items-center justify-center font-black text-xs border border-brand-100 dark:border-brand-500/20">
                           {(sig.role || "U").charAt(0)}
                         </div>
                         <div>
@@ -395,7 +395,7 @@ const toSignatoryStatus = (status: SignatoryStatus): ClearanceStatus => {
 
 function FilterGroup({ icon, value, onChange, options }: any) {
     return (
-        <div className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm focus-within:border-indigo-500 transition-all">
+        <div className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm focus-within:border-brand-500 transition-all">
             <span className="text-slate-400 dark:text-slate-500">{icon}</span>
             <select value={value} onChange={(e) => onChange(e.target.value)} className="bg-transparent text-[11px] text-slate-700 dark:text-slate-200 font-black uppercase outline-none cursor-pointer">
                 {options.map((opt: string) => <option key={opt} value={opt} className="bg-white dark:bg-slate-900">{opt === "All" ? `All ${opt}` : opt}</option>)}

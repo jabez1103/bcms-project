@@ -7,12 +7,15 @@ import {
   SkeletonUserHeader,
   SkeletonUserRow,
 } from "@/components/ui/Skeleton";
+import { PageHeader } from "@/components/shared/PageHeader";
+import { Users, UserPlus, Upload } from "lucide-react";
 
 type User = {
   user_id: number;
   first_name: string;
   middle_name: string | null;
   last_name: string;
+  suffix: string | null;
   email: string;
   role: string;
   account_status: string;
@@ -27,6 +30,7 @@ type FormState = {
   first_name: string;
   middle_name: string;
   last_name: string;
+  suffix: string;
   email: string;
   password: string;
   role: string;
@@ -51,11 +55,18 @@ type Notice = {
   message: string;
 };
 
+type ImportResult = {
+  imported: number;
+  skipped: { user_id: string; name: string; reason: string }[];
+  errors: string[];
+};
+
 const emptyForm: FormState = {
   user_id: "",
   first_name: "",
   middle_name: "",
   last_name: "",
+  suffix: "",
   email: "",
   password: "",
   role: "student",
@@ -92,6 +103,9 @@ const DEPARTMENTS = [
   'Head, FSTLP',
   'Director, Student Development Services',
   'Sports Office',
+  'Dean',
+  'Librarian',
+  'Cashier',
 ];
 
 
@@ -108,6 +122,8 @@ const CREDENTIALS = [
   { value: "RN", label: "RN — Registered Nurse" },
   { value: "RPm", label: "RPm — Registered Psychometrician" },
 ];
+
+const SUFFIXES = ["", "Jr.", "Sr.", "II", "III", "IV", "V"];
 
 const NAME_REGEX = /^[A-Za-z][A-Za-z\s.'-]*$/;
 const SELF_PROTECTION_MESSAGE =
@@ -132,12 +148,50 @@ function readYearLabel(year: number) {
   return ["1st", "2nd", "3rd", "4th", "5th"][year - 1] ?? `${year}th`;
 }
 
+function normalizeImportResult(payload: unknown): ImportResult {
+  const source =
+    typeof payload === "object" && payload !== null
+      ? (payload as Record<string, unknown>)
+      : {};
+
+  const importedRaw = Number(source.imported ?? 0);
+  const imported = Number.isFinite(importedRaw) ? importedRaw : 0;
+
+  const skipped = Array.isArray(source.skipped)
+    ? source.skipped.map((item) => {
+        const row =
+          typeof item === "object" && item !== null
+            ? (item as Record<string, unknown>)
+            : {};
+        return {
+          user_id: String(row.user_id ?? ""),
+          name: String(row.name ?? ""),
+          reason: String(row.reason ?? "Skipped"),
+        };
+      })
+    : [];
+
+  const errors = Array.isArray(source.errors)
+    ? source.errors.map((item) => String(item))
+    : [];
+
+  if (errors.length === 0 && typeof source.error === "string" && source.error.trim()) {
+    errors.push(source.error);
+  }
+  if (errors.length === 0 && typeof source.message === "string" && source.message.trim()) {
+    errors.push(source.message);
+  }
+
+  return { imported, skipped, errors };
+}
+
 function userToForm(user: User): FormState {
   return {
     user_id: String(user.user_id),
     first_name: user.first_name ?? "",
     middle_name: user.middle_name ?? "",
     last_name: user.last_name ?? "",
+    suffix: user.suffix ?? "",
     email: user.email ?? "",
     password: "",
     role: user.role ?? "student",
@@ -291,16 +345,13 @@ export default function UserAccounts() {
   const [showImportModal, setShowImportModal]   = useState(false);
   const [importFile, setImportFile]             = useState<File | null>(null);
   const [importPreview, setImportPreview]       = useState<any[]>([]);
-  const [importResult, setImportResult]         = useState<{
-    imported: number;
-    skipped: { user_id: string; name: string; reason: string }[];
-    errors: string[];
-  } | null>(null);
+  const [importResult, setImportResult]         = useState<ImportResult | null>(null);
   const [importing, setImporting]               = useState(false);
   const [fileType, setFileType]                 = useState<"csv" | "xlsx" | null>(null);
   const [activeResultTab, setActiveResultTab]   = useState<"skipped" | "errors">("skipped");
 
   const [roleFilter, setRoleFilter] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
   const { user: currentUser, loading: currentUserLoading } = useCurrentUser();
@@ -357,9 +408,24 @@ export default function UserAccounts() {
   }, []);
 
   const filteredUsers = useMemo(() => {
-    if (roleFilter === "all") return users;
-    return users.filter((u) => u.role.toLowerCase() === roleFilter.toLowerCase());
-  }, [users, roleFilter]);
+    const q = searchQuery.trim().toLowerCase();
+    return users.filter((u) => {
+      const matchesRole =
+        roleFilter === "all" || u.role.toLowerCase() === roleFilter.toLowerCase();
+      if (!matchesRole) return false;
+      if (!q) return true;
+
+      const fullName = `${u.first_name} ${u.middle_name ?? ""} ${u.last_name}`
+        .replace(/\s+/g, " ")
+        .trim()
+        .toLowerCase();
+      return (
+        fullName.includes(q) ||
+        String(u.user_id).toLowerCase().includes(q) ||
+        String(u.email ?? "").toLowerCase().includes(q)
+      );
+    });
+  }, [users, roleFilter, searchQuery]);
 
   const totalPages = Math.max(1, Math.ceil(filteredUsers.length / itemsPerPage));
 
@@ -370,7 +436,7 @@ export default function UserAccounts() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [roleFilter]);
+  }, [roleFilter, searchQuery]);
 
   useEffect(() => {
     if (currentPage > totalPages) {
@@ -531,6 +597,7 @@ export default function UserAccounts() {
       first_name: user.first_name,
       middle_name: user.middle_name ?? "",
       last_name: user.last_name,
+      suffix: user.suffix ?? "",
       email: user.email,
       password: "",
       role: user.role,
@@ -695,7 +762,7 @@ export default function UserAccounts() {
       });
 
       const data = await res.json();
-      setImportResult(data);
+      setImportResult(normalizeImportResult(data));
       fetchUsers();
     } catch {
       setImportResult({ imported: 0, skipped: [], errors: ["Failed to parse or upload file."] });
@@ -774,19 +841,13 @@ export default function UserAccounts() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 p-4 sm:p-6 md:p-12 font-sans text-slate-900 dark:text-slate-100">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 md:mb-10">
-          <div>
-            <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
-              User Management
-            </h1>
-            <p className="text-slate-500 dark:text-slate-400 mt-2 text-base md:text-lg">
-              Manage student and staff roles, credentials, and system access.
-            </p>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-3 w-full md:w-fit">
-            {/* ✅ Import button */}
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 transition-colors">
+      <PageHeader
+        title="User Accounts"
+        description="Comprehensive directory for managing institutional stakeholders and system access."
+        icon={Users}
+        actions={
+          <div className="flex items-center gap-3">
             <button
               onClick={() => {
                 setShowImportModal(true);
@@ -796,19 +857,20 @@ export default function UserAccounts() {
                 setFileType(null);
                 setActiveResultTab("skipped");
               }}
-              className="border-2 border-indigo-200 dark:border-indigo-500/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 px-6 py-3 rounded-xl md:rounded-2xl font-bold transition-all flex items-center justify-center gap-2 w-full md:w-fit"
+              className="px-5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 dark:hover:bg-slate-800 transition-all flex items-center gap-2 shadow-sm"
             >
-              ↑ Import Users
+              <Upload size={14} /> Import
             </button>
-
             <button
               onClick={() => handleOpenModal()}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 md:px-8 py-3 rounded-xl md:rounded-2xl font-bold transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2 w-full md:w-fit"
+              className="px-5 py-2.5 bg-brand-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-brand-700 transition-all flex items-center gap-2 shadow-lg shadow-brand-200 dark:shadow-none active:scale-95"
             >
-              <span className="text-xl">+</span> Add New Account
+              <UserPlus size={14} /> Add User
             </button>
           </div>
-        </div>
+        }
+      />
+      <div className="max-w-[1600px] mx-auto p-6 md:p-10">
 
         {notice && (
           <div
@@ -837,7 +899,7 @@ export default function UserAccounts() {
                   onClick={() => setRoleFilter(role)}
                   className={`flex-1 sm:flex-none px-4 md:px-6 py-2 rounded-lg text-xs md:text-sm font-bold capitalize transition-all whitespace-nowrap ${
                     roleFilter === role
-                      ? "bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm"
+                      ? "bg-white dark:bg-slate-700 text-brand-600 dark:text-brand-400 shadow-sm"
                       : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
                   }`}
                 >
@@ -849,6 +911,15 @@ export default function UserAccounts() {
           <div className="px-4 text-[10px] md:text-xs font-black text-slate-400 uppercase tracking-widest hidden sm:block">
             {filteredUsers.length} Users Registered
           </div>
+        </div>
+
+        <div className="mb-6">
+          <input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by name, ID, or email..."
+            className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl px-5 py-3 text-sm font-bold text-slate-700 dark:text-slate-200 outline-none focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 transition-all"
+          />
         </div>
 
         <div className="bg-white dark:bg-slate-900 rounded-2xl md:rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/40 dark:shadow-none overflow-hidden">
@@ -868,7 +939,7 @@ export default function UserAccounts() {
                   }`}
                 >
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center font-bold text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-500/20 shrink-0">
+                    <div className="w-12 h-12 rounded-full bg-brand-50 dark:bg-brand-500/10 flex items-center justify-center font-bold text-brand-600 dark:text-brand-400 border border-brand-100 dark:border-brand-500/20 shrink-0">
                       {u.first_name[0]}
                       {u.last_name[0]}
                     </div>
@@ -876,7 +947,7 @@ export default function UserAccounts() {
                       <div className={`font-bold text-slate-800 dark:text-slate-200 text-sm truncate ${isProtectedAdminAction(u) ? "italic" : ""}`}>
                         {u.first_name} {u.last_name}
                         {isProtectedAdminAction(u) && (
-                          <span className="ml-2 text-[9px] font-black uppercase tracking-widest bg-indigo-100 dark:bg-indigo-500/20 text-indigo-500 dark:text-indigo-400 px-1.5 py-0.5 rounded-md align-middle">
+                          <span className="ml-2 text-[9px] font-black uppercase tracking-widest bg-brand-100 dark:bg-brand-500/20 text-brand-500 dark:text-brand-400 px-1.5 py-0.5 rounded-md align-middle">
                             You
                           </span>
                         )}
@@ -918,7 +989,7 @@ export default function UserAccounts() {
                           disabled={busyUserId === u.user_id || isProtectedAdminAction(u)}
                           tooltip={SELF_PROTECTION_MESSAGE}
                           onClick={() => handleOpenModal(u)}
-                          className="text-indigo-600 dark:text-indigo-400 font-bold text-xs uppercase disabled:opacity-50"
+                          className="text-brand-600 dark:text-brand-400 font-bold text-xs uppercase disabled:opacity-50"
                         >
                           Edit
                         </ProtectedActionButton>
@@ -972,7 +1043,7 @@ export default function UserAccounts() {
                           <div
                             className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs border transition-all ${
                               u.account_status === "active"
-                                ? "bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-100 dark:border-indigo-500/20"
+                                ? "bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400 border-brand-100 dark:border-brand-500/20"
                                 : "bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-300 dark:border-slate-700"
                             }`}
                           >
@@ -991,7 +1062,7 @@ export default function UserAccounts() {
                               {u.middle_name ? ` ${u.middle_name}` : ""} {u.last_name}
                               {/*  "You" badge */}
                               {isProtectedAdminAction(u) && (
-                                <span className="ml-2 text-[9px] font-black uppercase tracking-widest bg-indigo-100 dark:bg-indigo-500/20 text-indigo-500 dark:text-indigo-400 px-1.5 py-0.5 rounded-md align-middle">
+                                <span className="ml-2 text-[9px] font-black uppercase tracking-widest bg-brand-100 dark:bg-brand-500/20 text-brand-500 dark:text-brand-400 px-1.5 py-0.5 rounded-md align-middle">
                                   You
                                 </span>
                               )}
@@ -1038,7 +1109,7 @@ export default function UserAccounts() {
                           disabled={busyUserId === u.user_id || isProtectedAdminAction(u)}
                           tooltip={SELF_PROTECTION_MESSAGE}
                           onClick={() => handleOpenModal(u)}
-                          className="text-indigo-600 dark:text-indigo-400 font-bold text-xs hover:underline uppercase tracking-wider disabled:opacity-50"
+                          className="text-brand-600 dark:text-brand-400 font-bold text-xs hover:underline uppercase tracking-wider disabled:opacity-50"
                         >
                           Modify
                         </ProtectedActionButton>
@@ -1134,7 +1205,7 @@ export default function UserAccounts() {
                     className={`w-full border-2 rounded-xl md:rounded-2xl p-3 md:p-3.5 text-sm font-bold outline-none transition-all disabled:opacity-60 ${
                       formErrors.user_id
                         ? "border-rose-300 bg-rose-50 dark:border-rose-500/40 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300"
-                        : "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:border-indigo-500"
+                        : "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:border-brand-500"
                     }`}
                   />
                   <FieldError message={formErrors.user_id} />
@@ -1151,7 +1222,7 @@ export default function UserAccounts() {
                     className={`w-full border-2 rounded-xl md:rounded-2xl p-3 md:p-3.5 text-sm font-bold outline-none transition-all ${
                       formErrors.first_name
                         ? "border-rose-300 bg-rose-50 dark:border-rose-500/40 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300"
-                        : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:border-indigo-500"
+                        : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:border-brand-500"
                     }`}
                   />
                   <FieldError message={formErrors.first_name} />
@@ -1168,13 +1239,13 @@ export default function UserAccounts() {
                     className={`w-full border-2 rounded-xl md:rounded-2xl p-3 md:p-3.5 text-sm font-bold outline-none transition-all ${
                       formErrors.middle_name
                         ? "border-rose-300 bg-rose-50 dark:border-rose-500/40 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300"
-                        : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:border-indigo-500"
+                        : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:border-brand-500"
                     }`}
                   />
                   <FieldError message={formErrors.middle_name} />
                 </div>
 
-                <div className="md:col-span-2">
+                <div>
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">
                     Last Name
                   </label>
@@ -1185,15 +1256,32 @@ export default function UserAccounts() {
                     className={`w-full border-2 rounded-xl md:rounded-2xl p-3 md:p-3.5 text-sm font-bold outline-none transition-all ${
                       formErrors.last_name
                         ? "border-rose-300 bg-rose-50 dark:border-rose-500/40 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300"
-                        : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:border-indigo-500"
+                        : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:border-brand-500"
                     }`}
                   />
                   <FieldError message={formErrors.last_name} />
                 </div>
 
+                <div>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">
+                    Suffix <span className="text-brand-400 normal-case font-medium">(optional)</span>
+                  </label>
+                  <select
+                    value={form.suffix}
+                    onChange={(e) => updateFormFields("suffix", e.target.value)}
+                    className="w-full border-2 rounded-xl md:rounded-2xl p-3 md:p-3.5 text-sm font-bold outline-none transition-all border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:border-brand-500"
+                  >
+                    {SUFFIXES.map((sfx) => (
+                      <option key={sfx || "none"} value={sfx}>
+                        {sfx || "None"}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
                 <div className="md:col-span-2">
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">
-                    Institutional Email <span className="text-indigo-400 normal-case font-medium">(auto-generated)</span>
+                    Institutional Email <span className="text-brand-400 normal-case font-medium">(auto-generated)</span>
                   </label>
                   <input
                     type="email"
@@ -1211,7 +1299,7 @@ export default function UserAccounts() {
                 <div className="md:col-span-2">
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">
                     {isEditing ? "Password Status" : "Default Password"}{" "}
-                    <span className="text-indigo-400 normal-case font-medium">
+                    <span className="text-brand-400 normal-case font-medium">
                       {isEditing ? "(unchanged on update)" : "(LastName + ID)"}
                     </span>
                   </label>
@@ -1239,7 +1327,7 @@ export default function UserAccounts() {
                       className={`w-full border-2 rounded-xl md:rounded-2xl p-3 md:p-3.5 text-sm font-bold outline-none bg-white dark:bg-slate-900 ${
                         formErrors.role
                           ? "border-rose-300 bg-rose-50 dark:border-rose-500/40 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300"
-                          : "border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:border-indigo-500"
+                          : "border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:border-brand-500"
                       }`}
                     >
                       <option value="student">Student</option>
@@ -1259,7 +1347,7 @@ export default function UserAccounts() {
                       className={`w-full border-2 rounded-xl md:rounded-2xl p-3 md:p-3.5 text-sm font-bold outline-none bg-white dark:bg-slate-900 ${
                         formErrors.account_status
                           ? "border-rose-300 bg-rose-50 dark:border-rose-500/40 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300"
-                          : "border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:border-indigo-500"
+                          : "border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:border-brand-500"
                       }`}
                     >
                       <option value="active">Active</option>
@@ -1281,7 +1369,7 @@ export default function UserAccounts() {
                         className={`w-full border-2 rounded-xl md:rounded-2xl p-3 md:p-3.5 text-sm font-bold outline-none bg-white dark:bg-slate-900 ${
                           formErrors.program
                             ? "border-rose-300 bg-rose-50 dark:border-rose-500/40 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300"
-                            : "border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:border-indigo-500"
+                            : "border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:border-brand-500"
                         }`}
                       >
                         {Object.entries(PROGRAMS).map(([key, val]) => (
@@ -1303,7 +1391,7 @@ export default function UserAccounts() {
                         className={`w-full border-2 rounded-xl md:rounded-2xl p-3 md:p-3.5 text-sm font-bold outline-none bg-white dark:bg-slate-900 ${
                           formErrors.year_level
                             ? "border-rose-300 bg-rose-50 dark:border-rose-500/40 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300"
-                            : "border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:border-indigo-500"
+                            : "border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:border-brand-500"
                         }`}
                       >
                         {Array.from({ length: years }, (_, i) => {
@@ -1332,7 +1420,7 @@ export default function UserAccounts() {
                         className={`w-full border-2 rounded-xl md:rounded-2xl p-3 md:p-3.5 text-sm font-bold outline-none bg-white dark:bg-slate-900 ${
                           formErrors.department
                             ? "border-rose-300 bg-rose-50 dark:border-rose-500/40 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300"
-                            : "border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:border-indigo-500"
+                            : "border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:border-brand-500"
                         }`}
                       >
                         {DEPARTMENTS.map((dept) => (
@@ -1345,12 +1433,12 @@ export default function UserAccounts() {
                     {/* Academic Credentials */}
                     <div className="md:col-span-2">
                       <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">
-                        Academic Credentials <span className="text-indigo-400 normal-case font-medium">(optional)</span>
+                        Academic Credentials <span className="text-brand-400 normal-case font-medium">(optional)</span>
                       </label>
                       <select
                         value={form.credentials}
                         onChange={(e) => updateFormFields("credentials", e.target.value)}
-                        className="w-full border-2 border-slate-200 dark:border-slate-700 rounded-xl md:rounded-2xl p-3 md:p-3.5 text-sm font-bold outline-none bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:border-indigo-500"
+                        className="w-full border-2 border-slate-200 dark:border-slate-700 rounded-xl md:rounded-2xl p-3 md:p-3.5 text-sm font-bold outline-none bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:border-brand-500"
                       >
                         {CREDENTIALS.map((c) => (
                           <option key={c.value} value={c.value}>{c.label}</option>
@@ -1358,7 +1446,7 @@ export default function UserAccounts() {
                       </select>
                       {/* Preview how name will appear */}
                       {form.credentials && (
-                        <p className="mt-2 text-[11px] font-bold text-indigo-500">
+                        <p className="mt-2 text-[11px] font-bold text-brand-500">
                           Display: {form.credentials} {form.last_name || "LastName"}, {form.first_name || "FirstName"}
                         </p>
                       )}
@@ -1379,7 +1467,7 @@ export default function UserAccounts() {
               <button
                 onClick={modifyUser}
                 disabled={saving}
-                className="order-1 sm:order-2 bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3.5 rounded-xl md:rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-indigo-100 transition-all active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
+                className="order-1 sm:order-2 bg-brand-600 hover:bg-brand-700 text-white px-8 py-3.5 rounded-xl md:rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-brand-100 transition-all active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {saving
                   ? isEditing
@@ -1412,7 +1500,7 @@ export default function UserAccounts() {
               {/* FORMAT GUIDE */}
               <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-5 border border-slate-100 dark:border-slate-800 space-y-3">
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Required Columns</p>
-                <code className="block text-xs text-indigo-600 dark:text-indigo-400 font-mono bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
+                <code className="block text-xs text-brand-600 dark:text-brand-400 font-mono bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
                   user_id, first_name, middle_name, last_name, role, program, year_level, department, credentials
                 </code>
                 <ul className="text-[10px] text-slate-400 space-y-1 leading-relaxed">
@@ -1423,9 +1511,9 @@ export default function UserAccounts() {
                   <li>• <strong>password & email</strong>: auto-generated</li>
                 </ul>
                 <div className="flex gap-3 pt-1">
-                  <button onClick={() => downloadSample("csv")} className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 hover:underline uppercase tracking-wider">↓ Sample CSV</button>
+                  <button onClick={() => downloadSample("csv")} className="text-[10px] font-black text-brand-600 dark:text-brand-400 hover:underline uppercase tracking-wider">↓ Sample CSV</button>
                   <span className="text-slate-300 dark:text-slate-700">|</span>
-                  <button onClick={() => downloadSample("xlsx")} className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 hover:underline uppercase tracking-wider">↓ Sample Excel</button>
+                  <button onClick={() => downloadSample("xlsx")} className="text-[10px] font-black text-brand-600 dark:text-brand-400 hover:underline uppercase tracking-wider">↓ Sample Excel</button>
                 </div>
               </div>
 
@@ -1433,9 +1521,9 @@ export default function UserAccounts() {
               {!importResult && (
                 <div>
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">
-                    Select File <span className="text-indigo-400 normal-case font-medium">(CSV or Excel)</span>
+                    Select File <span className="text-brand-400 normal-case font-medium">(CSV or Excel)</span>
                   </label>
-                  <div className={`border-2 border-dashed rounded-2xl p-6 transition-colors ${importFile ? "border-indigo-400 bg-indigo-50/30 dark:bg-indigo-500/10" : "border-slate-200 dark:border-slate-700 hover:border-indigo-300"}`}>
+                  <div className={`border-2 border-dashed rounded-2xl p-6 transition-colors ${importFile ? "border-brand-400 bg-brand-50/30 dark:bg-brand-500/10" : "border-slate-200 dark:border-slate-700 hover:border-brand-300"}`}>
                     <input type="file" accept=".csv,.xlsx" onChange={handleImportFile} className="hidden" id="import-upload" />
                     <label htmlFor="import-upload" className="cursor-pointer flex flex-col items-center gap-2">
                       <span className="text-3xl">{importFile ? (fileType === "xlsx" ? "📊" : "📄") : "📁"}</span>
@@ -1547,7 +1635,7 @@ export default function UserAccounts() {
 
                   <button
                     onClick={() => { setImportFile(null); setImportPreview([]); setImportResult(null); setFileType(null); }}
-                    className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 hover:underline uppercase tracking-wider"
+                    className="text-[10px] font-black text-brand-600 dark:text-brand-400 hover:underline uppercase tracking-wider"
                   >
                     ↑ Import Another File
                   </button>
@@ -1563,7 +1651,7 @@ export default function UserAccounts() {
               </button>
               {!importResult && (
                 <button onClick={handleImportSubmit} disabled={!importFile || importing}
-                  className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white px-8 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg transition-all active:scale-95">
+                  className="bg-brand-600 hover:bg-brand-700 disabled:opacity-50 text-white px-8 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg transition-all active:scale-95">
                   {importing ? "Importing..." : "Import Users"}
                 </button>
               )}

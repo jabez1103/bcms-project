@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Activity, CheckCircle2, AlertCircle, FileText, UploadCloud, Loader2 } from "lucide-react";
+import { Activity, CheckCircle2, AlertCircle, FileText, UploadCloud, Loader2, History } from "lucide-react";
+import { PageHeader } from "@/components/shared/PageHeader";
 
 /* ── Types ───────────────────────────────────────────────── */
 type LogStatus = "success" | "error" | "pending" | "neutral" | "active";
@@ -21,7 +22,7 @@ function iconAndColor(status: LogStatus, tab: "recent" | "history") {
   if (status === "error")
     return { Icon: AlertCircle, color: "text-rose-500 dark:text-rose-400 bg-rose-50 dark:bg-rose-500/10" };
   if (status === "pending")
-    return { Icon: UploadCloud, color: "text-indigo-500 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10" };
+    return { Icon: UploadCloud, color: "text-brand-500 dark:text-brand-400 bg-brand-50 dark:bg-brand-500/10" };
   if (status === "active")
     return { Icon: Activity, color: "text-amber-500 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10" };
   // neutral
@@ -79,17 +80,16 @@ export default function ActivityLogs() {
   const isLoading = activeTab === "recent" ? loadingRecent : loadingHistory;
 
   return (
-    <div className="p-4 md:p-8 lg:p-12 bg-[#F8FAFC] dark:bg-slate-950 min-h-screen text-slate-900 dark:text-slate-100 transition-colors">
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2rem] shadow-sm transition-colors overflow-hidden">
-        {/* Header */}
-        <div className="p-6 md:p-8 border-b border-slate-100 dark:border-slate-800">
-          <h1 className="text-2xl font-black mb-2 text-slate-900 dark:text-white uppercase tracking-tight">
-            Activity Logs
-          </h1>
-          <p className="text-slate-500 dark:text-slate-400 font-medium text-sm">
-            Track your recent interactions and system history.
-          </p>
-        </div>
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 transition-colors">
+      <PageHeader
+        title="Activity Logs"
+        description="Chronological record of your submissions, approvals, and system interactions."
+        icon={History}
+        breadcrumbs={[{ label: "Student" }, { label: "Activity Logs" }]}
+      />
+      <div className="max-w-[1600px] mx-auto p-6 md:p-10">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] shadow-sm transition-colors overflow-hidden">
+
 
         {/* Tabs */}
         <div className="px-6 md:px-8 pt-6">
@@ -100,7 +100,7 @@ export default function ActivityLogs() {
                 onClick={() => setActiveTab(tab)}
                 className={`pb-4 text-sm font-bold uppercase tracking-widest transition-colors border-b-2 ${
                   activeTab === tab
-                    ? "border-indigo-600 text-indigo-600 dark:text-indigo-400 dark:border-indigo-400"
+                    ? "border-brand-600 text-brand-600 dark:text-brand-400 dark:border-brand-400"
                     : "border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
                 }`}
               >
@@ -133,7 +133,7 @@ export default function ActivityLogs() {
                       <Icon size={18} />
                     </div>
                     <div className="flex-1">
-                      <p className="font-bold text-sm text-slate-800 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                      <p className="font-bold text-sm text-slate-800 dark:text-slate-200 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
                         {log.action}
                       </p>
                       <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1">
@@ -150,7 +150,7 @@ export default function ActivityLogs() {
                             ? "bg-rose-50 text-rose-600 border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20"
                             : log.status === "active"
                             ? "bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20"
-                            : "bg-indigo-50 text-indigo-600 border-indigo-200 dark:bg-indigo-500/10 dark:text-indigo-400 dark:border-indigo-500/20"
+                            : "bg-brand-50 text-brand-600 border-brand-200 dark:bg-brand-500/10 dark:text-brand-400 dark:border-brand-500/20"
                         }`}
                       >
                         {log.status === "active" ? "Live" : log.status}
@@ -163,6 +163,7 @@ export default function ActivityLogs() {
           )}
         </div>
       </div>
+    </div>
     </div>
   );
 }

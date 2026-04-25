@@ -1,6 +1,9 @@
+import { verifySessionFromCookies } from "@/lib/requestSession";
 import { NextRequest, NextResponse } from "next/server";
-import { verifyToken } from "@/lib/auth";
+
 import { createConnection } from "@/lib/db";
+import { ensureRequirementConditionalColumns } from "@/lib/ensureRequirementConditionalColumns";
+import { parseStoredConditionalIds } from "@/lib/requirementTypeAccess";
 
 export async function GET(
     request: NextRequest,
@@ -8,13 +11,14 @@ export async function GET(
   ) {
     const { id } = await params;
 
-    const token = request.cookies.get("token")?.value;
-    if (!token) return NextResponse.json({ error: "Not logged in" }, { status: 401 });
-
-    const payload = await verifyToken(token) as any;
-    if (!payload) return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+    const payload = await verifySessionFromCookies(request) as any;
+    const role = String(payload?.role ?? "").toLowerCase();
+    if (!payload || role !== "student") {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     const db = await createConnection();
+    await ensureRequirementConditionalColumns(db);
 
     const [student]: any = await db.query(
         "SELECT student_id, year_level FROM students WHERE user_id = ?",
@@ -57,7 +61,8 @@ export async function GET(
             COALESCE(a.decision_status,
                 CASE WHEN s.submission_id IS NOT NULL THEN 'pending' ELSE 'not_submitted' END
             ) AS status,
-            a.remarks AS rejection_comment
+            a.remarks AS signatory_feedback,
+            r.conditional_signatory_ids AS conditionalSignatoryIdsRaw
         FROM requirements r
         JOIN signatories sg ON r.signatory_id = sg.signatory_id
         JOIN users u ON sg.user_id = u.user_id
@@ -74,5 +79,26 @@ export async function GET(
 
     if (rows.length === 0) return NextResponse.json({ errro: "Requirements not found" }, { status: 404 });
 
-    return NextResponse.json({ success: true, signatory: rows[0] });
+    const detail = rows[0];
+    if (String(detail.requirement_type ?? "").toLowerCase() === "conditional") {
+      const [approvedRows]: any = await db.query(
+        `SELECT DISTINCT req.signatory_id AS signatoryId
+         FROM submissions sub
+         JOIN requirements req ON sub.requirement_id = req.requirement_id
+         JOIN clearance_periods cp ON req.period_id = cp.period_id
+         JOIN approvals a ON a.submission_id = sub.submission_id AND a.signatory_id = req.signatory_id
+         WHERE sub.student_id = ?
+           AND cp.period_status = 'live'
+           AND LOWER(a.decision_status) = 'approved'`,
+        [student_id]
+      );
+      const approvedSignatoryIds = new Set<number>(
+        approvedRows.map((r: any) => Number(r.signatoryId)).filter((n: number) => Number.isInteger(n))
+      );
+      const dependencyIds = parseStoredConditionalIds(detail.conditionalSignatoryIdsRaw);
+      const isApproved = dependencyIds.length > 0 && dependencyIds.every((depId) => approvedSignatoryIds.has(depId));
+      detail.status = isApproved ? "approved" : "pending";
+    }
+
+    return NextResponse.json({ success: true, signatory: detail });
  }

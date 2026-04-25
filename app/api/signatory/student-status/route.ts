@@ -1,63 +1,149 @@
+import { verifySessionFromCookies } from "@/lib/requestSession";
 import { NextRequest, NextResponse } from "next/server";
-import { verifyToken } from "@/lib/auth";
+import type { RowDataPacket } from "mysql2/promise";
+
 import { createConnection } from "@/lib/db";
 
 export async function GET(request: NextRequest) {
-    const token = request.cookies.get("token")?.value;
-    if (!token) return NextResponse.json({ error: "Not logged in" }, { status: 401 });
+  const payload = await verifySessionFromCookies(request) as { role?: string; user_id?: number } | null;
+  if (!payload || payload.role !== "signatory") {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
-    const payload = await verifyToken(token) as any;
-    if (!payload || payload.role !== "signatory") {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+  const db = await createConnection();
 
-    const db = await createConnection();
+  const [sigRows] = await db.query<RowDataPacket[]>(
+    "SELECT signatory_id FROM signatories WHERE user_id = ?",
+    [payload.user_id]
+  );
+  if (sigRows.length === 0) {
+    await db.end();
+    return NextResponse.json({ error: "Signatory profile not found" }, { status: 404 });
+  }
 
-    // Get signatory_id
-    const [sig]: any = await db.query(
-        "SELECT signatory_id FROM signatories WHERE user_id = ?",
-        [payload.user_id]
+  try {
+    const [rows] = await db.query<RowDataPacket[]>(
+      `SELECT
+         s.student_id AS id,
+         s.student_id AS studentId,
+         CONCAT(u.first_name, ' ', u.last_name) AS name,
+         s.program,
+         CASE s.year_level
+           WHEN 1 THEN '1st Year'
+           WHEN 2 THEN '2nd Year'
+           WHEN 3 THEN '3rd Year'
+           WHEN 4 THEN '4th Year'
+           ELSE '1st Year'
+         END AS year,
+         'A' AS section,
+         COUNT(req.requirement_id) AS total,
+         COALESCE(SUM(
+           CASE
+             WHEN LOWER(
+               COALESCE(
+                 a.decision_status,
+                 CASE WHEN sub.submission_id IS NOT NULL THEN 'pending' ELSE 'not_submitted' END
+               )
+             ) = 'approved'
+             THEN 1 ELSE 0
+           END
+         ), 0) AS approved,
+         CASE
+           WHEN COUNT(req.requirement_id) = 0 THEN 'Not Cleared'
+           WHEN COALESCE(SUM(
+             CASE
+               WHEN LOWER(
+                 COALESCE(
+                   a.decision_status,
+                   CASE WHEN sub.submission_id IS NOT NULL THEN 'pending' ELSE 'not_submitted' END
+                 )
+               ) = 'approved'
+               THEN 1 ELSE 0
+             END
+           ), 0) = COUNT(req.requirement_id)
+           THEN 'Cleared'
+           ELSE 'Not Cleared'
+         END AS status,
+         CONCAT(
+           COALESCE(SUM(CASE WHEN LOWER(COALESCE(a.decision_status, CASE WHEN sub.submission_id IS NOT NULL THEN 'pending' ELSE 'not_submitted' END)) = 'approved' THEN 1 ELSE 0 END), 0),
+           ' / ',
+           COUNT(req.requirement_id),
+           ' approved'
+         ) AS requirement,
+         MAX(DATE_FORMAT(sub.submission_date, '%M %d, %Y')) AS submittedAt,
+         MAX(sub.file_path) AS proofImageUrl,
+         MAX(sub.comment) AS comment,
+         MAX(CASE WHEN sub.submission_id IS NOT NULL THEN 1 ELSE 0 END) AS hasSubmissionCount
+       FROM students s
+       JOIN users u ON s.user_id = u.user_id
+         AND LOWER(COALESCE(NULLIF(TRIM(u.account_status), ''), 'active')) = 'active'
+       LEFT JOIN (
+         SELECT period_id
+         FROM clearance_periods
+         WHERE period_status = 'live'
+         ORDER BY created_at DESC
+         LIMIT 1
+       ) live ON 1 = 1
+       LEFT JOIN requirements req
+         ON live.period_id IS NOT NULL
+         AND req.period_id = live.period_id
+         AND COALESCE(req.req_status, 'active') = 'active'
+         AND (
+           req.target_year = 'All Years'
+           OR req.target_year = CASE s.year_level
+             WHEN 1 THEN '1st Year'
+             WHEN 2 THEN '2nd Year'
+             WHEN 3 THEN '3rd Year'
+             WHEN 4 THEN '4th Year'
+             ELSE 'All Years'
+           END
+         )
+       LEFT JOIN submissions sub
+         ON sub.requirement_id = req.requirement_id AND sub.student_id = s.student_id
+       LEFT JOIN approvals a ON a.submission_id = sub.submission_id
+       GROUP BY s.student_id, u.first_name, u.last_name, s.program, s.year_level
+       ORDER BY u.first_name ASC, u.last_name ASC, s.student_id ASC`,
+      []
     );
-    if (sig.length === 0) return NextResponse.json({ error: "Signatory profile not found" }, { status: 404 });
-    const signatory_id = sig[0].signatory_id;
 
-    try {
-        const [rows]: any = await db.query(`
-            SELECT 
-                s.student_id as id,
-                s.student_id as studentId,
-                CONCAT(u.first_name, ' ', u.last_name) as name,
-                s.program,
-                s.year_level as year,
-                'A' as section,
-                CASE
-                    WHEN COUNT(req.requirement_id) > 0 AND SUM(CASE WHEN a.decision_status = 'approved' THEN 1 ELSE 0 END) = COUNT(req.requirement_id) THEN 'Cleared'
-                    ELSE 'Not Cleared'
-                END as status,
-                MAX(DATE_FORMAT(sub.submission_date, '%M %d, %Y')) as submittedAt,
-                MAX(sub.file_path) as proofImageUrl,
-                MAX(sub.comment) as comment,
-                SUM(CASE WHEN sub.submission_id IS NOT NULL THEN 1 ELSE 0 END) as hasSubmissionCount
-            FROM students s
-            JOIN users u ON s.user_id = u.user_id
-            LEFT JOIN clearance_periods cp ON cp.period_status = 'live'
-            LEFT JOIN requirements req ON req.period_id = cp.period_id AND req.signatory_id = ?
-            LEFT JOIN submissions sub ON req.requirement_id = sub.requirement_id AND s.student_id = sub.student_id
-            LEFT JOIN approvals a ON sub.submission_id = a.submission_id
-            GROUP BY s.student_id, u.first_name, u.last_name, s.program, s.year_level
-            ORDER BY name ASC
-        `, [signatory_id]);
+    const toStr = (v: unknown) => (v == null ? "" : String(v));
 
-        const formattedRows = rows.map((r: any) => ({
-            ...r,
-            submittedAt: r.submittedAt || "N/A",
-            proofImageUrl: r.proofImageUrl || "",
-            comment: r.comment || "",
-            hasSubmission: r.hasSubmissionCount > 0
-        }));
+    const formattedRows = rows.map((r) => {
+      const row = r as RowDataPacket & {
+        id?: unknown;
+        studentId?: unknown;
+        name?: unknown;
+        program?: unknown;
+        year?: unknown;
+        section?: unknown;
+        status?: unknown;
+        requirement?: unknown;
+        submittedAt?: unknown;
+        proofImageUrl?: unknown;
+        comment?: unknown;
+        hasSubmissionCount?: unknown;
+      };
+      return {
+        id: toStr(row.id),
+        studentId: toStr(row.studentId),
+        name: toStr(row.name),
+        program: toStr(row.program),
+        year: toStr(row.year) || "1st Year",
+        section: toStr(row.section) || "A",
+        status: toStr(row.status) || "Not Cleared",
+        requirement: toStr(row.requirement),
+        submittedAt: toStr(row.submittedAt) || "N/A",
+        proofImageUrl: toStr(row.proofImageUrl),
+        comment: toStr(row.comment),
+        hasSubmission: Number(row.hasSubmissionCount) > 0,
+      };
+    });
 
-        return NextResponse.json({ success: true, statuses: formattedRows });
-    } catch (err: any) {
-        return NextResponse.json({ success: false, error: err.message }, { status: 500 });
-    }
+    return NextResponse.json({ success: true, statuses: formattedRows });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Failed to load student status";
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
+  } finally {
+    await db.end();
+  }
 }

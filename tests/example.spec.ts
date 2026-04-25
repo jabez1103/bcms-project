@@ -1,45 +1,28 @@
 import { test, expect } from '@playwright/test';
 
-test('student home page loads and buttons are visible', async ({ page }) => {
-  // Go directly to student home page
-  await page.goto('http://localhost:3000/student/home');
+test('student home is protected and redirects to login', async ({ page }) => {
+  await page.goto('http://localhost:3000/student/home', { waitUntil: 'domcontentloaded' });
 
-  // Optional: wait for page to fully load
-  await page.waitForLoadState('networkidle');
+  // Protected route should redirect unauthenticated users to login.
+  await expect(page).toHaveURL(/\/login/);
+  await expect(page.getByRole('button', { name: /sign in/i })).toBeVisible({ timeout: 10000 });
+});
 
-  // Check page loaded
-  await expect(page).toHaveURL(/student\/home/);
+test('login page renders interactive elements', async ({ page }) => {
+  await page.goto('http://localhost:3000/login', { waitUntil: 'domcontentloaded' });
 
-  // Catch JS errors (bug detection)
+  await expect(page).toHaveURL(/\/login/);
+
   page.on('pageerror', (error) => {
     console.log('PAGE ERROR:', error.message);
   });
 
-  // 🔍 CHECK COMMON BUTTONS (update names based on your UI)
-
-  // Example navigation / action buttons
-await expect(page.locator('button').first()).toBeVisible();
-  // Safer: check specific buttons if they exist
-  const buttons = [
-    'Dashboard',
-    'Profile',
-    'Settings',
-    'Logout'
-  ];
-
-  for (const name of buttons) {
-    const btn = page.getByRole('button', { name });
-    if (await btn.count() > 0) {
-      await expect(btn).toBeVisible();
-    }
-  }
+  await expect(page.getByRole('textbox').first()).toBeVisible({ timeout: 10000 });
+  await expect(page.getByRole('button', { name: /sign in|log in/i })).toBeVisible({ timeout: 10000 });
 });
 
-test('student home has clickable elements', async ({ page }) => {
-  await page.goto('http://localhost:3000/student/home');
-
-  // Click first available button safely
-  const firstButton = page.locator('button').first();
-
-  await expect(firstButton).toBeVisible();
+test('root route responds successfully', async ({ page }) => {
+  const response = await page.goto('http://localhost:3000/', { waitUntil: 'domcontentloaded' });
+  expect(response?.ok()).toBeTruthy();
+  await expect(page.locator('body')).toBeVisible({ timeout: 10000 });
 });

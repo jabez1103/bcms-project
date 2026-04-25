@@ -57,11 +57,11 @@ function getItemStyle(item: HistoryItem): EventStyle {
       };
     case "account_created":
       return {
-        badge: "bg-indigo-50 text-indigo-700 border-indigo-100 dark:bg-indigo-500/10 dark:text-indigo-400 dark:border-indigo-500/20",
+        badge: "bg-brand-50 text-brand-700 border-brand-100 dark:bg-brand-500/10 dark:text-brand-400 dark:border-brand-500/20",
         label: "Created",
-        accent: "hover:border-indigo-500",
-        dot: "bg-indigo-500",
-        icon: <UserCog className="w-3.5 h-3.5 text-indigo-500" />,
+        accent: "hover:border-brand-500",
+        dot: "bg-brand-500",
+        icon: <UserCog className="w-3.5 h-3.5 text-brand-500" />,
         category: "Account",
       };
     case "enrolled":
@@ -151,8 +151,8 @@ const SystemHistoryPage = () => {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <div className="flex items-center gap-3">
-                <div className="p-1.5 bg-indigo-50 dark:bg-indigo-500/10 rounded-lg">
-                  <History className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                <div className="p-1.5 bg-brand-50 dark:bg-brand-500/10 rounded-lg">
+                  <History className="w-4 h-4 text-brand-600 dark:text-brand-400" />
                 </div>
                 <h1 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">System History</h1>
               </div>
@@ -169,7 +169,7 @@ const SystemHistoryPage = () => {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search history..."
-                className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-lg text-xs outline-none transition-all focus:bg-white dark:focus:bg-slate-950 focus:ring-4 focus:ring-indigo-500/5 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-lg text-xs outline-none transition-all focus:bg-white dark:focus:bg-slate-950 focus:ring-4 focus:ring-brand-500/5 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500"
               />
             </div>
           </div>
@@ -182,8 +182,8 @@ const SystemHistoryPage = () => {
                 onClick={() => setCategoryFilter(cat)}
                 className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider transition-all border ${
                   categoryFilter === cat
-                    ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
-                    : "bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-indigo-400"
+                    ? "bg-brand-600 text-white border-brand-600 shadow-sm"
+                    : "bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-brand-400"
                 }`}
               >
                 {cat}
@@ -276,7 +276,7 @@ const SystemHistoryPage = () => {
                       <IpChip ip={item.ip_address} />
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-1.5 text-[10px] font-black text-slate-500 dark:text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                      <div className="flex items-center justify-end gap-1.5 text-[10px] font-black text-slate-500 dark:text-slate-400 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
                         {item.time}
                         <ArrowUpRight size={12} className="opacity-0 group-hover:opacity-100 transition-all -translate-y-0.5" />
                       </div>
@@ -291,7 +291,7 @@ const SystemHistoryPage = () => {
         {/* FOOTER */}
         <div className="border-t border-slate-100 dark:border-slate-800 px-6 py-4 flex items-center justify-between bg-slate-50/20 dark:bg-slate-900/20 transition-colors">
           <div className="flex items-center gap-2">
-            <ShieldCheck size={14} className="text-indigo-600 dark:text-indigo-400" />
+            <ShieldCheck size={14} className="text-brand-600 dark:text-brand-400" />
             <p className="text-[9px] text-slate-400 dark:text-slate-500 font-black uppercase tracking-[0.15em]">
               Security logs — BISU Clearance System
             </p>

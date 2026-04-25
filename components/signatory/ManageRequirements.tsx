@@ -6,9 +6,20 @@ import { RequirementModal } from "./RequirementModal";
 import type { Requirement } from "./types";
 import { DEFAULT_FORM } from "./types";
 
+type RequirementPermission = {
+  scope: "normal" | "director_sds" | "dean";
+  canUseConditional: boolean;
+};
+
+type SignatoryOption = {
+  signatoryId: number;
+  name: string;
+  department: string;
+};
+
 function StatCard({ label, value, color }: { label: string; value: number; color: string }) {
   const colors: Record<string, string> = {
-    indigo:  "bg-indigo-600 text-white border-transparent shadow-indigo-200 dark:shadow-none",
+    indigo:  "bg-brand-600 text-white border-transparent shadow-brand-200 dark:shadow-none",
     sky:     "bg-white dark:bg-slate-900 text-sky-600 dark:text-sky-400 border-slate-200 dark:border-slate-800",
     slate:   "bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-800",
     emerald: "bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 border-slate-200 dark:border-slate-800",
@@ -27,11 +38,19 @@ export default function ManageRequirements() {
   const [isModalOpen, setIsModalOpen]   = useState(false);
   const [editingId,   setEditingId]     = useState<string | null>(null);
   const [formData,    setFormData]      = useState<Omit<Requirement, "id">>(DEFAULT_FORM);
+  const [permission, setPermission] = useState<RequirementPermission>({ scope: "normal", canUseConditional: false });
+  const [signatories, setSignatories] = useState<SignatoryOption[]>([]);
 
   React.useEffect(() => {
     fetch("/api/signatory/requirements")
       .then(r => r.json())
-      .then(data => { if (data.success) setRequirements(data.requirements); });
+      .then(data => {
+        if (data.success) {
+          setRequirements(data.requirements);
+          if (data.permission) setPermission(data.permission);
+          if (Array.isArray(data.signatories)) setSignatories(data.signatories);
+        }
+      });
   }, []);
 
   const openCreate = () => {
@@ -83,6 +102,7 @@ export default function ManageRequirements() {
   const drafts   = requirements.filter(r => r.reqStatus   === "draft").length;
   const physical = requirements.filter(r => r.format      === "Physical").length;
   const digital  = requirements.filter(r => r.format      === "Digital").length;
+  const conditional = requirements.filter(r => r.format   === "Conditional").length;
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans pb-10 transition-colors">
@@ -91,21 +111,21 @@ export default function ManageRequirements() {
       <header className="sticky top-0 z-[20] bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200/60 dark:border-slate-800 px-4 py-4 sm:px-8 lg:px-12">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-200 dark:shadow-none">
+            <div className="w-10 h-10 bg-brand-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-brand-200 dark:shadow-none">
               <Settings2 size={20} />
             </div>
             <div className="space-y-0.5">
               <h1 className="text-xl sm:text-2xl font-black tracking-tight leading-none uppercase">
-                Manage <span className="text-indigo-600">Requirements</span>
+                Manage <span className="text-brand-600">Requirements</span>
               </h1>
               <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500">
-                <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+                <span className="w-1.5 h-1.5 rounded-full bg-brand-500" />
                 <p className="text-[9px] font-black uppercase tracking-[0.2em]">Configure clearance workflow</p>
               </div>
             </div>
           </div>
           <button onClick={openCreate}
-            className="flex items-center justify-center gap-2 px-5 py-2.5 bg-slate-900 dark:bg-indigo-600 text-white rounded-xl font-black uppercase text-xs tracking-widest hover:bg-indigo-600 dark:hover:bg-indigo-500 transition-all shadow-lg active:scale-95">
+            className="flex items-center justify-center gap-2 px-5 py-2.5 bg-slate-900 dark:bg-brand-600 text-white rounded-xl font-black uppercase text-xs tracking-widest hover:bg-brand-600 dark:hover:bg-brand-500 transition-all shadow-lg active:scale-95">
             <Plus size={15} /> New Requirement
           </button>
         </div>
@@ -114,12 +134,13 @@ export default function ManageRequirements() {
       <div className="max-w-6xl mx-auto p-4 md:p-8 lg:p-12">
 
         {/* Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-10">
+        <div className="grid grid-cols-2 lg:grid-cols-6 gap-4 mb-10">
           <StatCard label="Total"    value={requirements.length} color="indigo" />
           <StatCard label="Active"   value={active}              color="emerald" />
           <StatCard label="Drafts"   value={drafts}              color="amber" />
           <StatCard label="Physical" value={physical}            color="sky" />
           <StatCard label="Digital"  value={digital}             color="slate" />
+          <StatCard label="Conditional" value={conditional}      color="sky" />
         </div>
 
         {/* List */}
@@ -144,6 +165,8 @@ export default function ManageRequirements() {
           setFormData={setFormData}
           onSave={handleSave}
           onClose={() => setIsModalOpen(false)}
+          permission={permission}
+          signatories={signatories}
         />
       )}
     </div>

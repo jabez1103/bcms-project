@@ -1,16 +1,20 @@
+import { verifySessionFromCookies } from "@/lib/requestSession";
 import { NextRequest, NextResponse } from "next/server";
-import { verifyToken } from "@/lib/auth";
+
 import { createConnection } from "@/lib/db";
+import { ensureRequirementConditionalColumns } from "@/lib/ensureRequirementConditionalColumns";
+import { parseStoredConditionalIds } from "@/lib/requirementTypeAccess";
 
 export async function GET(request: NextRequest) {
 
-    const token = request.cookies.get("token")?.value;
-    if (!token) return NextResponse.json({ error: "Not logged in!" }, { status: 401 });
-
-    const payload = await verifyToken(token) as any;
-    if (!payload) return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+    const payload = await verifySessionFromCookies(request) as any;
+    const role = String(payload?.role ?? "").toLowerCase();
+    if (!payload || role !== "student") {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     const db = await createConnection();
+    await ensureRequirementConditionalColumns(db);
 
     const [student]: any = await db.query(
         "SELECT student_id, year_level FROM students WHERE user_id = ?",
@@ -43,6 +47,7 @@ export async function GET(request: NextRequest) {
             CONCAT(u.first_name, ' ', u.last_name,
               IF(sg.academic_credentials IS NOT NULL AND sg.academic_credentials != '',
                 CONCAT(', ', sg.academic_credentials), '')) AS name,
+            r.conditional_signatory_ids AS conditionalSignatoryIdsRaw,
             COALESCE(a.decision_status,
                 CASE WHEN s.submission_id IS NOT NULL THEN 'pending' ELSE 'not_submitted' END
             ) AS status
@@ -60,7 +65,33 @@ export async function GET(request: NextRequest) {
         ORDER BY r.requirement_id ASC
         `, [student_id, studentYearLabel ?? 'All Years']);
 
-    return NextResponse.json({ success: true, signatories: rows });
+    const [approvedRows]: any = await db.query(
+      `SELECT DISTINCT req.signatory_id AS signatoryId
+       FROM submissions sub
+       JOIN requirements req ON sub.requirement_id = req.requirement_id
+       JOIN clearance_periods cp ON req.period_id = cp.period_id
+       JOIN approvals a ON a.submission_id = sub.submission_id AND a.signatory_id = req.signatory_id
+       WHERE sub.student_id = ?
+         AND cp.period_status = 'live'
+         AND LOWER(a.decision_status) = 'approved'`,
+      [student_id]
+    );
+    const approvedSignatoryIds = new Set<number>(
+      approvedRows.map((r: any) => Number(r.signatoryId)).filter((n: number) => Number.isInteger(n))
+    );
+
+    const normalizedRows = rows.map((row: any) => {
+      const type = String(row.format ?? "").toLowerCase();
+      if (type !== "conditional") return row;
+      const dependencyIds = parseStoredConditionalIds(row.conditionalSignatoryIdsRaw);
+      const isApproved = dependencyIds.length > 0 && dependencyIds.every((id) => approvedSignatoryIds.has(id));
+      return {
+        ...row,
+        status: isApproved ? "approved" : "pending",
+      };
+    });
+
+    return NextResponse.json({ success: true, signatories: normalizedRows });
 }
 
 

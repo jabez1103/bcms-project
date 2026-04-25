@@ -4,57 +4,62 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import LoginForm from "./LoginForm";
+import Typewriter from "../ui/Typewriter";
 
 export default function MobileLogin() {
   return (
-    <div className="relative h-screen w-full overflow-hidden bg-purple-950">
+    <div className="relative min-h-screen w-full bg-slate-950 flex flex-col">
       {/* BACKGROUND LAYER */}
-      <div className="absolute inset-0">
-        <Image src="/bisu.png" alt="Background" fill priority className="object-cover opacity-50" />
-        <div className="absolute inset-0 bg-gradient-to-b from-purple-900/90 via-purple-900/40 to-black/90" />
+      <div className="absolute inset-0 z-0">
+        <Image src="/bisu.png" alt="Background" fill priority className="object-cover opacity-40" />
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-slate-900/40 to-slate-950" />
       </div>
 
       {/* HEADER */}
-      <header className="relative z-50 flex items-center justify-between px-6 py-8">
+      <header className="relative z-50 flex items-center justify-between px-5 py-6">
         <div className="flex items-center gap-3">
           {/* BACK BUTTON */}
           <Link 
             href="/" 
-            className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/10 backdrop-blur-md border border-white/20 text-white transition-all active:scale-90"
+            className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 backdrop-blur-md border border-white/10 text-white transition-all active:scale-90"
           >
-            <ArrowLeft size={20} />
+            <ArrowLeft size={18} />
           </Link>
 
           {/* LOGO & TITLE */}
-          <div className="flex items-center gap-3">
-            <div className="relative h-11 w-11 overflow-hidden rounded-xl bg-white/10 p-2 backdrop-blur-md border border-white/20">
-              <Image src="/left_logo.png" alt="Logo" fill className="object-contain p-1" />
+          <div className="flex items-center gap-2.5">
+            <div className="relative h-9 w-9 overflow-hidden rounded-lg bg-white/10 p-1.5 backdrop-blur-md border border-white/20">
+              <Image src="/logo.png" alt="Logo" fill className="object-contain p-0.5" />
             </div>
-              <div className="flex flex-col">
-
-                    <h1 className="text-sm font-black tracking-tighter leading-none transition-colors">
-                      BISU CLEARANCE
-                    </h1>
-                    <p className="text-[10px] font-bold tracking-[0.25em] transition-colors ">
-                      MANAGEMENT SYSTEM
-                    </p>
-                </div>
+            <div className="flex flex-col">
+              <h1 className="text-[11px] font-black tracking-tighter leading-none text-white">
+                BISU CLEARANCE
+              </h1>
+              <p className="text-[8px] font-bold tracking-[0.2em] text-white/50">
+                MANAGEMENT SYSTEM
+              </p>
+            </div>
           </div>
         </div>
-
-        
-       
       </header>
 
       {/* LOGIN FORM CONTAINER */}
-      <main className="relative z-20 flex h-[calc(100vh-120px)] items-center justify-center px-5">
-        <div className="w-full animate-in fade-in zoom-in-95 duration-700">
+      <main className="relative z-20 flex-1 flex flex-col items-center justify-center px-4 py-8">
+        <div className="w-full max-w-[400px] animate-in fade-in zoom-in-95 duration-700">
+          <div className="text-center mb-4 h-6 flex items-center justify-center">
+            <Typewriter 
+              text={["Welcome back, BISU'an!", "Sign in to your portal", "Secure Digital Clearance"]} 
+              speed={60}
+              pause={3000}
+              className="text-[10px] font-bold text-white/50 uppercase tracking-[0.2em]" 
+            />
+          </div>
           <LoginForm mobile />
         </div>
       </main>
 
       {/* DECORATIVE BOTTOM LINE */}
-      <div className="absolute bottom-0 left-0 h-1.5 w-full bg-gradient-to-r from-transparent via-purple-500/40 to-transparent" />
+      <div className="absolute bottom-0 left-0 h-1.5 w-full bg-gradient-to-r from-transparent via-brand-500/20 to-transparent" />
     </div>
   );
 }

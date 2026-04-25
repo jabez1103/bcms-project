@@ -1,12 +1,16 @@
-
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createConnection } from "@/lib/db";
+import { verifySessionFromCookies } from "@/lib/requestSession";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const payload = await verifySessionFromCookies(request);
+  if (!payload || String(payload.role).toLowerCase() !== "admin") {
+    return NextResponse.json({ success: false, message: "Unauthorized." }, { status: 401 });
+  }
+
   const db = await createConnection();
-
-  //  Get all students with their clearance status
-  const [students]: any = await db.query(`
+  try {
+    const [students] = (await db.query(`
     SELECT
       u.user_id,
       u.first_name,
@@ -15,7 +19,6 @@ export async function GET() {
       s.student_id,
       s.program,
       s.year_level,
-      -- Cleared = all requirements approved, Not Cleared = otherwise
       CASE
         WHEN COUNT(r.requirement_id) = 0 THEN 'Not Cleared'
         WHEN COUNT(r.requirement_id) = SUM(CASE WHEN a.decision_status = 'approved' THEN 1 ELSE 0 END)
@@ -35,28 +38,30 @@ export async function GET() {
     WHERE u.account_status = 'active'
     GROUP BY s.student_id, u.user_id
     ORDER BY u.last_name ASC
-  `);
+  `)) as [Array<{ status: string; program?: string }>, unknown];
 
-  //  Summary stats
-  const total = students.length;
-  const cleared = students.filter((s: any) => s.status === 'Cleared').length;
-  const notCleared = total - cleared;
+    const list = students;
+    const total = list.length;
+    const cleared = list.filter((s) => s.status === "Cleared").length;
+    const notCleared = total - cleared;
 
-  //  Chart data per program
-  const programs = [...new Set(students.map((s: any) => s.program).filter(Boolean))];
-  const chartData = programs.map((prog) => {
-    const group = students.filter((s: any) => s.program === prog);
-    return {
-      name: prog,
-      cleared: group.filter((s: any) => s.status === 'Cleared').length,
-      notCleared: group.filter((s: any) => s.status === 'Not Cleared').length,
-    };
-  });
+    const programs = [...new Set(list.map((s: { program?: string }) => s.program).filter(Boolean))];
+    const chartData = programs.map((prog) => {
+      const group = list.filter((s: { program?: string }) => s.program === prog);
+      return {
+        name: prog,
+        cleared: group.filter((s) => s.status === "Cleared").length,
+        notCleared: group.filter((s) => s.status === "Not Cleared").length,
+      };
+    });
 
-  return NextResponse.json({
-    success: true,
-    stats: { total, cleared, notCleared },
-    chartData,
-    students,
-  });
+    return NextResponse.json({
+      success: true,
+      stats: { total, cleared, notCleared },
+      chartData,
+      students: list,
+    });
+  } finally {
+    await db.end();
+  }
 }

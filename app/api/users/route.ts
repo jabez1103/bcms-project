@@ -1,25 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { createConnection } from "@/lib/db.js";
-import { AUTH_COOKIE_NAME, verifyToken } from "@/lib/auth";
+import { verifySessionFromCookies } from "@/lib/requestSession";
 import {
   createErrorResponse,
   syncRoleRecords,
   validateUserPayload,
 } from "./user-utils";
+import type { RowDataPacket } from "mysql2/promise";
 
 async function getAdminContext(request: NextRequest) {
-  const token = request.cookies.get(AUTH_COOKIE_NAME)?.value;
+  const payload = await verifySessionFromCookies(request);
 
-  if (!token) {
+  if (!payload) {
     return {
       response: createErrorResponse("Not logged in.", 401),
     } as const;
   }
 
-  const payload = await verifyToken(token);
-
-  if (!payload || String(payload.role).toLowerCase() !== "admin") {
+  if (String(payload.role).toLowerCase() !== "admin") {
     return {
       response: createErrorResponse("Unauthorized.", 401),
     } as const;
@@ -44,6 +43,7 @@ export async function GET(request: NextRequest) {
         u.first_name,
         u.middle_name,
         u.last_name,
+        u.suffix,
         u.email,
         u.role,
         u.account_status,
@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
       FROM users u
       LEFT JOIN students s ON s.user_id = u.user_id
       LEFT JOIN signatories sg ON sg.user_id = u.user_id
-      ORDER BY u.user_id DESC`,
+      ORDER BY u.first_name ASC, u.last_name ASC, u.user_id ASC`,
     );
 
     return NextResponse.json({
@@ -88,7 +88,8 @@ export async function POST(request: NextRequest) {
 
     const payload = validation.data;
 
-    const [existingUsers]: any = await db.query(
+    type ExistingUserRow = RowDataPacket & { user_id: number; email: string };
+    const [existingUsers] = await db.query<ExistingUserRow[]>(
       "SELECT user_id, email FROM users WHERE user_id = ? OR email = ? LIMIT 1",
       [payload.user_id, payload.email],
     );
@@ -117,17 +118,19 @@ export async function POST(request: NextRequest) {
         first_name,
         middle_name,
         last_name,
+        suffix,
         email,
         password,
         role,
         account_status,
         profile_picture
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         payload.user_id,
         payload.first_name,
         payload.middle_name,
         payload.last_name,
+        payload.suffix || null,
         payload.email,
         hashedPassword,
         payload.role,
@@ -147,14 +150,19 @@ export async function POST(request: NextRequest) {
       },
       { status: 201 },
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     try {
       await db.rollback();
     } catch {}
 
     console.error("Failed to create user:", error);
 
-    if (error?.code === "ER_DUP_ENTRY") {
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      (error as { code?: string }).code === "ER_DUP_ENTRY"
+    ) {
       return createErrorResponse("User already exists.", 409);
     }
 

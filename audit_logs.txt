@@ -1,0 +1,30 @@
+[info] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[log] [HMR] connected
+[log] [Fast Refresh] rebuilding
+[log] [Fast Refresh] done in 385ms
+[warning] Image with src "/bisu.png" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes
+[warning] Image with src "/left_logo.png" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes
+[log] [Fast Refresh] rebuilding
+[log] [Fast Refresh] done in 1743ms
+Admin login url: http://localhost:3000/login
+[log] [Fast Refresh] rebuilding
+[log] [Fast Refresh] done in 405ms
+[info] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[log] [HMR] connected
+[warning] Image with src "/bisu.png" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes
+[warning] Image with src "/left_logo.png" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes
+[log] [Fast Refresh] rebuilding
+[log] [Fast Refresh] done in 269ms
+[error] Failed to load resource: the server responded with a status of 401 (Unauthorized)
+Signatory login url: http://localhost:3000/login
+[log] [Fast Refresh] rebuilding
+[log] [Fast Refresh] done in 208ms
+[info] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[log] [HMR] connected
+[warning] Image with src "/bisu.png" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes
+[warning] Image with src "/left_logo.png" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes
+[log] [Fast Refresh] rebuilding
+[log] [Fast Refresh] done in 131ms
+[error] Failed to load resource: the server responded with a status of 401 (Unauthorized)
+[log] [Fast Refresh] rebuilding
+Student login url: http://localhost:3000/login

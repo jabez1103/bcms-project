@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { SkeletonPeriodForm, SkeletonPeriodRow, SkeletonMobileCard } from "@/components/ui/Skeleton";
+import { PageHeader } from "@/components/shared/PageHeader";
+import { CalendarRange } from "lucide-react";
 
 type Period = {
   period_id: number;
@@ -175,15 +177,12 @@ export default function ClearancePeriodPage() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 p-4 md:p-10">
-      <div className="max-w-6xl mx-auto">
-
-        {/* HEADER */}
-        <header className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-12">
-          <div>
-            <h1 className="text-3xl font-black tracking-tight text-slate-800 dark:text-slate-100">Clearance Management</h1>
-            <p className="text-slate-500 dark:text-slate-400 mt-1 text-lg">Define and enforce submission timelines.</p>
-          </div>
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100">
+      <PageHeader
+        title="Clearance Management"
+        description="Define and enforce submission timelines."
+        icon={CalendarRange}
+        actions={
           <div className="flex items-center gap-3 px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm">
             <div className="flex -space-x-1">
               <span className="h-3 w-3 rounded-full bg-emerald-500 border-2 border-white dark:border-slate-900"></span>
@@ -191,19 +190,21 @@ export default function ClearancePeriodPage() {
             </div>
             <span className="text-sm font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">Auto-Status Active</span>
           </div>
-        </header>
+        }
+      />
 
+      <div className="max-w-6xl mx-auto p-4 md:p-10">
         <main className="grid grid-cols-1 lg:grid-cols-12 gap-10">
 
           {/* FORM */}
           <section className="lg:col-span-4 space-y-6">
-            <div className={`rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-none border p-8 transition-all duration-300 ${editingId ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-500/30 ring-2 ring-indigo-500/20' : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800'}`}>
+            <div className={`rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-none border p-8 transition-all duration-300 ${editingId ? 'bg-brand-50 dark:bg-brand-900/20 border-brand-200 dark:border-brand-500/30 ring-2 ring-brand-500/20' : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800'}`}>
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">
                   {editingId ? 'Modify Period' : 'New Timeline'}
                 </h2>
                 {editingId && (
-                  <button onClick={cancelEdit} className="text-xs font-bold text-indigo-600 hover:text-indigo-800 underline">
+                  <button onClick={cancelEdit} className="text-xs font-bold text-brand-600 hover:text-brand-800 underline">
                     Cancel
                   </button>
                 )}
@@ -223,7 +224,7 @@ export default function ClearancePeriodPage() {
                   <select
                     value={formData.academic_year}
                     onChange={(e) => setFormData({ ...formData, academic_year: e.target.value })}
-                    className="w-full bg-white dark:bg-slate-800 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 p-4 text-slate-700 dark:text-slate-200 font-medium outline-none shadow-sm"
+                    className="w-full bg-white dark:bg-slate-800 border-none rounded-2xl focus:ring-2 focus:ring-brand-500 p-4 text-slate-700 dark:text-slate-200 font-medium outline-none shadow-sm"
                   >
                     {ACADEMIC_YEARS.map(y => (
                       <option key={y} value={y}>{y}</option>
@@ -237,7 +238,7 @@ export default function ClearancePeriodPage() {
                   <select
                     value={formData.semester}
                     onChange={(e) => setFormData({ ...formData, semester: e.target.value })}
-                    className="w-full bg-white dark:bg-slate-800 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 p-4 text-slate-700 dark:text-slate-200 font-medium outline-none shadow-sm"
+                    className="w-full bg-white dark:bg-slate-800 border-none rounded-2xl focus:ring-2 focus:ring-brand-500 p-4 text-slate-700 dark:text-slate-200 font-medium outline-none shadow-sm"
                   >
                     {SEMESTERS.map(s => (
                       <option key={s.value} value={s.value}>{s.label}</option>
@@ -253,7 +254,7 @@ export default function ClearancePeriodPage() {
                       type="date"
                       value={formData.start_date}
                       onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                      className="w-full bg-white dark:bg-slate-800 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 p-4 text-slate-700 dark:text-slate-200 outline-none shadow-sm"
+                      className="w-full bg-white dark:bg-slate-800 border-none rounded-2xl focus:ring-2 focus:ring-brand-500 p-4 text-slate-700 dark:text-slate-200 outline-none shadow-sm"
                     />
                   </div>
                   <div className="space-y-2">
@@ -263,7 +264,7 @@ export default function ClearancePeriodPage() {
                       value={formData.end_date}
                       min={formData.start_date} // Prevents selecting end before start
                       onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-                      className="w-full bg-white dark:bg-slate-800 border-none rounded-2xl focus:ring-2 focus:ring-indigo-500 p-4 text-slate-700 dark:text-slate-200 outline-none shadow-sm"
+                      className="w-full bg-white dark:bg-slate-800 border-none rounded-2xl focus:ring-2 focus:ring-brand-500 p-4 text-slate-700 dark:text-slate-200 outline-none shadow-sm"
                     />
                   </div>
                 </div>
@@ -271,7 +272,7 @@ export default function ClearancePeriodPage() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className={`w-full text-white font-extrabold py-4 rounded-2xl shadow-lg transition-all hover:-translate-y-0.5 active:scale-95 disabled:opacity-60 ${editingId ? 'bg-indigo-600 shadow-indigo-200 hover:bg-indigo-700' : 'bg-slate-800 shadow-slate-200 hover:bg-slate-900'}`}
+                  className={`w-full text-white font-extrabold py-4 rounded-2xl shadow-lg transition-all hover:-translate-y-0.5 active:scale-95 disabled:opacity-60 ${editingId ? 'bg-brand-600 shadow-brand-200 hover:bg-brand-700' : 'bg-slate-800 shadow-slate-200 hover:bg-slate-900'}`}
                 >
                   {submitting ? "Saving..." : editingId ? "Update Timeline" : "Set Timeline"}
                 </button>
@@ -301,7 +302,7 @@ export default function ClearancePeriodPage() {
                   const statusStyle = STATUS_STYLES[item.period_status] ?? STATUS_STYLES.disabled;
 
                   return (
-                    <div key={item.period_id} className={`p-6 space-y-4 transition-colors ${isEditing ? 'bg-indigo-50/50 dark:bg-indigo-900/10' : ''}`}>
+                    <div key={item.period_id} className={`p-6 space-y-4 transition-colors ${isEditing ? 'bg-brand-50/50 dark:bg-brand-900/10' : ''}`}>
                       <div className="flex justify-between items-start gap-4">
                         <div>
                           <p className="font-bold text-slate-700 dark:text-slate-200">{item.academic_year}</p>
@@ -331,7 +332,7 @@ export default function ClearancePeriodPage() {
                         {item.period_status !== "ended" && (
                           <button
                             onClick={() => handleEdit(item)}
-                            className={`flex-1 py-3 rounded-xl transition-all font-black text-[10px] uppercase tracking-widest ${isEditing ? 'text-indigo-600 bg-white dark:bg-slate-800 shadow-sm ring-1 ring-indigo-200 dark:ring-indigo-500/20' : 'text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50 hover:text-indigo-600 hover:bg-white dark:hover:bg-slate-800 hover:shadow-sm'}`}
+                            className={`flex-1 py-3 rounded-xl transition-all font-black text-[10px] uppercase tracking-widest ${isEditing ? 'text-brand-600 bg-white dark:bg-slate-800 shadow-sm ring-1 ring-brand-200 dark:ring-brand-500/20' : 'text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50 hover:text-brand-600 hover:bg-white dark:hover:bg-slate-800 hover:shadow-sm'}`}
                           >
                             Edit
                           </button>
@@ -375,7 +376,7 @@ export default function ClearancePeriodPage() {
                       const statusStyle = STATUS_STYLES[item.period_status] ?? STATUS_STYLES.disabled;
 
                       return (
-                        <tr key={item.period_id} className={`group transition-colors ${isEditing ? 'bg-indigo-50/50 dark:bg-indigo-900/10' : 'hover:bg-slate-50/80 dark:hover:bg-slate-800/80'}`}>
+                        <tr key={item.period_id} className={`group transition-colors ${isEditing ? 'bg-brand-50/50 dark:bg-brand-900/10' : 'hover:bg-slate-50/80 dark:hover:bg-slate-800/80'}`}>
                           <td className="px-8 py-6">
                             <p className="font-bold text-slate-700 dark:text-slate-200">{item.academic_year}</p>
                             <p className="text-xs text-slate-400 mt-0.5">{item.semester ? item.semester + " Semester" : "No semester"}</p>
@@ -397,7 +398,7 @@ export default function ClearancePeriodPage() {
                               {item.period_status !== "ended" && (
                                 <button
                                   onClick={() => handleEdit(item)}
-                                  className={`p-2 rounded-xl transition-all ${isEditing ? 'text-indigo-600 bg-white dark:bg-slate-800 shadow-sm ring-1 ring-indigo-200 dark:ring-indigo-500/20' : 'text-slate-400 hover:text-indigo-600 hover:bg-white dark:hover:bg-slate-800 hover:shadow-sm'}`}
+                                  className={`p-2 rounded-xl transition-all ${isEditing ? 'text-brand-600 bg-white dark:bg-slate-800 shadow-sm ring-1 ring-brand-200 dark:ring-brand-500/20' : 'text-slate-400 hover:text-brand-600 hover:bg-white dark:hover:bg-slate-800 hover:shadow-sm'}`}
                                   title="Edit Period"
                                 >
                                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
