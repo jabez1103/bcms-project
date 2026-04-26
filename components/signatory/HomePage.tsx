@@ -238,12 +238,12 @@ export default function SignatoryDashboard() {
                 <ShieldCheck size={20} />
             </div>
             <div className="space-y-0.5">
-              <h1 className="text-xl sm:text-2xl font-black tracking-tight leading-none uppercase">
+              <h1 className="text-lg sm:text-2xl font-black tracking-tight leading-none uppercase">
                 Signatory <span className="text-blue-600">Portal</span>
               </h1>
               <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500">
                 <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                <p className="text-[9px] font-black uppercase tracking-[0.2em]">Queue Monitoring</p>
+                <p className="text-[8px] font-black uppercase tracking-[0.17em]">Queue Monitoring</p>
               </div>
             </div>
           </div>

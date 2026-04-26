@@ -150,7 +150,7 @@ const toSignatoryStatus = (status: SignatoryStatus): ClearanceStatus => {
               <GraduationCap size={20} />
             </div>
             <div className="space-y-0.5">
-              <h1 className="text-xl sm:text-2xl font-black tracking-tight leading-none uppercase">
+              <h1 className="text-lg sm:text-2xl font-black tracking-tight leading-none uppercase">
                 Student <span className="text-brand-600">Clearance Status</span>
               </h1>
               <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500">

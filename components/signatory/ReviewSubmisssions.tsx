@@ -164,12 +164,12 @@ export default function UltimateClearancePortal() {
               <Eye size={20} />
             </div>
             <div className="space-y-0.5">
-              <h1 className="text-xl sm:text-2xl font-black tracking-tight leading-none uppercase">
+              <h1 className="text-lg sm:text-2xl font-black tracking-tight leading-none uppercase">
                 Review <span className="text-brand-600">Submissions</span>
               </h1>
               <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500">
                 <span className="w-1.5 h-1.5 rounded-full bg-brand-500 animate-pulse" />
-                <p className="text-[9px] font-black uppercase tracking-[0.2em]">Clearance Audit</p>
+                <p className="text-[8px] font-black uppercase tracking-[0.17em]">Clearance Audit</p>
               </div>
             </div>
           </div>

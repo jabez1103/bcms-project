@@ -169,12 +169,12 @@ export default function AdminHomePage() {
               <LayoutGrid size={20} />
             </div>
             <div className="space-y-0.5">
-              <h1 className="text-xl sm:text-2xl font-black tracking-tight leading-none uppercase">
+              <h1 className="text-lg sm:text-2xl font-black tracking-tight leading-none uppercase">
                 Admin <span className="text-brand-600 dark:text-brand-400">Dashboard</span>
               </h1>
               <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                <p className="text-[9px] font-black uppercase tracking-[0.2em]">Clearance Monitoring</p>
+                <p className="text-[8px] font-black uppercase tracking-[0.17em]">Clearance Monitoring</p>
               </div>
             </div>
           </div>

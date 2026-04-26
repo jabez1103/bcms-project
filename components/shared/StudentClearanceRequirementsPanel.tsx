@@ -75,7 +75,31 @@ export function StudentClearanceRequirementsPanel({
       <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
         Requirement breakdown (live period)
       </p>
-      <div className="overflow-x-auto rounded-2xl border border-slate-100 dark:border-slate-800">
+      <div className="md:hidden rounded-2xl border border-slate-100 dark:border-slate-800 overflow-hidden divide-y divide-slate-100 dark:divide-slate-800">
+        {requirements.map((r) => (
+          <div key={r.requirementId} className="p-3.5 bg-white dark:bg-slate-900/40 space-y-2.5">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <p className="font-bold text-slate-800 dark:text-slate-100 text-sm truncate">{r.requirementName}</p>
+                {r.description && (
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2">{r.description}</p>
+                )}
+              </div>
+              <StatusBadge status={r.status} />
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-[11px]">
+              <p className="text-slate-500 dark:text-slate-400"><span className="font-bold text-slate-600 dark:text-slate-300">Office:</span> {r.department}</p>
+              <p className="text-slate-500 dark:text-slate-400"><span className="font-bold text-slate-600 dark:text-slate-300">Year:</span> {r.targetYear ?? "—"}</p>
+              <p className="col-span-2 text-slate-500 dark:text-slate-400"><span className="font-bold text-slate-600 dark:text-slate-300">Signatory:</span> {r.signatoryName}</p>
+              <p className="col-span-2 text-slate-500 dark:text-slate-400"><span className="font-bold text-slate-600 dark:text-slate-300">Submitted:</span> {r.submittedAt ?? "—"}</p>
+            </div>
+            {r.rejectionComment && r.status === "rejected" && (
+              <p className="text-[11px] text-rose-600 dark:text-rose-400">Remarks: {r.rejectionComment}</p>
+            )}
+          </div>
+        ))}
+      </div>
+      <div className="hidden md:block overflow-x-auto rounded-2xl border border-slate-100 dark:border-slate-800">
         <table className="w-full text-left text-sm min-w-[720px]">
           <thead>
             <tr className="bg-slate-50/80 dark:bg-slate-800/60 border-b border-slate-100 dark:border-slate-800">

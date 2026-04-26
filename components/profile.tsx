@@ -27,6 +27,8 @@ export default function ProfilePage() {
   const [passLoading, setPassLoading] = useState(false);
   const [passMessage, setPassMessage] = useState("");
   const [passError, setPassError] = useState("");
+  const [isEligible, setIsEligible] = useState(false);
+  const [eligibilityLoaded, setEligibilityLoaded] = useState(false);
 
   // Sync state when user data is available
   useEffect(() => {
@@ -97,6 +99,36 @@ export default function ProfilePage() {
     }
   };
 
+  useEffect(() => {
+    const fetchEligibility = async () => {
+      if (!user || String(user.role).toLowerCase() !== "student") {
+        setEligibilityLoaded(true);
+        return;
+      }
+
+      try {
+        const res = await fetch("/api/student/clearance-status", { cache: "no-store" });
+        const data = await res.json();
+        if (data?.success && Array.isArray(data.signatories)) {
+          const eligible =
+            data.signatories.length > 0 &&
+            data.signatories.every(
+              (s: { status?: string }) => String(s?.status ?? "").toLowerCase() === "approved"
+            );
+          setIsEligible(eligible);
+        } else {
+          setIsEligible(false);
+        }
+      } catch {
+        setIsEligible(false);
+      } finally {
+        setEligibilityLoaded(true);
+      }
+    };
+
+    fetchEligibility();
+  }, [user]);
+
   if (loading) return (
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 p-3 sm:p-5 md:p-12">
       <div className="max-w-6xl mx-auto mt-20">
@@ -111,20 +143,20 @@ export default function ProfilePage() {
     </div>
   );
 
-  const isEligible = false;
+  const isStudent = String(user.role ?? "").toLowerCase() === "student";
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 text-slate-900 dark:text-slate-100 pb-24 selection:bg-brand-100 dark:selection:bg-brand-900/30">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 text-slate-900 dark:text-slate-100 pb-14 md:pb-24 selection:bg-brand-100 dark:selection:bg-brand-900/30">
       {/* Banner - Dark Slate */}
-      <div className="w-full h-48 bg-[#0F172A]" />
+      <div className="w-full h-28 md:h-48 bg-[#0F172A]" />
       
       <div className="max-w-6xl mx-auto px-2 sm:px-4 md:px-6">
         {/* Header Section */}
-        <header className="relative flex flex-col md:flex-row items-center md:items-end justify-between gap-6 -mt-16 mb-12">
-          <div className="flex flex-col md:flex-row items-center md:items-end gap-6">
+        <header className="relative flex flex-col md:flex-row items-center md:items-end justify-between gap-3 md:gap-6 -mt-10 md:-mt-16 mb-5 md:mb-12">
+          <div className="flex flex-col md:flex-row items-center md:items-end gap-3 md:gap-6">
             {/* Profile Avatar */}
             <div className="relative">
-              <div className="w-36 h-36 rounded-2xl overflow-hidden border-[6px] border-white dark:border-slate-800 shadow-xl bg-slate-200 dark:bg-slate-800">
+              <div className="w-20 h-20 md:w-36 md:h-36 rounded-2xl overflow-hidden border-4 md:border-[6px] border-white dark:border-slate-800 shadow-xl bg-slate-200 dark:bg-slate-800">
                 <ProfileAvatar
                   src={user?.avatar}
                   fullName={user?.full_name as string}
@@ -136,29 +168,29 @@ export default function ProfilePage() {
             </div>
             
             {/* Identity Text */}
-            <div className="text-center md:text-left pb-1">
-              <div className="flex items-center gap-2 mb-2 justify-center md:justify-start">
+            <div className="text-center md:text-left pb-0.5 md:pb-1">
+              <div className="flex items-center gap-2 mb-1.5 md:mb-2 justify-center md:justify-start">
                 <span className="px-2.5 py-1 bg-brand-600 text-white text-[10px] font-bold uppercase tracking-wider rounded-md shadow-sm">
                   {user.role as string}
                 </span>
               </div>
               
               {/* text-white for visibility on banner, md:text-slate-900 for below banner */}
-              <h1 className="text-3xl font-bold text-black dark:text-white md:text-slate-900 md:dark:text-white tracking-tight">
+              <h1 className="text-[2rem] leading-[1.05] md:text-3xl font-bold text-black dark:text-white md:text-slate-900 md:dark:text-white tracking-tight">
                 {user.full_name as string}
               </h1>
-              <p className="text-slate-400 md:text-slate-500 text-sm mt-1 font-medium">
+              <p className="text-slate-400 md:text-slate-500 text-xs md:text-sm mt-0.5 md:mt-1 font-medium">
                 Manage your account settings and preferences
               </p>
             </div>
           </div>
           
           {/* Action Buttons for Profile Edit */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 md:gap-3">
             {!isEditing ? (
               <button 
                 onClick={() => setIsEditing(true)}
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 rounded-xl text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-sm active:scale-95"
+                className="inline-flex items-center gap-2 px-4 py-2 md:px-5 md:py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 rounded-xl text-[13px] md:text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-sm active:scale-95"
               >
                 <Edit3 size={16} /> Edit Profile
               </button>
@@ -195,9 +227,9 @@ export default function ProfilePage() {
 
         <div className="grid grid-cols-12 gap-8">
           {/* Main Content Area */}
-          <div className="col-span-12 lg:col-span-8 space-y-6">
+          <div className="col-span-12 lg:col-span-8 space-y-3 md:space-y-6">
             <div className={`bg-white dark:bg-slate-900 border rounded-2xl shadow-sm overflow-hidden transition-all ${isEditing ? "border-brand-200 dark:border-brand-500/30 ring-4 ring-brand-50 dark:ring-brand-500/10" : "border-slate-200 dark:border-slate-800"}`}>
-              <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
+              <div className="px-4 py-3 md:px-6 md:py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
                 <div className="flex items-center gap-2">
                   <User size={18} className={isEditing ? "text-brand-500" : "text-slate-400"} />
                   <h2 className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-widest">
@@ -231,9 +263,9 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            <div className="p-6 bg-brand-50/50 dark:bg-brand-950/30 border border-brand-100 dark:border-brand-900/50 rounded-2xl flex items-center gap-4">
-              <div className="p-3 bg-white dark:bg-slate-800 rounded-xl shadow-sm">
-                <ShieldCheck className="w-6 h-6 text-brand-600" />
+            <div className="p-4 md:p-6 bg-brand-50/50 dark:bg-brand-950/30 border border-brand-100 dark:border-brand-900/50 rounded-2xl flex items-center gap-3 md:gap-4">
+              <div className="p-2.5 md:p-3 bg-white dark:bg-slate-800 rounded-xl shadow-sm">
+                <ShieldCheck className="w-5 h-5 md:w-6 md:h-6 text-brand-600" />
               </div>
               <div>
                 <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">Account Privacy</h3>
@@ -243,20 +275,36 @@ export default function ProfilePage() {
           </div>
 
           {/* Sidebar Area */}
-          <div className="col-span-12 lg:col-span-4 space-y-6">
-            <div className={`p-6 rounded-2xl border shadow-sm ${isEligible ? "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-100 dark:border-emerald-900/50" : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"}`}>
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Account Status</p>
-              <div className="flex items-center justify-between">
-                <p className="text-xl font-bold text-slate-800 dark:text-slate-100">
-                  {isEligible ? "Verified Eligible" : "Pending Review"}
+          <div className="col-span-12 lg:col-span-4 space-y-3 md:space-y-6">
+            {isStudent && (
+              <div className={`p-4 md:p-6 rounded-2xl border shadow-sm ${isEligible ? "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-100 dark:border-emerald-900/50" : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"}`}>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">
+                  Enrollment Eligibility
                 </p>
-                <div className={`w-3 h-3 rounded-full ${isEligible ? "bg-emerald-500 animate-pulse" : "bg-amber-400"}`} />
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-lg md:text-xl font-bold text-slate-800 dark:text-slate-100">
+                    {!eligibilityLoaded
+                      ? "Checking..."
+                      : isEligible
+                      ? "Eligible for Enrollment"
+                      : "Not Eligible Yet"}
+                  </p>
+                  <div
+                    className={`w-3 h-3 rounded-full ${
+                      !eligibilityLoaded
+                        ? "bg-slate-300 dark:bg-slate-600"
+                        : isEligible
+                        ? "bg-emerald-500 animate-pulse"
+                        : "bg-amber-400"
+                    }`}
+                  />
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Password Section - Always Enabled */}
-            <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-6">Security Settings</p>
+            <div className="bg-white dark:bg-slate-900 p-4 md:p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3 md:mb-6">Security Settings</p>
               
               {!showPassForm ? (
                 <button 
@@ -296,20 +344,20 @@ export default function ProfilePage() {
 
 function StaticField({ label, value, icon }: { label: string; value: string; icon: React.ReactNode }) {
   return (
-    <div className="p-6 border-b border-slate-100 dark:border-slate-800 md:even:border-l last:border-b-0">
-      <div className="flex items-center gap-2 text-slate-400 mb-2">
+    <div className="p-4 md:p-6 border-b border-slate-100 dark:border-slate-800 md:even:border-l last:border-b-0">
+      <div className="flex items-center gap-2 text-slate-400 mb-1.5 md:mb-2">
         {icon}
         <span className="text-[10px] font-bold uppercase tracking-widest">{label}</span>
       </div>
-      <p className="text-sm font-semibold text-slate-500">{value}</p>
+      <p className="text-[13px] md:text-sm font-semibold text-slate-500">{value}</p>
     </div>
   );
 }
 
 function EditableField({ label, value, editable, onChange, icon, placeholder }: any) {
   return (
-    <div className={`p-6 border-b border-slate-100 dark:border-slate-800 md:even:border-l last:border-b-0 transition-all ${editable ? "bg-brand-50/20 dark:bg-brand-950/20" : "bg-transparent"}`}>
-      <div className={`flex items-center gap-2 mb-2 ${editable ? "text-brand-600" : "text-slate-400"}`}>
+    <div className={`p-4 md:p-6 border-b border-slate-100 dark:border-slate-800 md:even:border-l last:border-b-0 transition-all ${editable ? "bg-brand-50/20 dark:bg-brand-950/20" : "bg-transparent"}`}>
+      <div className={`flex items-center gap-2 mb-1.5 md:mb-2 ${editable ? "text-brand-600" : "text-slate-400"}`}>
         {icon}
         <span className="text-[10px] font-bold uppercase tracking-widest">{label}</span>
       </div>
@@ -319,7 +367,7 @@ function EditableField({ label, value, editable, onChange, icon, placeholder }: 
         disabled={!editable}
         onChange={onChange}
         placeholder={placeholder}
-        className={`w-full bg-transparent text-sm font-semibold outline-none transition-all ${
+        className={`w-full bg-transparent text-[13px] md:text-sm font-semibold outline-none transition-all ${
           editable 
           ? "text-slate-900 dark:text-white border-b border-brand-300 dark:border-brand-700 pb-1" 
           : "text-slate-700 dark:text-slate-400 cursor-not-allowed"

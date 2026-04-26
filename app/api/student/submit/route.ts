@@ -1,5 +1,6 @@
 import { verifySessionFromCookies } from "@/lib/requestSession";
 import { NextRequest, NextResponse } from "next/server";
+import { put } from "@vercel/blob";
 
 import { createConnection } from "@/lib/db";
 import { createNotification } from "@/lib/notifications";
@@ -8,6 +9,14 @@ import path from "path";
 
 const allowLocalUploadsInProduction =
   process.env.ALLOW_LOCAL_UPLOADS_IN_PRODUCTION === "true";
+const blobToken = process.env.BLOB_READ_WRITE_TOKEN;
+const uploadStorageDirEnv = process.env.UPLOAD_STORAGE_DIR?.trim();
+const uploadPublicBasePath = process.env.UPLOAD_PUBLIC_BASE_PATH?.trim() || "/api/uploads";
+const localUploadsRoot = uploadStorageDirEnv || path.join(process.cwd(), "public", "uploads");
+
+function sanitizeFilename(filename: string) {
+    return filename.replace(/[^a-zA-Z0-9._-]/g, "_");
+}
 
 export async function POST(request: NextRequest) {
     const payload = await verifySessionFromCookies(request) as any;
@@ -83,24 +92,38 @@ export async function POST(request: NextRequest) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    if (process.env.NODE_ENV === "production" && !allowLocalUploadsInProduction) {
-        return NextResponse.json(
-            {
-                error:
-                    "File uploads are not configured for production. Configure managed storage or explicitly allow local uploads.",
-            },
-            { status: 503 }
-        );
+    let publicUrl: string;
+    const fileExt = path.extname(file.name);
+    const baseName = path.basename(file.name, fileExt);
+    const normalizedBaseName = sanitizeFilename(baseName || "upload");
+
+    if (process.env.NODE_ENV === "production" && blobToken) {
+        const blobFileName = `submission_${student_id}_${requirement_id}_${Date.now()}_${normalizedBaseName}${fileExt}`;
+        const blob = await put(`submissions/${blobFileName}`, buffer, {
+            access: "public",
+            contentType: file.type || undefined,
+            token: blobToken,
+        });
+        publicUrl = blob.url;
+    } else {
+        if (process.env.NODE_ENV === "production" && !allowLocalUploadsInProduction) {
+            return NextResponse.json(
+                {
+                    error:
+                        "File uploads are not configured for production. Set BLOB_READ_WRITE_TOKEN for managed storage or ALLOW_LOCAL_UPLOADS_IN_PRODUCTION=true for self-hosted persistent disk.",
+                },
+                { status: 503 }
+            );
+        }
+
+        const uploadDir = path.join(localUploadsRoot, "submissions");
+        await mkdir(uploadDir, { recursive: true });
+
+        const fileName = `submission_${student_id}_${requirement_id}_${Date.now()}_${normalizedBaseName}${fileExt}`;
+        const filePath = path.join(uploadDir, fileName);
+        await writeFile(filePath, buffer);
+        publicUrl = `${uploadPublicBasePath.replace(/\/$/, "")}/submissions/${fileName}`;
     }
-
-    const uploadDir = path.join(process.cwd(), "public", "uploads", "submissions");
-    await mkdir(uploadDir, { recursive: true });
-
-    const fileName = `submission_${student_id}_${requirement_id}_${Date.now()}${path.extname(file.name)}`;
-    const filePath = path.join(uploadDir, fileName);
-    await writeFile(filePath, buffer);
-
-    const publicUrl = `/uploads/submissions/${fileName}`;
 
     const [existing]: any = await db.query(
         "SELECT submission_id FROM submissions WHERE student_id = ? AND requirement_id = ?",

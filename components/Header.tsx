@@ -314,7 +314,7 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
 
   if (loading) {
     return (
-      <header className="h-[10vh] flex items-center justify-center bg-white border-b border-gray-100">
+      <header className="h-[6.8vh] md:h-[10vh] flex items-center justify-center bg-white border-b border-gray-100">
         <div className="w-8 h-8 border-4 border-brand-500/20 border-t-brand-500 rounded-full animate-spin" />
       </header>
     );
@@ -324,31 +324,31 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
 
   return (
     <>
-      <header className="flex justify-between items-center px-2 sm:px-3 md:px-8 h-[10vh] bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 sticky top-0 z-40 transition-colors duration-300">
+      <header className="bcms-mobile-shell flex justify-between items-center px-1.5 sm:px-3 md:px-8 h-[6.8vh] md:h-[10vh] bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 sticky top-0 z-40 transition-colors duration-300">
         {/* LEFT SIDE: BRANDING */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1.5 md:gap-3">
           {/* HAMBURGER MENU (MOBILE ONLY) */}
           <button 
             onClick={onMobileMenuToggle}
-            className="md:hidden p-2 -ml-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+            className="md:hidden p-0.5 -ml-0.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md transition-colors"
             aria-label="Open sidebar"
           >
-            <Menu size={20} />
+            <Menu size={16} />
           </button>
 
-          <img src="/logo.png" alt="BISU Logo" className="w-10 h-10 object-contain" />
-          <div className="flex flex-col">
-            <h1 className="text-xs md:text-sm font-black tracking-tighter text-slate-800 dark:text-slate-100 uppercase leading-none">
+          <img src="/logo.png" alt="BISU Logo" className="w-6 h-6 md:w-10 md:h-10 object-contain" />
+          <div className="flex flex-col justify-center leading-none">
+            <h1 className="text-[10px] md:text-sm font-black tracking-tight text-slate-800 dark:text-slate-100 uppercase leading-none">
               BISU CLEARANCE
             </h1>
-            <p className="text-[8px] md:text-[9px] font-bold tracking-[0.2em] text-slate-400 dark:text-slate-500 uppercase">
+            <p className="text-[7px] md:text-[9px] font-bold tracking-[0.13em] text-slate-400 dark:text-slate-500 uppercase leading-none">
               Management System
             </p>
           </div>
         </div>
 
         {/* RIGHT SIDE: ACTIONS */}
-        <div className="flex items-center gap-2 md:gap-6">
+        <div className="flex items-center gap-0.5 md:gap-6">
           {/* SEARCH BAR */}
           <div ref={searchRef} className="relative hidden sm:block">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
@@ -409,15 +409,15 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
           <div className="relative">
             <button
               onClick={() => setNotifOpen(!isNotifOpen)}
-              className={`p-2.5 rounded-xl transition-all relative ${
+              className={`p-1.5 md:p-2.5 rounded-xl transition-all relative ${
                 isNotifOpen ? "bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400" : "text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"
               }`}
             >
-              <Bell size={20} fill={isNotifOpen ? "currentColor" : "none"} className={isNotifOpen ? "opacity-20" : ""} />
+              <Bell size={16} fill={isNotifOpen ? "currentColor" : "none"} className={isNotifOpen ? "opacity-20" : ""} />
               {!isNotifOpen && unreadCount > 0 && (
-                <span className="absolute top-2 right-2 flex h-4 w-4">
+                <span className="absolute top-1.5 right-1.5 flex h-3.5 w-3.5">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                  <span className="relative inline-flex items-center justify-center rounded-full h-4 w-4 bg-rose-500 border-2 border-white text-[9px] text-white font-bold">
+                  <span className="relative inline-flex items-center justify-center rounded-full h-3.5 w-3.5 bg-rose-500 border-2 border-white text-[8px] text-white font-bold">
                     {unreadCount > 9 ? "9+" : unreadCount}
                   </span>
                 </span>
@@ -427,8 +427,8 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
             {isNotifOpen && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => { setNotifOpen(false); setMenuOpen(false); }} />
-                <div className="absolute right-0 mt-3 w-80 md:w-96 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-20 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                  <div className="p-4 border-b border-slate-50 dark:border-slate-800 flex items-center justify-between">
+                <div className="absolute right-0 mt-2.5 w-[min(92vw,20rem)] md:w-96 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-20 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                  <div className="p-3.5 md:p-4 border-b border-slate-50 dark:border-slate-800 flex items-center justify-between">
                     <h3 className="font-bold text-slate-900 dark:text-slate-100">Notifications</h3>
                     <div className="relative">
                       <button onClick={() => setMenuOpen(!isNotifMenuOpen)} className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors">
@@ -465,7 +465,7 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
                     ))}
                   </div>
 
-                  <div className="max-h-[400px] overflow-y-auto">
+                  <div className="max-h-[68vh] md:max-h-[400px] overflow-y-auto">
                     {notifLoading ? (
                       <div className="flex items-center justify-center py-12 gap-3">
                         <div className="w-5 h-5 border-2 border-brand-200 border-t-brand-500 rounded-full animate-spin" />
@@ -476,11 +476,11 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
                         <div
                           key={notif.id}
                           onClick={() => handleNotifClick(notif)}
-                          className="p-4 flex gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors border-b border-slate-50 dark:border-slate-800/50 last:border-0 relative"
+                          className="p-3.5 md:p-4 flex gap-2.5 md:gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors border-b border-slate-50 dark:border-slate-800/50 last:border-0 relative"
                         >
                           <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${notif.isRead ? "bg-transparent" : "bg-brand-500"}`} />
                           <div className="flex-1">
-                            <p className={`text-sm leading-snug ${notif.isRead ? "text-slate-500 dark:text-slate-400" : "text-slate-900 dark:text-slate-100 font-semibold"}`}>
+                            <p className={`text-[13px] md:text-sm leading-snug ${notif.isRead ? "text-slate-500 dark:text-slate-400" : "text-slate-900 dark:text-slate-100 font-semibold"}`}>
                               {notif.title}
                             </p>
                             <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{notif.message}</p>
@@ -500,23 +500,23 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
           </div>
 
           {/* PROFILE */}
-          <div className="relative border-l border-slate-100 pl-2 md:pl-6">
-            <button onClick={() => setDropdownOpen(!isDropdownOpen)} className="flex items-center gap-3 group">
+          <div className="relative border-l border-slate-100 pl-1 md:pl-6">
+            <button onClick={() => setDropdownOpen(!isDropdownOpen)} className="flex items-center gap-1.5 md:gap-3 group">
               <div className="relative">
                 <ProfileAvatar
                   src={user?.avatar}
                   fullName={user?.full_name || user?.name}
                   alt="Profile"
-                  className="w-9 h-9 md:w-10 md:h-10 rounded-xl object-cover border-2 border-transparent group-hover:border-brand-100 transition-all"
-                  initialsClassName="border-2 border-transparent group-hover:border-brand-100 text-[11px]"
+                  className="w-[30px] h-[30px] md:w-10 md:h-10 rounded-xl object-cover border-2 border-transparent group-hover:border-brand-100 transition-all"
+                  initialsClassName="border-2 border-transparent group-hover:border-brand-100 text-[9px] md:text-[11px]"
                 />
-                <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full" />
+                <div className="absolute -bottom-0.5 -right-0.5 w-2 h-2 md:w-3 md:h-3 bg-emerald-500 border-2 border-white rounded-full" />
               </div>
               <div className="hidden md:block text-left">
                 <p className="text-sm font-bold text-slate-800 dark:text-slate-200 leading-none">{user.full_name}</p>
                 <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1">{user.role}</p>
               </div>
-              <ChevronDown size={16} className={`text-slate-400 transition-transform ${isDropdownOpen ? "rotate-180" : ""}`} />
+              <ChevronDown size={14} className={`text-slate-400 transition-transform ${isDropdownOpen ? "rotate-180" : ""}`} />
             </button>
 
             

@@ -852,13 +852,13 @@ export default function UserAccounts() {
           <SkeletonUserHeader />
 
           <div className="bg-white dark:bg-slate-900 rounded-2xl md:rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden">
-            <div className="block md:hidden divide-y divide-slate-100 dark:divide-slate-800/50">
+            <div className="block xl:hidden divide-y divide-slate-100 dark:divide-slate-800/50">
               {Array.from({ length: 4 }).map((_, i) => (
                 <SkeletonMobileCard key={i} />
               ))}
             </div>
 
-            <div className="hidden md:block overflow-x-auto">
+            <div className="hidden xl:block overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800/50">
                   <tr>
@@ -920,7 +920,7 @@ export default function UserAccounts() {
           </div>
         }
       />
-      <div className="max-w-[1600px] mx-auto p-2 sm:p-4 md:p-10">
+      <div className="max-w-[1600px] mx-auto p-1.5 sm:p-4 md:p-10">
 
         {notice && (
           <div
@@ -940,14 +940,14 @@ export default function UserAccounts() {
           </div>
         )}
 
-        <div className="flex flex-col lg:flex-row items-center justify-between mb-5 md:mb-8 bg-white dark:bg-slate-900 p-2 md:p-3 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm gap-3 md:gap-4">
+        <div className="flex flex-col lg:flex-row items-center justify-between mb-4 md:mb-8 bg-white dark:bg-slate-900 p-1.5 md:p-3 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm gap-2.5 md:gap-4">
           <div className="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-xl overflow-x-auto w-full no-scrollbar">
             <div className="flex min-w-full sm:min-w-0">
               {["all", "student", "signatory", "admin"].map((role) => (
                 <button
                   key={role}
                   onClick={() => setRoleFilter(role)}
-                  className={`flex-1 sm:flex-none px-4 md:px-6 py-2 rounded-lg text-xs md:text-sm font-bold capitalize transition-all whitespace-nowrap ${
+                  className={`flex-1 sm:flex-none px-3 md:px-6 py-1.5 md:py-2 rounded-lg text-[11px] md:text-sm font-bold capitalize transition-all whitespace-nowrap ${
                     roleFilter === role
                       ? "bg-white dark:bg-slate-700 text-brand-600 dark:text-brand-400 shadow-sm"
                       : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
@@ -963,17 +963,17 @@ export default function UserAccounts() {
           </div>
         </div>
 
-        <div className="mb-4 md:mb-6">
+        <div className="mb-3 md:mb-6">
           <input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by name, ID, or email..."
-            className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl px-5 py-3 text-sm font-bold text-slate-700 dark:text-slate-200 outline-none focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 transition-all"
+            className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl px-4 py-2.5 text-[13px] md:text-sm font-bold text-slate-700 dark:text-slate-200 outline-none focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 transition-all"
           />
         </div>
 
         <div className="bg-white dark:bg-slate-900 rounded-2xl md:rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/40 dark:shadow-none overflow-hidden">
-          <div className="block md:hidden divide-y divide-slate-100 dark:divide-slate-800/50">
+          <div className="block xl:hidden divide-y divide-slate-100 dark:divide-slate-800/50">
             {paginatedUsers.length === 0 ? (
               <div className="px-4 py-8 sm:px-6 sm:py-12 text-center">
                 <p className="text-sm font-bold text-slate-500 dark:text-slate-400">
@@ -984,7 +984,7 @@ export default function UserAccounts() {
               paginatedUsers.map((u) => (
                 <div
                   key={u.user_id}
-                  className={`p-3.5 sm:p-4 space-y-2.5 sm:space-y-3 ${
+                  className={`p-3 space-y-2 ${
                     u.account_status === "inactive" ? "opacity-60 grayscale-[0.5]" : ""
                   }`}
                 >
@@ -1002,11 +1002,11 @@ export default function UserAccounts() {
                           </span>
                         )}
                       </div>
-                      <div className="text-xs text-slate-400 truncate">{u.email}</div>
+                      <div className="text-[11px] text-slate-400 truncate">{u.email}</div>
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center justify-between gap-2">
                     <div className="flex gap-2 flex-wrap">
                       <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded">
                         {u.role}
@@ -1022,20 +1022,20 @@ export default function UserAccounts() {
                       </span>
                     </div>
 
-                      <div className="flex gap-3 ml-auto shrink-0">
+                      <div className="flex flex-wrap justify-end gap-2 ml-auto shrink-0">
                         <ProtectedActionButton
                           disabled={busyUserId === u.user_id || isProtectedAdminAction(u)}
                           tooltip={SELF_PROTECTION_MESSAGE}
                           onClick={() => resetPassword(u)}
-                          className="text-amber-600 dark:text-amber-400 font-bold text-xs uppercase disabled:opacity-50"
+                          className="text-amber-600 dark:text-amber-400 font-bold text-[10px] uppercase disabled:opacity-50"
                         >
-                          {busyUserId === u.user_id ? "Working..." : "Reset Password"}
+                          {busyUserId === u.user_id ? "Working..." : "Reset"}
                         </ProtectedActionButton>
                         <ProtectedActionButton
                           disabled={busyUserId === u.user_id || isProtectedAdminAction(u)}
                           tooltip={SELF_PROTECTION_MESSAGE}
                           onClick={() => toggleStatus(u)}
-                          className="text-slate-600 dark:text-slate-400 font-bold text-xs uppercase disabled:opacity-50"
+                          className="text-slate-600 dark:text-slate-400 font-bold text-[10px] uppercase disabled:opacity-50"
                         >
                           {busyUserId === u.user_id
                             ? "Working..."
@@ -1047,7 +1047,7 @@ export default function UserAccounts() {
                           disabled={busyUserId === u.user_id || isProtectedAdminAction(u)}
                           tooltip={SELF_PROTECTION_MESSAGE}
                           onClick={() => handleOpenModal(u)}
-                          className="text-brand-600 dark:text-brand-400 font-bold text-xs uppercase disabled:opacity-50"
+                          className="text-brand-600 dark:text-brand-400 font-bold text-[10px] uppercase disabled:opacity-50"
                         >
                           Edit
                         </ProtectedActionButton>
@@ -1058,7 +1058,7 @@ export default function UserAccounts() {
             )}
           </div>
 
-          <div className="hidden md:block overflow-x-auto">
+          <div className="hidden xl:block overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800/50">
                 <tr>

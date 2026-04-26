@@ -286,31 +286,31 @@ export default function ClearanceProgress() {
         }
       />
 
-      <div className="max-w-[1600px] mx-auto p-2 sm:p-4 md:p-10">
+      <div className="max-w-[1600px] mx-auto p-1.5 sm:p-4 md:p-10">
 
         {/* STATS GRID */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 md:gap-6 mb-6 md:mb-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5 md:gap-6 mb-4 md:mb-10">
           {stats.map((stat, i) => (
-            <div key={i} className="bg-white dark:bg-slate-900 p-4 sm:p-5 md:p-6 rounded-2xl md:rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 flex items-center gap-3 sm:gap-4 md:gap-5">
-              <div className={`text-2xl w-12 h-12 flex items-center justify-center rounded-2xl ${stat.color} dark:bg-opacity-10`}>
+            <div key={i} className="bg-white dark:bg-slate-900 p-3.5 sm:p-5 md:p-6 rounded-2xl md:rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 flex items-center gap-2.5 sm:gap-4 md:gap-5">
+              <div className={`text-xl md:text-2xl w-10 h-10 md:w-12 md:h-12 flex items-center justify-center rounded-xl md:rounded-2xl ${stat.color} dark:bg-opacity-10`}>
                 {stat.icon}
               </div>
               <div>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">{stat.label}</p>
-                <p className="text-2xl font-black text-slate-800 dark:text-slate-100">{stat.value}</p>
+                <p className="text-[11px] md:text-xs font-bold text-slate-400 uppercase tracking-wider">{stat.label}</p>
+                <p className="text-xl md:text-2xl font-black text-slate-800 dark:text-slate-100">{stat.value}</p>
               </div>
             </div>
           ))}
         </div>
 
         {/* FILTERS */}
-        <section className="bg-white dark:bg-slate-900 rounded-2xl md:rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 p-4 sm:p-5 md:p-6 mb-5 md:mb-8">
+        <section className="bg-white dark:bg-slate-900 rounded-2xl md:rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 p-3.5 sm:p-5 md:p-6 mb-4 md:mb-8">
           <div className="flex flex-col lg:flex-row gap-4 justify-between items-center">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full lg:w-auto">
 
               {/* Real program options */}
               <select
-                className="bg-slate-50 dark:bg-slate-800 border-none rounded-xl p-3 text-sm font-bold text-slate-600 dark:text-slate-300 focus:ring-2 focus:ring-brand-500 outline-none"
+                className="bg-slate-50 dark:bg-slate-800 border-none rounded-xl p-2.5 md:p-3 text-[13px] md:text-sm font-bold text-slate-600 dark:text-slate-300 focus:ring-2 focus:ring-brand-500 outline-none"
                 value={filters.role}
                 onChange={(e) => setFilters({ ...filters, role: e.target.value })}
               >
@@ -319,7 +319,7 @@ export default function ClearanceProgress() {
               </select>
 
               <select
-                className="bg-slate-50 dark:bg-slate-800 border-none rounded-xl p-3 text-sm font-bold text-slate-600 dark:text-slate-300 focus:ring-2 focus:ring-brand-500 outline-none"
+                className="bg-slate-50 dark:bg-slate-800 border-none rounded-xl p-2.5 md:p-3 text-[13px] md:text-sm font-bold text-slate-600 dark:text-slate-300 focus:ring-2 focus:ring-brand-500 outline-none"
                 value={filters.program}
                 onChange={(e) => setFilters({ ...filters, program: e.target.value })}
                 disabled={filters.role !== "Student"}
@@ -329,7 +329,7 @@ export default function ClearanceProgress() {
               </select>
 
               <select
-                className="bg-slate-50 dark:bg-slate-800 border-none rounded-xl p-3 text-sm font-bold text-slate-600 dark:text-slate-300 focus:ring-2 focus:ring-brand-500 outline-none"
+                className="bg-slate-50 dark:bg-slate-800 border-none rounded-xl p-2.5 md:p-3 text-[13px] md:text-sm font-bold text-slate-600 dark:text-slate-300 focus:ring-2 focus:ring-brand-500 outline-none"
                 value={filters.yearLevel}
                 onChange={(e) => setFilters({ ...filters, yearLevel: e.target.value })}
                 disabled={filters.role !== "Student"}
@@ -342,7 +342,7 @@ export default function ClearanceProgress() {
               </select>
 
               <select
-                className="bg-slate-50 dark:bg-slate-800 border-none rounded-xl p-3 text-sm font-bold text-slate-600 dark:text-slate-300 focus:ring-2 focus:ring-brand-500 outline-none"
+                className="bg-slate-50 dark:bg-slate-800 border-none rounded-xl p-2.5 md:p-3 text-[13px] md:text-sm font-bold text-slate-600 dark:text-slate-300 focus:ring-2 focus:ring-brand-500 outline-none"
                 value={filters.section}
                 onChange={(e) => setFilters({ ...filters, section: e.target.value })}
                 disabled={filters.role !== "Student"}
@@ -351,7 +351,7 @@ export default function ClearanceProgress() {
               </select>
 
               <select
-                className="bg-slate-50 dark:bg-slate-800 border-none rounded-xl p-3 text-sm font-bold text-slate-600 dark:text-slate-300 focus:ring-2 focus:ring-brand-500 outline-none"
+                className="bg-slate-50 dark:bg-slate-800 border-none rounded-xl p-2.5 md:p-3 text-[13px] md:text-sm font-bold text-slate-600 dark:text-slate-300 focus:ring-2 focus:ring-brand-500 outline-none"
                 value={filters.department}
                 onChange={(e) => setFilters({ ...filters, department: e.target.value })}
                 disabled={filters.role !== "Signatory"}
@@ -376,7 +376,7 @@ export default function ClearanceProgress() {
               const progress = getProgress(student);
 
               return (
-                <div key={student.id} className="p-6 space-y-4 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
+                <div key={student.id} className="p-4 space-y-3 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
                   <div className="flex justify-between items-start">
                     <div>
                       <p className="font-bold text-slate-800 dark:text-slate-200">{student.name}</p>
@@ -391,7 +391,7 @@ export default function ClearanceProgress() {
                     </span>
                   </div>
                   
-                    <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-800 space-y-3">
+                    <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-100 dark:border-slate-800 space-y-2.5">
                     <div className="flex justify-between text-xs">
                       <span className="font-black text-slate-400 uppercase tracking-widest">Classification</span>
                       <span className="font-bold text-slate-600 dark:text-slate-300">{student.program} • {YEAR_LABELS[student.year_level]}</span>
@@ -418,7 +418,7 @@ export default function ClearanceProgress() {
                   </div>
                     <button
                       onClick={() => openStudentDetails(student)}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300"
+                      className="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300"
                     >
                       View Per Signatory
                     </button>

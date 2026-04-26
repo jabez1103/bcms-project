@@ -138,7 +138,7 @@ export default function HelpAndSupport() {
   return (
     <div id="help-top" className="min-h-screen bg-[#f8fafc] dark:bg-slate-950 pb-20 font-sans transition-colors duration-300">
       {/* PREMIUM HEADER: High-contrast Navy with Glassmorphism */}
-      <div className="relative bg-[#0f172a] dark:bg-slate-950 text-white pt-20 pb-32 px-4 md:px-8 overflow-hidden transition-colors">
+      <div className="relative bg-[#0f172a] dark:bg-slate-950 text-white pt-14 md:pt-20 pb-20 md:pb-32 px-3 md:px-8 overflow-hidden transition-colors">
         {/* Decorative elements to match your UI style */}
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-brand-600/10 rounded-full blur-[120px] -mr-48 -mt-48" />
         <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-blue-600/10 rounded-full blur-[100px] -ml-24 -mb-24" />
@@ -148,8 +148,8 @@ export default function HelpAndSupport() {
             <div className="flex flex-col md:flex-row md:items-center gap-6">
               <div className="relative group">
                 <div className="absolute -inset-1 bg-gradient-to-r from-brand-600 to-blue-600 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
-                <div className="relative bg-slate-900 p-5 rounded-2xl border border-white/10 backdrop-blur-xl">
-                  <HelpCircle size={44} className="text-brand-400" />
+                <div className="relative bg-slate-900 p-3.5 md:p-5 rounded-2xl border border-white/10 backdrop-blur-xl">
+                  <HelpCircle size={32} className="text-brand-400" />
                 </div>
               </div>
               
@@ -162,10 +162,10 @@ export default function HelpAndSupport() {
                     <Sparkles size={12} className="text-amber-400" /> v2.4.0
                   </span>
                 </div>
-                <h1 className="text-4xl md:text-5xl font-black tracking-tight text-white mb-2">
+                <h1 className="text-3xl md:text-5xl font-black tracking-tight text-white mb-2">
                   How can we <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-400 to-blue-400">help you?</span>
                 </h1>
-                <p className="text-slate-400 text-lg max-w-xl leading-relaxed font-medium">
+                <p className="text-slate-400 text-sm md:text-lg max-w-xl leading-relaxed font-medium">
                   Search our documentation for the BISU Clearance Management System or browse categories below.
                 </p>
               </div>
@@ -174,35 +174,35 @@ export default function HelpAndSupport() {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 md:px-8 -mt-14 relative z-20">
+      <div className="max-w-6xl mx-auto px-3 md:px-8 -mt-10 md:-mt-14 relative z-20">
         {/* SEARCH BAR: Enhanced Shadow and Interaction */}
-        <div className="relative mb-12 group">
+        <div className="relative mb-8 md:mb-12 group">
           <div className="absolute -inset-1 bg-gradient-to-r from-brand-500/20 to-blue-500/20 rounded-[2.2rem] blur-xl opacity-0 group-focus-within:opacity-100 transition-opacity"></div>
-          <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 group-focus-within:text-brand-500 dark:group-focus-within:text-brand-400 transition-colors" size={24} />
+          <Search className="absolute left-4 md:left-6 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 group-focus-within:text-brand-500 dark:group-focus-within:text-brand-400 transition-colors" size={20} />
           <input 
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Type your question (e.g., 'How to upload files?')..."
-            className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2rem] py-6 pl-16 pr-8 text-slate-900 dark:text-slate-100 shadow-2xl shadow-slate-200/60 dark:shadow-none outline-none focus:ring-0 focus:border-brand-500/50 transition-all text-xl font-medium placeholder:text-slate-400 dark:placeholder:text-slate-500"
+            className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2rem] py-4 md:py-6 pl-12 md:pl-16 pr-5 md:pr-8 text-slate-900 dark:text-slate-100 shadow-2xl shadow-slate-200/60 dark:shadow-none outline-none focus:ring-0 focus:border-brand-500/50 transition-all text-base md:text-xl font-medium placeholder:text-slate-400 dark:placeholder:text-slate-500"
           />
         </div>
 
         {/* DOCUMENTATION CARDS: Grid with Hover Effects */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
           {filteredCategories.length > 0 ? (
             filteredCategories.map((item, idx) => (
-              <div key={idx} className={`bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-10 transition-all duration-300 hover:shadow-2xl hover:shadow-slate-200/80 dark:hover:shadow-none group ${item.color}`}>
-                <div className="flex items-start gap-8">
-                  <div className="p-5 bg-slate-50 dark:bg-slate-800 rounded-[1.5rem] group-hover:scale-110 group-hover:bg-white dark:group-hover:bg-slate-700 transition-all duration-500 shadow-sm border border-slate-100 dark:border-slate-700">
+              <div key={idx} className={`bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2rem] md:rounded-[2.5rem] p-5 md:p-10 transition-all duration-300 hover:shadow-2xl hover:shadow-slate-200/80 dark:hover:shadow-none group ${item.color}`}>
+                <div className="flex items-start gap-4 md:gap-8">
+                  <div className="p-3 md:p-5 bg-slate-50 dark:bg-slate-800 rounded-[1rem] md:rounded-[1.5rem] group-hover:scale-110 group-hover:bg-white dark:group-hover:bg-slate-700 transition-all duration-500 shadow-sm border border-slate-100 dark:border-slate-700">
                     {item.icon}
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight">{item.title}</h3>
+                      <h3 className="text-xl md:text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight">{item.title}</h3>
                       <ArrowUpRight size={20} className="text-slate-300 dark:text-slate-600 group-hover:text-brand-500 dark:group-hover:text-brand-400 opacity-0 group-hover:opacity-100 transition-all" />
                     </div>
-                    <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed mb-8 font-medium italic opacity-80">{item.desc}</p>
+                    <p className="text-slate-500 dark:text-slate-400 text-xs md:text-sm leading-relaxed mb-4 md:mb-8 font-medium italic opacity-80">{item.desc}</p>
                     
                     <div className="grid grid-cols-1 gap-3">
                       {item.links.map((link, i) => (

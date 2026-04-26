@@ -59,25 +59,25 @@ export default function AppearanceSettings() {
   if (!mounted) return null;
 
   return (
-    <div className="max-w-2xl mx-auto py-8 px-4 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="max-w-2xl mx-auto py-4 md:py-8 px-2 md:px-4 space-y-4 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       
       {/* --- VISUAL THEME & CONTRAST --- */}
-      <section className="space-y-3">
-        <h4 className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] px-4">Visual Style</h4>
+      <section className="space-y-2.5 md:space-y-3">
+        <h4 className="text-[10px] md:text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.18em] md:tracking-[0.2em] px-2 md:px-4">Visual Style</h4>
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2rem] overflow-hidden shadow-sm">
           
           {/* Theme Switcher */}
-          <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-800">
-            <div className="flex items-center gap-4">
-              <div className={`p-3 rounded-2xl transition-colors ${theme === 'dark' ? 'bg-slate-900 text-white' : 'bg-amber-50 text-amber-500'}`}>
-                {theme === 'dark' ? <Moon size={22} /> : <Sun size={22} />}
+          <div className="flex items-center justify-between p-3.5 md:p-6 border-b border-slate-100 dark:border-slate-800">
+            <div className="flex items-center gap-3 md:gap-4">
+              <div className={`p-2.5 md:p-3 rounded-2xl transition-colors ${theme === 'dark' ? 'bg-slate-900 text-white' : 'bg-amber-50 text-amber-500'}`}>
+                {theme === 'dark' ? <Moon size={18} /> : <Sun size={18} />}
               </div>
               <div>
-                <p className="font-bold text-slate-900 dark:text-slate-200">Interface Theme</p>
+                <p className="text-[15px] md:text-base font-bold text-slate-900 dark:text-slate-200">Interface Theme</p>
                 <p className="text-xs text-slate-500 dark:text-slate-400">Light or Dark preference</p>
               </div>
             </div>
-            <div className="flex bg-slate-100 dark:bg-slate-800 p-1.5 rounded-2xl">
+            <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl md:rounded-2xl">
               {['light', 'dark', 'system'].map((t) => (
                 <button 
                   key={t}
@@ -85,7 +85,7 @@ export default function AppearanceSettings() {
                     setSaved(false);
                     setTheme(t);
                   }}
-                  className={`px-4 py-2 text-xs font-bold rounded-xl transition-all capitalize ${theme === t ? 'bg-white dark:bg-slate-700 shadow-md text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`}
+                  className={`px-3 md:px-4 py-1.5 md:py-2 text-[11px] md:text-xs font-bold rounded-lg md:rounded-xl transition-all capitalize ${theme === t ? 'bg-white dark:bg-slate-700 shadow-md text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`}
                 >
                   {t}
                 </button>
@@ -94,10 +94,10 @@ export default function AppearanceSettings() {
           </div>
 
           {/* High Contrast */}
-          <div className="flex items-center justify-between p-6">
-            <div className="flex items-center gap-4">
-              <div className={`p-3 rounded-2xl transition-colors ${highContrast ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-400'}`}>
-                <Eye size={22} />
+          <div className="flex items-center justify-between p-3.5 md:p-6">
+            <div className="flex items-center gap-3 md:gap-4">
+              <div className={`p-2.5 md:p-3 rounded-2xl transition-colors ${highContrast ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-400'}`}>
+                <Eye size={18} />
               </div>
               <div>
                 <p className="font-bold text-slate-900 dark:text-slate-200">High Contrast</p>
@@ -120,22 +120,22 @@ export default function AppearanceSettings() {
       </section>
 
       {/* --- TYPOGRAPHY & REGIONAL --- */}
-      <section className="space-y-3">
-        <h4 className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] px-4">Accessibility & Language</h4>
+      <section className="space-y-2.5 md:space-y-3">
+        <h4 className="text-[10px] md:text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.18em] md:tracking-[0.2em] px-2 md:px-4">Accessibility & Language</h4>
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2rem] overflow-hidden shadow-sm">
           
           {/* Font Size Stepper */}
-          <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-800">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 rounded-2xl">
-                <Type size={22} />
+          <div className="flex items-center justify-between p-3.5 md:p-6 border-b border-slate-100 dark:border-slate-800">
+            <div className="flex items-center gap-3 md:gap-4">
+              <div className="p-2.5 md:p-3 bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 rounded-2xl">
+                <Type size={18} />
               </div>
               <div>
                 <p className="font-bold text-slate-900 dark:text-slate-200">Font Size</p>
                 <p className="text-xs text-slate-500 dark:text-slate-400">{fontSizes[fontSize]} view</p>
               </div>
             </div>
-            <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-800/50 p-1 rounded-xl border border-slate-100 dark:border-slate-800">
+            <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800/50 p-1 rounded-xl border border-slate-100 dark:border-slate-800">
               <button 
                 disabled={fontSize === 0}
                 onClick={() => {
@@ -144,7 +144,7 @@ export default function AppearanceSettings() {
                   setFontSize(next);
                   persistAppearance({ fontSize: next });
                 }}
-                className="w-8 h-8 flex items-center justify-center rounded-lg bg-white dark:bg-slate-700 dark:text-white shadow-sm disabled:opacity-30 font-bold"
+                className="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-lg bg-white dark:bg-slate-700 dark:text-white shadow-sm disabled:opacity-30 font-bold"
               >–</button>
               <span className="text-xs font-bold w-4 text-center">{fontSize + 1}</span>
               <button 
@@ -155,16 +155,16 @@ export default function AppearanceSettings() {
                   setFontSize(next);
                   persistAppearance({ fontSize: next });
                 }}
-                className="w-8 h-8 flex items-center justify-center rounded-lg bg-white dark:bg-slate-700 dark:text-white shadow-sm disabled:opacity-30 font-bold"
+                className="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-lg bg-white dark:bg-slate-700 dark:text-white shadow-sm disabled:opacity-30 font-bold"
               >+</button>
             </div>
           </div>
 
           {/* Language Selection */}
-          <div className="flex items-center justify-between p-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-2xl">
-                <Languages size={22} />
+          <div className="flex items-center justify-between p-3.5 md:p-6">
+            <div className="flex items-center gap-3 md:gap-4">
+              <div className="p-2.5 md:p-3 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-2xl">
+                <Languages size={18} />
               </div>
               <div>
                 <p className="font-bold text-slate-900 dark:text-slate-200">Language</p>
@@ -189,9 +189,9 @@ export default function AppearanceSettings() {
       </section>
 
       {/* --- DASHBOARD PREFERENCE --- */}
-      <section className="space-y-3">
-        <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em] px-4">Dashboard Layout</h4>
-        <div className="grid grid-cols-2 gap-4">
+      <section className="space-y-2.5 md:space-y-3">
+        <h4 className="text-[10px] md:text-[11px] font-bold text-slate-400 uppercase tracking-[0.18em] md:tracking-[0.2em] px-2 md:px-4">Dashboard Layout</h4>
+        <div className="grid grid-cols-2 gap-2.5 md:gap-4">
           {[
             { id: 'standard', label: 'Sidebar', icon: <Sidebar size={20} />, desc: 'Classic navigation' },
             { id: 'compact', label: 'Expanded', icon: <Maximize size={20} />, desc: 'Focus on content' }
@@ -204,7 +204,7 @@ export default function AppearanceSettings() {
                 setLayout(next);
                 persistAppearance({ layout: next });
               }}
-              className={`p-5 rounded-[2rem] text-left border-2 transition-all space-y-3 relative overflow-hidden ${
+              className={`p-3.5 md:p-5 rounded-2xl md:rounded-[2rem] text-left border-2 transition-all space-y-2 md:space-y-3 relative overflow-hidden ${
                 layout === item.id 
                 ? 'border-brand-500 bg-white dark:bg-slate-800 shadow-md' 
                 : 'border-transparent bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 opacity-70'
@@ -226,10 +226,10 @@ export default function AppearanceSettings() {
           ))}
         </div>
       </section>
-      <div className="pt-2 flex justify-end">
+      <div className="pt-1 md:pt-2 flex justify-end">
         <button
           onClick={() => persistAppearance()}
-          className="px-6 py-2.5 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-[11px] font-black uppercase tracking-widest rounded-xl"
+          className="px-5 py-2 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-[10px] md:text-[11px] font-black uppercase tracking-widest rounded-xl"
         >
           {saved ? "Saved" : "Save Preferences"}
         </button>

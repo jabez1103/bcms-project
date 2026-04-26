@@ -31,7 +31,7 @@ export default function StudentLayout({
   };
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden">
+    <div className="mobile-compact flex flex-col h-screen overflow-hidden">
       <Suspense fallback={null}>
         <NotificationQueryAck />
       </Suspense>
@@ -57,7 +57,7 @@ export default function StudentLayout({
 
         {/* MAIN WRAPPER */}
         <div className="flex-1 flex flex-col min-w-0 bg-[#f4f6f9] dark:bg-slate-950 overflow-y-auto">
-          <main className="flex-1 p-4 bg-transparent">{children}</main>
+          <main className="flex-1 p-2.5 sm:p-4 bg-transparent">{children}</main>
 
           <Footer />
         </div>

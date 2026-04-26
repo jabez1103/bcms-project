@@ -123,22 +123,22 @@ export default function LandingPage() {
         />
         
         {/* Menu Content */}
-        <div className="relative h-full flex flex-col p-8">
+        <div className="relative h-full flex flex-col p-5 sm:p-8">
           <div className="flex justify-end">
             <button 
               onClick={() => setMobileMenuOpen(false)}
-              className="p-4 rounded-2xl bg-white/10 text-white active:scale-90 transition-transform"
+              className="p-2.5 sm:p-4 rounded-2xl bg-white/10 text-white active:scale-90 transition-transform"
             >
-              <X size={32} />
+              <X size={24} />
             </button>
           </div>
 
-          <nav className="flex-1 flex flex-col justify-center items-start gap-8">
+          <nav className="flex-1 flex flex-col justify-center items-start gap-5 sm:gap-8">
             {navItems.map((item, idx) => (
               <button
                 key={idx} 
                 onClick={() => handleNavAction(item.href)}
-                className="text-4xl sm:text-5xl font-black text-white tracking-tighter hover:text-brand-400 transition-colors text-left"
+                className="text-3xl sm:text-5xl font-black text-white tracking-tighter hover:text-brand-400 transition-colors text-left"
               >
                 {item.title}
               </button>
@@ -146,7 +146,7 @@ export default function LandingPage() {
             <Link 
               href="/login"
               onClick={() => setMobileMenuOpen(false)}
-              className="mt-4 inline-flex items-center gap-3 text-2xl font-bold text-brand-400 underline decoration-2 underline-offset-8"
+              className="mt-3 sm:mt-4 inline-flex items-center gap-2.5 text-xl sm:text-2xl font-bold text-brand-400 underline decoration-2 underline-offset-8"
             >
               Sign in to Portal <ArrowRight />
             </Link>
@@ -154,7 +154,7 @@ export default function LandingPage() {
             {mounted && (
               <button
                 onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                className="mt-8 self-start inline-flex items-center gap-3 px-6 py-3 rounded-2xl bg-white/10 text-white font-bold text-xl hover:bg-white/20 transition-all active:scale-95"
+                className="mt-5 sm:mt-8 self-start inline-flex items-center gap-2.5 px-4 py-2.5 sm:px-6 sm:py-3 rounded-2xl bg-white/10 text-white font-bold text-base sm:text-xl hover:bg-white/20 transition-all active:scale-95"
               >
                 {theme === 'dark' ? (
                   <><Sun size={24} /> Light Mode</>
@@ -177,13 +177,13 @@ export default function LandingPage() {
       <header 
         className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-500 px-3 sm:px-4 md:px-6 ${
           isScrolled 
-            ? "py-3 bg-white/70 dark:bg-slate-950/80 backdrop-blur-xl border-b border-brand-100 dark:border-slate-800 shadow-sm" 
-            : "py-6 bg-transparent"
+            ? "py-2.5 sm:py-3 bg-white/70 dark:bg-slate-950/80 backdrop-blur-xl border-b border-brand-100 dark:border-slate-800 shadow-sm" 
+            : "py-3.5 sm:py-6 bg-transparent"
         }`}
       >
         <div className="mx-auto max-w-7xl flex items-center justify-between">
-          <div className="flex items-center gap-3 group cursor-pointer">
-            <div className="relative h-11 w-11 transition-transform group-hover:rotate-12">
+          <div className="flex items-center gap-2.5 sm:gap-3 group cursor-pointer">
+            <div className="relative h-9 w-9 sm:h-11 sm:w-11 transition-transform group-hover:rotate-12">
               <Image src="/logo.png" alt="BISU Logo" fill className="object-contain" />
             </div>
             <div className="flex flex-col">
@@ -247,7 +247,7 @@ export default function LandingPage() {
       </header>
 
       {/* --- HERO SECTION --- */}
-      <section id="home" className="relative h-[95vh] w-full flex items-center justify-center overflow-hidden scroll-mt-28">
+      <section id="home" className="relative h-[90vh] sm:h-[95vh] w-full flex items-center justify-center overflow-hidden scroll-mt-28">
         <div className="absolute inset-0 z-0">
           <Image 
             src="/bisu.png" 
@@ -261,7 +261,7 @@ export default function LandingPage() {
         </div>
 
         <div className="relative z-10 text-center px-3 sm:px-4 md:px-6 max-w-5xl">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-[10px] font-bold tracking-[0.3em] uppercase mb-8">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-[9px] sm:text-[10px] font-bold tracking-[0.25em] sm:tracking-[0.3em] uppercase mb-5 sm:mb-8">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-500"></span>
@@ -270,7 +270,7 @@ export default function LandingPage() {
           </div>
           
           <h2
-            className="text-4xl md:text-6xl lg:text-7xl font-black text-white tracking-tight leading-[1.1] mb-8 drop-shadow-2xl min-h-[1.2em]"
+            className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-black text-white tracking-tight leading-[1.1] mb-5 sm:mb-8 drop-shadow-2xl min-h-[1.2em]"
             aria-live="polite"
           >
             Welcome,{" "}
@@ -283,8 +283,8 @@ export default function LandingPage() {
             <span className="sr-only">Welcome {headlineTarget}</span>
           </h2>
 
-          <div className="mx-auto max-w-3xl min-h-[5rem]">
-            <p className="text-sm md:text-lg text-white font-medium mx-auto leading-relaxed drop-shadow-lg opacity-90">
+          <div className="mx-auto max-w-3xl min-h-[4rem] sm:min-h-[5rem]">
+            <p className="text-xs sm:text-sm md:text-lg text-white font-medium mx-auto leading-relaxed drop-shadow-lg opacity-90">
               {typedTagline}
               {!isTaglineDone && (
                 <span className="inline-block ml-1 text-white/90 animate-pulse" aria-hidden="true">
@@ -294,14 +294,14 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-5">
-            <Link href="/login" className="group h-14 px-10 flex items-center justify-center rounded-2xl bg-white dark:bg-slate-900 text-brand-900 dark:text-brand-100 font-black text-sm uppercase tracking-widest shadow-[0_20px_40px_-10px_rgba(255,255,255,0.3)] dark:shadow-[0_20px_40px_-10px_rgba(124,58,237,0.3)] transition-all hover:scale-[1.02] hover:bg-brand-50 dark:hover:bg-slate-800 active:scale-95">
+          <div className="mt-7 sm:mt-12 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-5">
+            <Link href="/login" className="group h-11 sm:h-14 px-7 sm:px-10 flex items-center justify-center rounded-2xl bg-white dark:bg-slate-900 text-brand-900 dark:text-brand-100 font-black text-[11px] sm:text-sm uppercase tracking-widest shadow-[0_20px_40px_-10px_rgba(255,255,255,0.3)] dark:shadow-[0_20px_40px_-10px_rgba(124,58,237,0.3)] transition-all hover:scale-[1.02] hover:bg-brand-50 dark:hover:bg-slate-800 active:scale-95">
               Access Portal
-              <ArrowRight size={18} className="ml-2 group-hover:translate-x-1.5 transition-transform" />
+              <ArrowRight size={16} className="ml-2 group-hover:translate-x-1.5 transition-transform" />
             </Link>
             <button
               onClick={() => handleNavAction("#policy")}
-              className="h-14 px-10 flex items-center justify-center rounded-2xl bg-white/10 backdrop-blur-md border border-white/25 text-white font-black text-sm uppercase tracking-widest hover:bg-white/15 transition-all active:scale-95"
+              className="h-11 sm:h-14 px-7 sm:px-10 flex items-center justify-center rounded-2xl bg-white/10 backdrop-blur-md border border-white/25 text-white font-black text-[11px] sm:text-sm uppercase tracking-widest hover:bg-white/15 transition-all active:scale-95"
             >
               System Guide
             </button>
@@ -310,12 +310,12 @@ export default function LandingPage() {
       </section>
 
       {/* --- THE PROCESS --- */}
-      <section id="how-it-works" className="py-24 md:py-32 px-3 sm:px-4 md:px-6 bg-[#FDFCFE] dark:bg-slate-950 transition-colors duration-300 scroll-mt-28">
+      <section id="how-it-works" className="py-14 md:py-32 px-3 sm:px-4 md:px-6 bg-[#FDFCFE] dark:bg-slate-950 transition-colors duration-300 scroll-mt-28">
         <div className="mx-auto max-w-7xl">
-          <div className="flex flex-col md:flex-row items-end justify-between mb-20 gap-8">
+          <div className="flex flex-col md:flex-row items-end justify-between mb-10 md:mb-20 gap-5 md:gap-8">
             <div className="max-w-2xl">
               <h3 className="text-[9px] font-black text-brand-600 dark:text-brand-400 uppercase tracking-[0.4em] mb-4">Workflow</h3>
-              <h4 className="text-2xl md:text-4xl font-black text-gray-900 dark:text-white tracking-tight leading-none">
+              <h4 className="text-xl md:text-4xl font-black text-gray-900 dark:text-white tracking-tight leading-none">
                 Complete clearance in three <br /> straightforward steps.
               </h4>
             </div>
@@ -324,7 +324,7 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-8">
             {[
               { 
                 icon: <Monitor className="w-8 h-8" />, 
@@ -345,11 +345,11 @@ export default function LandingPage() {
                 color: "bg-emerald-500"
               }
             ].map((step, i) => (
-              <div key={i} className="group relative p-10 rounded-3xl bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 transition-all duration-500 hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.05)] dark:hover:shadow-none hover:-translate-y-2 hover:border-brand-100 dark:hover:border-brand-900">
-                <div className={`mb-8 inline-flex p-3.5 rounded-2xl text-white ${step.color} shadow-lg shadow-inherit transition-transform group-hover:rotate-12`}>
+              <div key={i} className="group relative p-5 md:p-10 rounded-2xl md:rounded-3xl bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 transition-all duration-500 hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.05)] dark:hover:shadow-none hover:-translate-y-2 hover:border-brand-100 dark:hover:border-brand-900">
+                <div className={`mb-4 md:mb-8 inline-flex p-2.5 md:p-3.5 rounded-xl md:rounded-2xl text-white ${step.color} shadow-lg shadow-inherit transition-transform group-hover:rotate-12`}>
                   {step.icon}
                 </div>
-                <h5 className="text-lg font-black text-gray-900 dark:text-white mb-4 tracking-tight">{step.title}</h5>
+                <h5 className="text-base md:text-lg font-black text-gray-900 dark:text-white mb-2.5 md:mb-4 tracking-tight">{step.title}</h5>
                 <p className="text-xs text-gray-500 dark:text-slate-400 leading-relaxed font-medium">{step.desc}</p>
               </div>
             ))}
@@ -358,14 +358,14 @@ export default function LandingPage() {
       </section>
 
       {/* --- POLICY --- */}
-      <section id="policy" className="py-20 md:py-28 px-3 sm:px-4 md:px-6 bg-white dark:bg-slate-950 transition-colors duration-300 scroll-mt-28">
+      <section id="policy" className="py-14 md:py-28 px-3 sm:px-4 md:px-6 bg-white dark:bg-slate-950 transition-colors duration-300 scroll-mt-28">
         <div className="mx-auto max-w-7xl">
-          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-8 mb-14">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-5 md:gap-8 mb-8 md:mb-14">
             <div className="max-w-3xl">
               <h3 className="text-[9px] font-black text-brand-600 dark:text-brand-400 uppercase tracking-[0.35em] mb-4">
                 Policy
               </h3>
-              <h4 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
+              <h4 className="text-xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
                 Clear policies for a faster clearance experience.
               </h4>
             </div>
@@ -374,7 +374,7 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
             {[
               {
                 title: "One Account, One Session",
@@ -391,7 +391,7 @@ export default function LandingPage() {
             ].map((item, i) => (
               <article
                 key={i}
-                className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/70 p-8 hover:border-brand-200 dark:hover:border-brand-700 transition-all duration-300 hover:shadow-sm"
+                className="rounded-2xl md:rounded-3xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/70 p-5 md:p-8 hover:border-brand-200 dark:hover:border-brand-700 transition-all duration-300 hover:shadow-sm"
               >
                 <p className="text-[10px] font-black text-brand-600 dark:text-brand-400 uppercase tracking-widest mb-3">
                   Rule {String(i + 1).padStart(2, "0")}
@@ -405,14 +405,14 @@ export default function LandingPage() {
       </section>
 
       {/* --- DIRECTORY --- */}
-      <section id="directory" className="py-20 md:py-28 px-3 sm:px-4 md:px-6 bg-[#F8FAFC] dark:bg-slate-900/30 transition-colors duration-300 scroll-mt-28">
+      <section id="directory" className="py-14 md:py-28 px-3 sm:px-4 md:px-6 bg-[#F8FAFC] dark:bg-slate-900/30 transition-colors duration-300 scroll-mt-28">
         <div className="mx-auto max-w-7xl">
-          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-8 mb-14">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-5 md:gap-8 mb-8 md:mb-14">
             <div className="max-w-3xl">
               <h3 className="text-[9px] font-black text-brand-600 dark:text-brand-400 uppercase tracking-[0.35em] mb-4">
                 Directory
               </h3>
-              <h4 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
+              <h4 className="text-xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
                 Offices that handle each stage of your clearance.
               </h4>
             </div>
@@ -430,7 +430,7 @@ export default function LandingPage() {
             ].map((item, i) => (
               <article
                 key={i}
-                className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300"
+                className="rounded-2xl md:rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 md:p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300"
               >
                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2">
                   Office
