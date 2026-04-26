@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { 
   Home, 
   Users, 
@@ -16,7 +16,8 @@ import {
   ChevronLeft,
   ChevronDown,
   UserCheck,
-  X
+  X,
+  Search
 } from "lucide-react";
 import { PageType, UserRole } from "@/types/index";
 
@@ -37,6 +38,7 @@ interface SidebarProps {
 
 export function Sidebar({ role, activePage, onPageClick, isMobileOpen, onMobileClose }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const isSignatoriesRoute = useMemo(
     () => pathname.startsWith(`/${role}/signatories`),
     [pathname, role]
@@ -50,6 +52,11 @@ export function Sidebar({ role, activePage, onPageClick, isMobileOpen, onMobileC
   const [signatoriesOpen, setSignatoriesOpen] = useState(false);
   const [activityLogsOpen, setActivityLogsOpen] = useState(false);
   const [signatories, setSignatories] = useState<Signatory[]>([]);
+  const [mobileSearchValue, setMobileSearchValue] = useState("");
+  const [mobileSearchLoading, setMobileSearchLoading] = useState(false);
+  const [mobileSearchResults, setMobileSearchResults] = useState<
+    Array<{ id: string; category: string; title: string; subtitle?: string; href: string }>
+  >([]);
 
   useEffect(() => {
     if (isSignatoriesRoute) setSignatoriesOpen(true);
@@ -88,6 +95,55 @@ export function Sidebar({ role, activePage, onPageClick, isMobileOpen, onMobileC
     };
     fetchSignatories();
   }, [role]);
+
+  useEffect(() => {
+    if (!isMobileOpen) {
+      setMobileSearchValue("");
+      setMobileSearchResults([]);
+      setMobileSearchLoading(false);
+      return;
+    }
+
+    const q = mobileSearchValue.trim();
+    if (q.length < 2) {
+      setMobileSearchResults([]);
+      setMobileSearchLoading(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      setMobileSearchLoading(true);
+      try {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`, {
+          signal: controller.signal,
+          cache: "no-store",
+        });
+        const data = await res.json();
+        if (!cancelled) {
+          setMobileSearchResults(Array.isArray(data?.results) ? data.results : []);
+        }
+      } catch {
+        if (!cancelled) setMobileSearchResults([]);
+      } finally {
+        if (!cancelled) setMobileSearchLoading(false);
+      }
+    }, 150);
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+      clearTimeout(timer);
+    };
+  }, [isMobileOpen, mobileSearchValue]);
+
+  const openMobileSearchResult = (href: string) => {
+    setMobileSearchValue("");
+    setMobileSearchResults([]);
+    if (onMobileClose) onMobileClose();
+    router.push(href);
+  };
 
   if (isCollapsed === null) return null;
 
@@ -183,6 +239,44 @@ export function Sidebar({ role, activePage, onPageClick, isMobileOpen, onMobileC
 
         {/* Main Navigation */}
         <div className="flex flex-col overflow-y-auto px-3 md:px-4 space-y-1.5 md:space-y-2 h-full py-3 md:py-8 custom-scrollbar">
+          {/* Mobile Global Search (between header/logo and Home) */}
+          <div className="md:hidden mb-1.5">
+            <div className="relative">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
+              <input
+                type="text"
+                placeholder="Search pages, users..."
+                value={mobileSearchValue}
+                onChange={(e) => setMobileSearchValue(e.target.value)}
+                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-3 py-2 text-[12px] text-black dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-brand-500/5 dark:focus:ring-brand-400/10 transition-all outline-none"
+              />
+            </div>
+            {mobileSearchValue.trim().length >= 2 && (
+              <div className="mt-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
+                {mobileSearchLoading ? (
+                  <p className="px-3 py-2 text-[11px] text-slate-500 dark:text-slate-400">Searching...</p>
+                ) : mobileSearchResults.length === 0 ? (
+                  <p className="px-3 py-2 text-[11px] text-slate-500 dark:text-slate-400">No matching results.</p>
+                ) : (
+                  mobileSearchResults.slice(0, 6).map((item) => (
+                    <button
+                      key={item.id}
+                      onClick={() => openMobileSearchResult(item.href)}
+                      className="w-full text-left px-3 py-2 border-b border-slate-50 dark:border-slate-800 last:border-b-0 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors"
+                    >
+                      <p className="text-[12px] font-semibold text-slate-800 dark:text-slate-200 truncate">
+                        {item.title}
+                      </p>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
+                        {item.category}{item.subtitle ? ` · ${item.subtitle}` : ""}
+                      </p>
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+
           {getLinksByRole().map((item) => {
             const isSignatories = item.label === "Signatories";
             const isActivityLogs = item.label === "Activity Logs";

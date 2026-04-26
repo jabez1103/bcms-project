@@ -49,6 +49,7 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
   const [searchValue, setSearchValue] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [showAllNotifications, setShowAllNotifications] = useState(false);
   const [searchResults, setSearchResults] = useState<
     Array<{
       id: string;
@@ -166,12 +167,17 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
   // Derived
   const visibleNotifications = notifications.filter((n) => isNotificationEnabled(n.type));
   const filteredNotifs = visibleNotifications.filter((n) => (activeTab === "all" ? true : !n.isRead));
+  const displayedNotifs = showAllNotifications ? filteredNotifs : filteredNotifs.slice(0, 3);
 
   useEffect(() => {
     if (isNotifOpen) {
       setUnreadCount(visibleNotifications.filter((n) => !n.isRead).length);
     }
   }, [visibleNotifications, isNotifOpen]);
+
+  useEffect(() => {
+    setShowAllNotifications(false);
+  }, [activeTab, isNotifOpen]);
 
   useEffect(() => {
     const q = searchValue.trim();
@@ -348,7 +354,7 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
         </div>
 
         {/* RIGHT SIDE: ACTIONS */}
-        <div className="flex items-center gap-0.5 md:gap-6">
+        <div className="flex items-center gap-2 md:gap-6">
           {/* SEARCH BAR */}
           <div ref={searchRef} className="relative hidden sm:block">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
@@ -472,7 +478,7 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
                         <p className="text-xs text-slate-400">Loading...</p>
                       </div>
                     ) : filteredNotifs.length > 0 ? (
-                      filteredNotifs.map((notif) => (
+                      displayedNotifs.map((notif) => (
                         <div
                           key={notif.id}
                           onClick={() => handleNotifClick(notif)}
@@ -494,13 +500,23 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
                       </div>
                     )}
                   </div>
+                  {filteredNotifs.length > 3 && (
+                    <div className="p-2.5 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
+                      <button
+                        onClick={() => setShowAllNotifications((prev) => !prev)}
+                        className="w-full py-2 rounded-lg text-[10px] font-black uppercase tracking-widest text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-500/10 hover:bg-brand-100 dark:hover:bg-brand-500/20 transition-colors"
+                      >
+                        {showAllNotifications ? "Show less" : "See more"}
+                      </button>
+                    </div>
+                  )}
                 </div>
               </>
             )}
           </div>
 
           {/* PROFILE */}
-          <div className="relative border-l border-slate-100 pl-1 md:pl-6">
+          <div className="relative border-l border-slate-100 pl-2 md:pl-6">
             <button onClick={() => setDropdownOpen(!isDropdownOpen)} className="flex items-center gap-1.5 md:gap-3 group">
               <div className="relative">
                 <ProfileAvatar
