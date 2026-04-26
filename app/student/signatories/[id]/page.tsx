@@ -506,7 +506,9 @@ export default function SignatoryDetails() {
               <p className="text-sm text-indigo-900 dark:text-indigo-200 leading-relaxed">
                 {isPhysical
                   ? "Visit the office listed above during the available schedule. Bring all required documents and have this clearance stamped."
-                  : "Upload your file below. It will be reviewed by the signatory in the order received. You will be notified once your status is updated."}
+                  : uploadAllowed
+                    ? "Upload your file below. It will be reviewed by the signatory in the order received. You will be notified once your status is updated."
+                    : "Follow the signatory instructions above. Upload submission is currently disabled for this requirement."}
               </p>
             </div>
 
