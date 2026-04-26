@@ -310,7 +310,7 @@ export default function LandingPage() {
       </section>
 
       {/* --- THE PROCESS --- */}
-      <section id="how-it-works" className="py-14 md:py-32 px-3 sm:px-4 md:px-6 bg-[#FDFCFE] dark:bg-slate-950 transition-colors duration-300 scroll-mt-28">
+      <section id="how-it-works" className="py-14 md:py-32 px-3 sm:px-4 md:px-6 bg-[#fbfcff] dark:bg-slate-950 transition-colors duration-300 scroll-mt-28">
         <div className="mx-auto max-w-7xl">
           <div className="flex flex-col md:flex-row items-end justify-between mb-10 md:mb-20 gap-5 md:gap-8">
             <div className="max-w-2xl">
@@ -405,7 +405,7 @@ export default function LandingPage() {
       </section>
 
       {/* --- DIRECTORY --- */}
-      <section id="directory" className="py-14 md:py-28 px-3 sm:px-4 md:px-6 bg-[#F8FAFC] dark:bg-slate-900/30 transition-colors duration-300 scroll-mt-28">
+      <section id="directory" className="py-14 md:py-28 px-3 sm:px-4 md:px-6 bg-[#fbfcff] dark:bg-slate-900/30 transition-colors duration-300 scroll-mt-28">
         <div className="mx-auto max-w-7xl">
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-5 md:gap-8 mb-8 md:mb-14">
             <div className="max-w-3xl">

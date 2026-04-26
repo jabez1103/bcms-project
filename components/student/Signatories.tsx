@@ -59,7 +59,7 @@ export default function SignatoriesPage() {
   }, []);
 
   if (loading) return (
-    <div className="p-3 sm:p-4 md:p-6 bg-[#F8FAFC] dark:bg-slate-950 min-h-screen text-slate-900 dark:text-slate-100 transition-colors">
+    <div className="p-3 sm:p-4 md:p-6 bg-[#fbfcff] dark:bg-slate-950 min-h-screen text-slate-900 dark:text-slate-100 transition-colors">
       <h1 className="text-2xl font-black mb-6 tracking-tight text-slate-900 dark:text-white uppercase">Signatories</h1>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -77,7 +77,7 @@ export default function SignatoriesPage() {
 
 
   return (
-    <div className="p-3 sm:p-4 md:p-6 bg-[#F8FAFC] dark:bg-slate-950 min-h-screen text-slate-900 dark:text-slate-100 transition-colors">
+    <div className="p-3 sm:p-4 md:p-6 bg-[#fbfcff] dark:bg-slate-950 min-h-screen text-slate-900 dark:text-slate-100 transition-colors">
       <h1 className="text-2xl font-black mb-6 tracking-tight text-slate-900 dark:text-white uppercase">Signatories</h1>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

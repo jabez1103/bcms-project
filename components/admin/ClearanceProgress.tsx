@@ -7,7 +7,7 @@ import { BarChart3, FileDown, X } from "lucide-react";
 
 /* ================= TYPES ================= */
 
-type StudentStatus = "Completed" | "Pending" | "Incomplete";
+type StudentStatus = "Cleared" | "Not Cleared";
 
 interface Student {
   id: number;
@@ -41,6 +41,16 @@ interface RequirementDetail {
   status: string;
 }
 
+interface StudentSignatoryBreakdown {
+  department: string;
+  signatoryName: string;
+  approved: number;
+  pending: number;
+  rejected: number;
+  total: number;
+  status: "Approved" | "Pending" | "Rejected";
+}
+
 const YEAR_LABELS: Record<number, string> = {
   1: "1st Year", 2: "2nd Year", 3: "3rd Year", 4: "4th Year"
 };
@@ -59,7 +69,6 @@ export default function ClearanceProgress() {
     yearLevel: "All Years",
     section: "All Sections",
     role: "Student",
-    department: "All Departments",
   });
   const [studentDetails, setStudentDetails] = useState<RequirementDetail[]>([]);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
@@ -83,10 +92,7 @@ export default function ClearanceProgress() {
 
   /* ── COMPUTE STATUS & PROGRESS ── */
   function getStudentStatus(s: Student): StudentStatus {
-    if (s.total === 0) return "Incomplete";
-    if (s.approved === s.total) return "Completed";
-    if (s.approved > 0) return "Pending";
-    return "Incomplete";
+    return s.status;
   }
 
   function getProgress(s: Student): number {
@@ -104,43 +110,21 @@ export default function ClearanceProgress() {
     });
   }, [students, filters.program, filters.yearLevel, filters.section]);
 
-  const departmentOptions = useMemo(() => {
-    const set = new Set(signatories.map((s) => s.department).filter(Boolean));
-    return ["All Departments", ...Array.from(set).sort((a, b) => a.localeCompare(b))];
-  }, [signatories]);
-
-  const filteredSignatories = useMemo(() => {
-    return signatories.filter((s) => {
-      if (filters.department === "All Departments") return true;
-      return s.department === filters.department;
-    });
-  }, [signatories, filters.department]);
-
   useEffect(() => { setCurrentPage(1); }, [filters]);
 
   /* ── STATS ── */
   const stats = useMemo(() => {
-    const studentMode = filters.role === "Student";
-    const activeRows = studentMode ? filteredStudents : filteredSignatories;
-    const completed  = studentMode
-      ? filteredStudents.filter(s => getStudentStatus(s) === "Completed").length
-      : filteredSignatories.filter((s) => s.approved > 0 && s.pending === 0 && s.rejected === 0).length;
-    const pending    = studentMode
-      ? filteredStudents.filter(s => getStudentStatus(s) === "Pending").length
-      : filteredSignatories.filter((s) => s.pending > 0).length;
-    const incomplete = studentMode
-      ? filteredStudents.filter(s => getStudentStatus(s) === "Incomplete").length
-      : filteredSignatories.filter((s) => s.approved === 0 && s.pending === 0 && s.rejected > 0).length;
+    const cleared = filteredStudents.filter((s) => getStudentStatus(s) === "Cleared").length;
+    const notCleared = filteredStudents.filter((s) => getStudentStatus(s) === "Not Cleared").length;
     return [
-      { label: studentMode ? "Total Students" : "Total Signatories", value: activeRows.length, icon: "👥", color: "bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400" },
-      { label: "Completed",       value: completed,               icon: "✅", color: "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" },
-      { label: "Pending Review",  value: pending,                 icon: "⏳", color: "bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400" },
-      { label: "Incomplete",      value: incomplete,              icon: "❌", color: "bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400" },
+      { label: "Total Students", value: filteredStudents.length, icon: "👥", color: "bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400" },
+      { label: "Cleared", value: cleared, icon: "✅", color: "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" },
+      { label: "Not Cleared", value: notCleared, icon: "❌", color: "bg-orange-50 dark:bg-orange-500/10 text-orange-600 dark:text-orange-400" },
     ];
-  }, [filteredStudents, filteredSignatories, filters.role]);
+  }, [filteredStudents]);
 
   /* ── PAGINATION ── */
-  const activeRows = filters.role === "Student" ? filteredStudents : filteredSignatories;
+  const activeRows = filteredStudents;
   const totalPages = Math.ceil(activeRows.length / itemsPerPage);
   const paginated = activeRows.slice(
     (currentPage - 1) * itemsPerPage,
@@ -166,34 +150,8 @@ export default function ClearanceProgress() {
   };
 
   const exportAnalytics = () => {
-    const safeRole = filters.role.toLowerCase();
+    const safeRole = "student";
     const dateStamp = new Date().toISOString().slice(0, 10);
-
-    if (filters.role === "Signatory") {
-      const csv = [
-        ["Signatory ID", "Signatory Name", "Department", "Approved", "Pending", "Rejected", "Total Reviews"],
-        ...filteredSignatories.map((s) => [
-          s.signatory_id,
-          s.signatory_name,
-          s.department,
-          s.approved,
-          s.pending,
-          s.rejected,
-          s.total_reviews,
-        ]),
-      ]
-        .map((r) => r.map((v) => `"${String(v ?? "").replace(/"/g, '""')}"`).join(","))
-        .join("\n");
-
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `clearance_progress_${safeRole}_${dateStamp}.csv`;
-      a.click();
-      URL.revokeObjectURL(url);
-      return;
-    }
 
     const csv = [
       ["ID", "Name", "Email", "Program", "Year", "Section", "Progress", "Status", "Approved", "Pending", "Rejected"],
@@ -219,6 +177,56 @@ export default function ClearanceProgress() {
     const a = document.createElement("a");
     a.href = url;
     a.download = `clearance_progress_${safeRole}_${dateStamp}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const groupedStudentDetails = useMemo<StudentSignatoryBreakdown[]>(() => {
+    const groups = studentDetails.reduce((acc: Record<string, RequirementDetail[]>, row) => {
+      const key = `${row.department}|||${row.signatoryName}`;
+      (acc[key] ||= []).push(row);
+      return acc;
+    }, {});
+
+    return Object.entries(groups).map(([key, rows]) => {
+      const [department, signatoryName] = key.split("|||");
+      const approved = rows.filter((r) => r.status === "approved").length;
+      const rejected = rows.filter((r) => r.status === "rejected").length;
+      const pending = rows.filter((r) => r.status === "pending" || r.status === "not_submitted").length;
+      const total = rows.length;
+      const status: StudentSignatoryBreakdown["status"] =
+        rejected > 0 ? "Rejected" : pending > 0 ? "Pending" : "Approved";
+
+      return { department, signatoryName, approved, pending, rejected, total, status };
+    });
+  }, [studentDetails]);
+
+  const downloadStudentProgress = () => {
+    if (!selectedStudent || groupedStudentDetails.length === 0) return;
+
+    const dateStamp = new Date().toISOString().slice(0, 10);
+    const csv = [
+      ["Student ID", "Student Name", "Department", "Signatory", "Overall Status", "Approved", "Pending", "Rejected", "Total Requirements"],
+      ...groupedStudentDetails.map((row) => [
+        selectedStudent.id,
+        selectedStudent.name,
+        row.department,
+        row.signatoryName,
+        row.status,
+        row.approved,
+        row.pending,
+        row.rejected,
+        row.total,
+      ]),
+    ]
+      .map((r) => r.map((v) => `"${String(v ?? "").replace(/"/g, '""')}"`).join(","))
+      .join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `student_progress_${selectedStudent.id}_${dateStamp}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -289,37 +297,40 @@ export default function ClearanceProgress() {
       <div className="max-w-[1600px] mx-auto p-1.5 sm:p-4 md:p-10">
 
         {/* STATS GRID */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5 md:gap-6 mb-4 md:mb-10">
-          {stats.map((stat, i) => (
-            <div key={i} className="bg-white dark:bg-slate-900 p-3.5 sm:p-5 md:p-6 rounded-2xl md:rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 flex items-center gap-2.5 sm:gap-4 md:gap-5">
-              <div className={`text-xl md:text-2xl w-10 h-10 md:w-12 md:h-12 flex items-center justify-center rounded-xl md:rounded-2xl ${stat.color} dark:bg-opacity-10`}>
-                {stat.icon}
+        <div className="mb-4 md:mb-10">
+          <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-3 gap-2.5 sm:gap-5 md:gap-6">
+            {stats.map((stat, i) => (
+              <div key={i} className="bg-white dark:bg-slate-900 p-2.5 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl md:rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 flex items-center justify-center sm:justify-start gap-2 sm:gap-4 md:gap-5">
+                <div className={`hidden sm:flex text-base md:text-2xl w-8 h-8 md:w-12 md:h-12 items-center justify-center rounded-lg md:rounded-2xl ${stat.color} dark:bg-opacity-10`}>
+                  {stat.icon}
+                </div>
+                <div className="text-center sm:text-left">
+                  <p className="text-[8px] sm:text-[11px] md:text-xs font-bold text-slate-400 uppercase tracking-wider">{stat.label}</p>
+                  <p className="text-lg sm:text-xl md:text-2xl font-black text-slate-800 dark:text-slate-100 leading-none mt-0.5 sm:mt-0">{stat.value}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-[11px] md:text-xs font-bold text-slate-400 uppercase tracking-wider">{stat.label}</p>
-                <p className="text-xl md:text-2xl font-black text-slate-800 dark:text-slate-100">{stat.value}</p>
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
 
         {/* FILTERS */}
         <section className="bg-white dark:bg-slate-900 rounded-2xl md:rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 p-3.5 sm:p-5 md:p-6 mb-4 md:mb-8">
           <div className="flex flex-col lg:flex-row gap-4 justify-between items-center">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full lg:w-auto">
+            <div className="w-full">
+              <div className="grid grid-cols-2 gap-3 sm:gap-4 w-full lg:w-auto">
 
               {/* Real program options */}
               <select
-                className="bg-slate-50 dark:bg-slate-800 border-none rounded-xl p-2.5 md:p-3 text-[13px] md:text-sm font-bold text-slate-600 dark:text-slate-300 focus:ring-2 focus:ring-brand-500 outline-none"
+                className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl p-2.5 md:p-3 text-[13px] md:text-sm font-bold text-slate-600 dark:text-slate-300 focus:ring-2 focus:ring-brand-500 outline-none"
                 value={filters.role}
                 onChange={(e) => setFilters({ ...filters, role: e.target.value })}
+                disabled
               >
                 <option>Student</option>
-                <option>Signatory</option>
               </select>
 
               <select
-                className="bg-slate-50 dark:bg-slate-800 border-none rounded-xl p-2.5 md:p-3 text-[13px] md:text-sm font-bold text-slate-600 dark:text-slate-300 focus:ring-2 focus:ring-brand-500 outline-none"
+                className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl p-2.5 md:p-3 text-[13px] md:text-sm font-bold text-slate-600 dark:text-slate-300 focus:ring-2 focus:ring-brand-500 outline-none"
                 value={filters.program}
                 onChange={(e) => setFilters({ ...filters, program: e.target.value })}
                 disabled={filters.role !== "Student"}
@@ -329,7 +340,7 @@ export default function ClearanceProgress() {
               </select>
 
               <select
-                className="bg-slate-50 dark:bg-slate-800 border-none rounded-xl p-2.5 md:p-3 text-[13px] md:text-sm font-bold text-slate-600 dark:text-slate-300 focus:ring-2 focus:ring-brand-500 outline-none"
+                className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl p-2.5 md:p-3 text-[13px] md:text-sm font-bold text-slate-600 dark:text-slate-300 focus:ring-2 focus:ring-brand-500 outline-none"
                 value={filters.yearLevel}
                 onChange={(e) => setFilters({ ...filters, yearLevel: e.target.value })}
                 disabled={filters.role !== "Student"}
@@ -342,7 +353,7 @@ export default function ClearanceProgress() {
               </select>
 
               <select
-                className="bg-slate-50 dark:bg-slate-800 border-none rounded-xl p-2.5 md:p-3 text-[13px] md:text-sm font-bold text-slate-600 dark:text-slate-300 focus:ring-2 focus:ring-brand-500 outline-none"
+                className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl p-2.5 md:p-3 text-[13px] md:text-sm font-bold text-slate-600 dark:text-slate-300 focus:ring-2 focus:ring-brand-500 outline-none"
                 value={filters.section}
                 onChange={(e) => setFilters({ ...filters, section: e.target.value })}
                 disabled={filters.role !== "Student"}
@@ -350,14 +361,7 @@ export default function ClearanceProgress() {
                 {SECTION_OPTIONS.map((sec) => <option key={sec}>{sec}</option>)}
               </select>
 
-              <select
-                className="bg-slate-50 dark:bg-slate-800 border-none rounded-xl p-2.5 md:p-3 text-[13px] md:text-sm font-bold text-slate-600 dark:text-slate-300 focus:ring-2 focus:ring-brand-500 outline-none"
-                value={filters.department}
-                onChange={(e) => setFilters({ ...filters, department: e.target.value })}
-                disabled={filters.role !== "Signatory"}
-              >
-                {departmentOptions.map((d) => <option key={d}>{d}</option>)}
-              </select>
+              </div>
             </div>
 
           </div>
@@ -371,7 +375,7 @@ export default function ClearanceProgress() {
               <div className="py-20 text-center text-slate-300 font-black uppercase tracking-widest">
                 No records found
               </div>
-            ) : filters.role === "Student" ? (paginated as Student[]).map((student) => {
+            ) : (paginated as Student[]).map((student) => {
               const status = getStudentStatus(student);
               const progress = getProgress(student);
 
@@ -383,9 +387,7 @@ export default function ClearanceProgress() {
                       <p className="text-xs font-medium text-slate-400">ID: {student.id}</p>
                     </div>
                     <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest ${
-                      status === 'Completed'  ? 'bg-emerald-100 text-emerald-700' :
-                      status === 'Pending'    ? 'bg-amber-100 text-amber-700'    :
-                                               'bg-rose-100 text-rose-700'
+                      status === 'Cleared' ? 'bg-emerald-100 text-emerald-700' : 'bg-orange-100 text-orange-700'
                     }`}>
                       {status}
                     </span>
@@ -420,19 +422,11 @@ export default function ClearanceProgress() {
                       onClick={() => openStudentDetails(student)}
                       className="w-full px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300"
                     >
-                      View Per Signatory
+                      View Student Progress
                     </button>
                 </div>
               );
-            }) : (paginated as SignatoryProgress[]).map((sig) => (
-              <div key={sig.signatory_id} className="p-6 space-y-2 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
-                <p className="font-bold text-slate-800 dark:text-slate-200">{sig.signatory_name}</p>
-                <p className="text-xs font-medium text-slate-400">{sig.department}</p>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">
-                  Approved: {sig.approved} • Pending: {sig.pending} • Rejected: {sig.rejected}
-                </p>
-              </div>
-            ))}
+            })}
           </div>
 
           {/* DESKTOP TABLE VIEW */}
@@ -440,23 +434,13 @@ export default function ClearanceProgress() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50/50 dark:bg-slate-800/50">
-                  {filters.role === "Student" ? (
-                    <>
-                      <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Student</th>
-                      <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Year / Program</th>
-                      <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Progress</th>
-                      <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Per Signatory Status</th>
-                      <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
-                    </>
-                  ) : (
-                    <>
-                      <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Signatory</th>
-                      <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Department</th>
-                      <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Approved</th>
-                      <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Pending</th>
-                      <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Rejected</th>
-                    </>
-                  )}
+                  <>
+                    <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Student</th>
+                    <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Year / Program</th>
+                    <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Progress</th>
+                    <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Per Signatory Status</th>
+                    <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
+                  </>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
@@ -466,7 +450,7 @@ export default function ClearanceProgress() {
                       No records found
                     </td>
                   </tr>
-                ) : filters.role === "Student" ? (paginated as Student[]).map((student) => {
+                ) : (paginated as Student[]).map((student) => {
                   const status   = getStudentStatus(student);
                   const progress = getProgress(student);
 
@@ -509,24 +493,14 @@ export default function ClearanceProgress() {
                       </td>
                       <td className="px-8 py-6">
                         <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest ${
-                          status === 'Completed'  ? 'bg-emerald-100 text-emerald-700' :
-                          status === 'Pending'    ? 'bg-amber-100 text-amber-700'    :
-                                                   'bg-rose-100 text-rose-700'
+                          status === 'Cleared' ? 'bg-emerald-100 text-emerald-700' : 'bg-orange-100 text-orange-700'
                         }`}>
                           {status}
                         </span>
                       </td>
                     </tr>
                   );
-                }) : (paginated as SignatoryProgress[]).map((sig) => (
-                  <tr key={sig.signatory_id} className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
-                    <td className="px-8 py-6 font-bold text-slate-800 dark:text-slate-200">{sig.signatory_name}</td>
-                    <td className="px-8 py-6 text-sm text-slate-600 dark:text-slate-300">{sig.department}</td>
-                    <td className="px-8 py-6 text-sm font-black text-emerald-600 dark:text-emerald-400">{sig.approved}</td>
-                    <td className="px-8 py-6 text-sm font-black text-amber-600 dark:text-amber-400">{sig.pending}</td>
-                    <td className="px-8 py-6 text-sm font-black text-rose-600 dark:text-rose-400">{sig.rejected}</td>
-                  </tr>
-                ))}
+                })}
               </tbody>
             </table>
           </div>
@@ -562,37 +536,38 @@ export default function ClearanceProgress() {
           <div className="w-full max-w-4xl bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden">
             <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-black text-slate-900 dark:text-slate-100">Per Signatory Progress</h3>
+                <h3 className="text-lg font-black text-slate-900 dark:text-slate-100">Student Progress By Signatory</h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400">{selectedStudent.name} · ID {selectedStudent.id}</p>
               </div>
-              <button onClick={() => setSelectedStudent(null)} className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800">
-                <X size={18} />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={downloadStudentProgress}
+                  disabled={detailsLoading || groupedStudentDetails.length === 0}
+                  className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-brand-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-brand-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  <FileDown size={14} />
+                  Download Soft Copy
+                </button>
+                <button onClick={() => setSelectedStudent(null)} className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800">
+                  <X size={18} />
+                </button>
+              </div>
             </div>
             <div className="p-6 max-h-[70vh] overflow-y-auto">
               {detailsLoading ? (
-                <p className="text-sm font-bold text-slate-500">Loading breakdown...</p>
+                <p className="text-sm font-bold text-slate-500">Loading student progress...</p>
               ) : studentDetails.length === 0 ? (
-                <p className="text-sm font-bold text-slate-500">No requirement details found.</p>
+                <p className="text-sm font-bold text-slate-500">No student requirement details found.</p>
               ) : (
                 <div className="space-y-4">
-                  {Object.entries(
-                    studentDetails.reduce((acc: Record<string, RequirementDetail[]>, row) => {
-                      const key = `${row.department}|||${row.signatoryName}`;
-                      (acc[key] ||= []).push(row);
-                      return acc;
-                    }, {})
-                  ).map(([key, rows]) => {
-                    const [department, signatoryName] = key.split("|||");
-                    const approved = rows.filter((r) => r.status === "approved").length;
-                    const rejected = rows.filter((r) => r.status === "rejected").length;
-                    const pending = rows.filter((r) => r.status === "pending" || r.status === "not_submitted").length;
+                  {groupedStudentDetails.map((row) => {
                     return (
-                      <div key={key} className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 p-4">
-                        <p className="text-sm font-black text-slate-800 dark:text-slate-100">{department}</p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">{signatoryName}</p>
-                        <p className="mt-2 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">
-                          Approved: {approved} • Pending: {pending} • Rejected: {rejected}
+                      <div key={`${row.department}-${row.signatoryName}`} className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 p-4">
+                        <p className="text-sm font-black text-slate-800 dark:text-slate-100">{row.department}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">{row.signatoryName}</p>
+                        <p className="mt-1 text-[10px] font-black uppercase tracking-widest text-brand-600 dark:text-brand-400">
+                          Student Status: {row.status}
                         </p>
                       </div>
                     );

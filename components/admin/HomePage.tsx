@@ -7,6 +7,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Eye,
+  FileDown,
   GraduationCap,
   LayoutGrid,
   PieChart as PieIcon,
@@ -55,6 +56,24 @@ interface Stats {
   notCleared: number;
 }
 
+interface RequirementDetail {
+  requirementId: number;
+  requirementName: string;
+  department: string;
+  signatoryName: string;
+  status: string;
+}
+
+interface StudentSignatoryBreakdown {
+  department: string;
+  signatoryName: string;
+  approved: number;
+  pending: number;
+  rejected: number;
+  total: number;
+  status: "Approved" | "Pending" | "Rejected";
+}
+
 const STATUS_COLORS = {
   cleared: "#10b981",
   notCleared: "#f97316",
@@ -90,6 +109,8 @@ export default function AdminHomePage() {
   const [tableSearch, setTableSearch] = useState("");
   const [tableYearFilter, setTableYearFilter] = useState<YearFilter>("All");
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  const [studentDetails, setStudentDetails] = useState<RequirementDetail[]>([]);
+  const [detailsLoading, setDetailsLoading] = useState(false);
   const [chartRadius, setChartRadius] = useState({ inner: 60, outer: 85 });
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -160,8 +181,84 @@ export default function AdminHomePage() {
     return tableResults.slice(start, start + itemsPerPage);
   }, [tableResults, currentPage, itemsPerPage]);
 
+  useEffect(() => {
+    const fetchStudentDetails = async () => {
+      if (!selectedStudent) {
+        setStudentDetails([]);
+        return;
+      }
+
+      setDetailsLoading(true);
+      try {
+        const res = await fetch(`/api/admin/clearance-progress/student/${selectedStudent.student_id}`, { cache: "no-store" });
+        const data = await res.json();
+        if (data?.success && Array.isArray(data.requirements)) {
+          setStudentDetails(data.requirements as RequirementDetail[]);
+        } else {
+          setStudentDetails([]);
+        }
+      } catch {
+        setStudentDetails([]);
+      } finally {
+        setDetailsLoading(false);
+      }
+    };
+
+    fetchStudentDetails();
+  }, [selectedStudent]);
+
+  const groupedStudentDetails = useMemo<StudentSignatoryBreakdown[]>(() => {
+    const groups = studentDetails.reduce((acc: Record<string, RequirementDetail[]>, row) => {
+      const key = `${row.department}|||${row.signatoryName}`;
+      (acc[key] ||= []).push(row);
+      return acc;
+    }, {});
+
+    return Object.entries(groups).map(([key, rows]) => {
+      const [department, signatoryName] = key.split("|||");
+      const approved = rows.filter((r) => r.status === "approved").length;
+      const rejected = rows.filter((r) => r.status === "rejected").length;
+      const pending = rows.filter((r) => r.status === "pending" || r.status === "not_submitted").length;
+      const total = rows.length;
+      const status: StudentSignatoryBreakdown["status"] =
+        rejected > 0 ? "Rejected" : pending > 0 ? "Pending" : "Approved";
+
+      return { department, signatoryName, approved, pending, rejected, total, status };
+    });
+  }, [studentDetails]);
+
+  const downloadStudentProgress = () => {
+    if (!selectedStudent || groupedStudentDetails.length === 0) return;
+
+    const dateStamp = new Date().toISOString().slice(0, 10);
+    const csv = [
+      ["Student ID", "Student Name", "Department", "Signatory", "Overall Status", "Approved", "Pending", "Rejected", "Total Requirements"],
+      ...groupedStudentDetails.map((row) => [
+        selectedStudent.student_id,
+        `${selectedStudent.first_name} ${selectedStudent.last_name}`,
+        row.department,
+        row.signatoryName,
+        row.status,
+        row.approved,
+        row.pending,
+        row.rejected,
+        row.total,
+      ]),
+    ]
+      .map((r) => r.map((v) => `"${String(v ?? "").replace(/"/g, '""')}"`).join(","))
+      .join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `student_progress_${selectedStudent.student_id}_${dateStamp}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
-    <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans">
+    <div className="min-h-screen bg-[#fbfcff] dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans">
       <header className="sticky top-0 z-[20] bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200/60 dark:border-slate-800 px-3 py-4 sm:px-5 lg:px-12">
         <div className="max-w-[1600px] mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
@@ -169,7 +266,7 @@ export default function AdminHomePage() {
               <LayoutGrid size={20} />
             </div>
             <div className="space-y-0.5">
-              <h1 className="text-lg sm:text-2xl font-black tracking-tight leading-none uppercase">
+              <h1 className="text-sm sm:text-2xl font-black tracking-tight leading-none uppercase">
                 Admin <span className="text-brand-600 dark:text-brand-400">Dashboard</span>
               </h1>
               <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500">
@@ -265,7 +362,7 @@ export default function AdminHomePage() {
             </div>
           </div>
 
-          <div className="lg:col-span-4 grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-4">
+          <div className="lg:col-span-4 grid grid-cols-3 lg:grid-cols-1 gap-2 sm:gap-3 lg:gap-4">
             {loading ? (
               Array.from({ length: 3 }).map((_, i) => <SkeletonStatCard key={i} />)
             ) : (
@@ -292,8 +389,8 @@ export default function AdminHomePage() {
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto">
-              <div className="relative flex-grow sm:w-80">
+            <div className="flex flex-row gap-2 sm:gap-3 w-full xl:w-auto">
+              <div className="relative flex-[1.35] min-w-0 sm:w-80">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" size={16} />
                 <input
                   className="w-full pl-11 pr-4 py-3.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 dark:text-slate-200 rounded-2xl text-xs font-bold outline-none focus:ring-2 ring-brand-500/10 transition-all"
@@ -303,7 +400,7 @@ export default function AdminHomePage() {
                 />
               </div>
               <select
-                className="px-5 py-3.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-[10px] font-black uppercase outline-none cursor-pointer"
+                className="flex-1 sm:flex-none min-w-[120px] px-3.5 sm:px-5 py-3.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-[10px] font-black uppercase outline-none cursor-pointer"
                 value={tableYearFilter}
                 onChange={(e) => setTableYearFilter(e.target.value as YearFilter)}
               >
@@ -416,7 +513,7 @@ export default function AdminHomePage() {
 
       {selectedStudent && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 dark:bg-slate-900/80 backdrop-blur-md">
-          <div className="bg-white dark:bg-slate-900 w-full max-w-xl rounded-[2.5rem] shadow-2xl overflow-hidden">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-3xl rounded-[2.5rem] shadow-2xl overflow-hidden">
             <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
               <div className="flex items-center gap-4">
                 <div className={`w-12 h-12 ${avatarColor(selectedStudent.student_id)} rounded-2xl flex items-center justify-center font-black text-sm`}>
@@ -427,21 +524,43 @@ export default function AdminHomePage() {
                     {selectedStudent.first_name} {selectedStudent.last_name}
                   </h2>
                   <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                    {selectedStudent.user_id} • {yearLabel(selectedStudent.year_level)}
+                    ID {selectedStudent.student_id} • {yearLabel(selectedStudent.year_level)}
                   </p>
                 </div>
               </div>
-              <button onClick={() => setSelectedStudent(null)} className="p-3 bg-slate-50 dark:bg-slate-800 rounded-full text-slate-400 dark:text-slate-500">
-                <X size={18} />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={downloadStudentProgress}
+                  disabled={detailsLoading || groupedStudentDetails.length === 0}
+                  className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-brand-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-brand-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  <FileDown size={14} />
+                  Download Soft Copy
+                </button>
+                <button onClick={() => setSelectedStudent(null)} className="p-3 bg-slate-50 dark:bg-slate-800 rounded-full text-slate-400 dark:text-slate-500">
+                  <X size={18} />
+                </button>
+              </div>
             </div>
-            <div className="p-8 space-y-4">
-              <p className="text-sm text-slate-600 dark:text-slate-300">
-                <strong>Program:</strong> {selectedStudent.program || "No Program"}
-              </p>
-              <p className="text-sm text-slate-600 dark:text-slate-300">
-                <strong>Status:</strong> <span className={selectedStudent.status === "Cleared" ? "text-emerald-600 font-bold" : "text-orange-600 font-bold"}>{selectedStudent.status}</span>
-              </p>
+            <div className="p-8 max-h-[70vh] overflow-y-auto">
+              {detailsLoading ? (
+                <p className="text-sm font-bold text-slate-500">Loading student progress...</p>
+              ) : groupedStudentDetails.length === 0 ? (
+                <p className="text-sm font-bold text-slate-500">No student requirement details found.</p>
+              ) : (
+                <div className="space-y-4">
+                  {groupedStudentDetails.map((row) => (
+                    <div key={`${row.department}-${row.signatoryName}`} className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 p-4">
+                      <p className="text-sm font-black text-slate-800 dark:text-slate-100">{row.department}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{row.signatoryName}</p>
+                      <p className="mt-1 text-[10px] font-black uppercase tracking-widest text-brand-600 dark:text-brand-400">
+                        Student Status: {row.status}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -464,12 +583,12 @@ function StatCard({
   bg: string;
 }) {
   return (
-    <div className="p-6 sm:p-8 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 flex items-center justify-between shadow-sm">
-      <div>
-        <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">{label}</p>
-        <h2 className={`text-4xl sm:text-5xl font-black ${color}`}>{value}</h2>
+    <div className="p-2.5 sm:p-4 lg:p-8 bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl lg:rounded-[2rem] border border-slate-100 dark:border-slate-800 flex flex-col items-start gap-2 lg:flex-row lg:items-center lg:justify-between shadow-sm">
+      <div className="min-w-0">
+        <p className="text-[8px] sm:text-[9px] lg:text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider lg:tracking-widest mb-0.5">{label}</p>
+        <h2 className={`text-2xl sm:text-3xl lg:text-5xl font-black leading-none ${color}`}>{value}</h2>
       </div>
-      <div className={`p-4 sm:p-5 rounded-2xl ${bg} ${color}`}>{icon}</div>
+      <div className={`p-2 sm:p-2.5 lg:p-5 rounded-lg sm:rounded-xl lg:rounded-2xl ${bg} ${color}`}>{icon}</div>
     </div>
   );
 }

@@ -136,7 +136,7 @@ export default function HelpAndSupport() {
   })();
 
   return (
-    <div id="help-top" className="min-h-screen bg-[#f8fafc] dark:bg-slate-950 pb-20 font-sans transition-colors duration-300">
+    <div id="help-top" className="min-h-screen bg-[#fbfcff] dark:bg-slate-950 pb-20 font-sans transition-colors duration-300">
       {/* PREMIUM HEADER: High-contrast Navy with Glassmorphism */}
       <div className="relative bg-[#0f172a] dark:bg-slate-950 text-white pt-14 md:pt-20 pb-20 md:pb-32 px-3 md:px-8 overflow-hidden transition-colors">
         {/* Decorative elements to match your UI style */}

@@ -12,6 +12,7 @@ interface LoginFormProps {
 export default function LoginForm({ mobile = false }: LoginFormProps) {
   const searchParams = useSearchParams();
   const loginRequestInFlight = useRef(false);
+  const formRef = useRef<HTMLFormElement | null>(null);
 
   
   const [email, setEmail] = useState("");
@@ -26,6 +27,8 @@ export default function LoginForm({ mobile = false }: LoginFormProps) {
   const [forgotLoading, setForgotLoading] = useState(false);
   const [forgotMessage, setForgotMessage] = useState("");
   const [sessionNotice, setSessionNotice] = useState("");
+  const [isAuraVisible, setIsAuraVisible] = useState(false);
+  const [auraPosition, setAuraPosition] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
     const reason = searchParams.get("reason");
@@ -174,15 +177,37 @@ export default function LoginForm({ mobile = false }: LoginFormProps) {
   return (
   <>
   <form
+  ref={formRef}
   onSubmit={handleLogin}
+  onMouseEnter={() => setIsAuraVisible(true)}
+  onMouseLeave={() => setIsAuraVisible(false)}
+  onMouseMove={(e) => {
+    if (!formRef.current) return;
+    const rect = formRef.current.getBoundingClientRect();
+    setAuraPosition({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+  }}
   className={`
-    flex flex-col items-center font-body z-10 transition-all duration-700
+    relative overflow-hidden flex flex-col items-center font-body z-10 transition-all duration-700
     rounded-[2rem] border border-slate-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl
-    p-4 sm:p-8 ${mobile ? "px-3.5 sm:px-6" : "sm:p-12"} shadow-[0_32px_64px_-12px_rgba(0,0,0,0.08)]          
+    p-4 sm:p-8 ${mobile ? "px-3.5 sm:px-6 pt-4.5 sm:pt-6 pb-3.5 sm:pb-5" : "sm:p-12"} shadow-[0_32px_64px_-12px_rgba(0,0,0,0.08)]          
     w-[94%] sm:w-full max-w-[460px] mx-auto animate-fade-in-up
     ${mobile ? "my-4" : "relative"}
   `}
 >
+  {/* Local purple cursor aura (form-only) */}
+  <div
+    aria-hidden="true"
+    className="pointer-events-none absolute z-0 h-44 w-44 rounded-full blur-2xl transition-opacity duration-200"
+    style={{
+      opacity: isAuraVisible ? 0.3 : 0,
+      left: auraPosition.x - 88,
+      top: auraPosition.y - 88,
+      background:
+        "radial-gradient(circle at center, rgba(139,92,246,0.55) 0%, rgba(124,58,237,0.25) 45%, rgba(99,102,241,0.06) 75%, rgba(99,102,241,0) 100%)",
+    }}
+  />
+
+  <div className="relative z-10 contents">
   {/* Branding Logo */}
     <div className={`
       ${mobile ? "mb-3 h-12 w-12" : "mb-6 h-16 w-16"} 
@@ -206,7 +231,7 @@ export default function LoginForm({ mobile = false }: LoginFormProps) {
     </p>
 
   {/* INPUTS */}
-  <div className="mt-4 sm:mt-8 w-full space-y-3 sm:space-y-5">
+  <div className="mt-5 sm:mt-9 w-full space-y-5 sm:space-y-6">
     {/* Email */}
     <div className="flex flex-col gap-1.5">
       <label className="text-[clamp(10px,1.5vw,11px)] font-bold uppercase tracking-widest text-gray-400 dark:text-slate-500">
@@ -261,7 +286,7 @@ export default function LoginForm({ mobile = false }: LoginFormProps) {
   </div>
 
   {/* Remember Me & Forgot Password */}
-  <div className="mt-4 flex w-full flex-wrap items-center justify-between gap-1.5 px-0.5">
+  <div className="mt-5 flex w-full flex-wrap items-center justify-between gap-1.5 px-0.5">
     <label className="group flex cursor-pointer items-center gap-2">
       <input
         type="checkbox"
@@ -298,17 +323,20 @@ export default function LoginForm({ mobile = false }: LoginFormProps) {
   </div>
 
   {/* Sign In Button */}
-  <button
-    type="submit"
-    disabled={isLoading}
-    className="group relative mt-3 flex h-[46px] sm:h-12 w-full items-center justify-center overflow-hidden rounded-2xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold tracking-widest text-[9px] sm:text-[10px] uppercase transition-all hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-70"
-  >
-    {isLoading ? (
-      <div className="h-5 w-5 animate-spin rounded-full border-2 border-slate-400 border-t-slate-100" />
-    ) : (
-      <span>Sign In to System</span>
-    )}
-  </button>
+  <div className="w-full h-[96px] sm:h-[88px] flex items-center">
+    <button
+      type="submit"
+      disabled={isLoading}
+      className="group relative flex h-[46px] sm:h-12 w-full items-center justify-center overflow-hidden rounded-2xl bg-white text-slate-900 border border-brand-200/70 dark:border-brand-400/40 font-bold tracking-widest text-[9px] sm:text-[10px] uppercase transition-all hover:shadow-xl hover:shadow-brand-500/15 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-70"
+    >
+      {isLoading ? (
+        <div className="h-5 w-5 animate-spin rounded-full border-2 border-slate-400 border-t-slate-100" />
+      ) : (
+        <span>Sign In to System</span>
+      )}
+    </button>
+  </div>
+  </div>
 </form>
 {showForgotPassword && (
   <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/60 backdrop-blur-sm px-3 sm:px-4">

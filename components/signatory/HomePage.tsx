@@ -228,7 +228,7 @@ export default function SignatoryDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans">
+    <div className="min-h-screen bg-[#fbfcff] dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans">
       
       {/* STICKY HEADER COMPONENT */}
       <header className="sticky top-0 z-[20] bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200/60 dark:border-slate-800 px-3 py-4 sm:px-5 lg:px-12">
@@ -238,7 +238,7 @@ export default function SignatoryDashboard() {
                 <ShieldCheck size={20} />
             </div>
             <div className="space-y-0.5">
-              <h1 className="text-lg sm:text-2xl font-black tracking-tight leading-none uppercase">
+              <h1 className="text-sm sm:text-2xl font-black tracking-tight leading-none uppercase">
                 Signatory <span className="text-blue-600">Portal</span>
               </h1>
               <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500">
@@ -273,11 +273,11 @@ export default function SignatoryDashboard() {
                   value={globalLevelFilter}
                   onChange={(e) => setGlobalLevelFilter(e.target.value as any)}
                 >
-                  <option value="All">All Years</option>
-                  <option value="1st Year">1st Year</option>
-                  <option value="2nd Year">2nd Year</option>
-                  <option value="3rd Year">3rd Year</option>
-                  <option value="4th Year">4th Year</option>
+                  <option value="All" className="text-black bg-white">All Years</option>
+                  <option value="1st Year" className="text-black bg-white">1st Year</option>
+                  <option value="2nd Year" className="text-black bg-white">2nd Year</option>
+                  <option value="3rd Year" className="text-black bg-white">3rd Year</option>
+                  <option value="4th Year" className="text-black bg-white">4th Year</option>
                 </select>
               </div>
             </div>
@@ -311,7 +311,7 @@ export default function SignatoryDashboard() {
             </div>
           </div>
 
-          <div className="lg:col-span-4 grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-4">
+          <div className="lg:col-span-4 grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-1 gap-2 sm:gap-4">
             {loading ? (
               Array.from({ length: 3 }).map((_, i) => <SkeletonStatCard key={i} />)
             ) : (
@@ -335,12 +335,12 @@ export default function SignatoryDashboard() {
               </div>
             </div>
             
-            <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto">
-              <div className="relative flex-grow sm:w-80">
+            <div className="grid grid-cols-[1.8fr_1fr_1fr] sm:flex gap-2 sm:gap-3 w-full xl:w-auto items-stretch">
+              <div className="relative min-w-0 sm:flex-grow sm:w-80">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" size={16} />
                 <input 
                   type="text"
-                  className="w-full pl-11 pr-4 py-3.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 dark:text-slate-200 rounded-2xl text-xs font-bold outline-none focus:ring-2 ring-blue-500/10 transition-all shadow-inner"
+                  className="w-full h-11 sm:h-auto pl-10 sm:pl-11 pr-3 sm:pr-4 py-0 sm:py-3.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 dark:text-slate-200 rounded-lg sm:rounded-2xl text-[11px] sm:text-xs font-bold outline-none focus:ring-2 ring-blue-500/10 transition-all shadow-inner"
                   placeholder="Search by ID or Name..."
                   value={tableSearch}
                   onChange={(e) => setTableSearch(e.target.value)}
@@ -352,7 +352,7 @@ export default function SignatoryDashboard() {
                 />
               </div>
               <select 
-                className="px-5 py-3.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-[10px] font-black uppercase outline-none cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700 transition-all"
+                className="min-w-0 h-11 sm:h-auto px-2 sm:px-5 py-0 sm:py-3.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg sm:rounded-2xl text-[10px] sm:text-[10px] text-center font-extrabold normal-case sm:uppercase outline-none cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700 transition-all"
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value as any)}
               >
@@ -361,6 +361,12 @@ export default function SignatoryDashboard() {
                 <option value="Approved">Approved</option>
                 <option value="Rejected">Rejected</option>
               </select>
+              <button
+                onClick={handleSelectPage}
+                className="sm:hidden min-w-0 h-11 px-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-[8px] font-black uppercase tracking-[0.08em] text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all whitespace-nowrap"
+              >
+                Select
+              </button>
             </div>
           </div>
 
@@ -368,7 +374,7 @@ export default function SignatoryDashboard() {
           <div className="px-6 sm:px-8 py-4 border-t border-slate-100 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm flex items-center justify-between sticky top-0 z-10">
             <button
               onClick={handleSelectPage}
-              className="flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-slate-700 dark:text-slate-300"
+              className="hidden sm:flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-slate-700 dark:text-slate-300"
             >
               <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${
                 isPageSelected
@@ -718,12 +724,12 @@ export default function SignatoryDashboard() {
 
 function StatCard({ label, value, color, icon, bg }: { label: string, value: number, color: string, icon: React.ReactNode, bg: string }) {
   return (
-    <div className="p-6 sm:p-8 bg-white dark:bg-slate-900 rounded-[2rem] border border-slate-100 dark:border-slate-800 flex items-center justify-between shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 group">
+    <div className="p-3 sm:p-8 bg-white dark:bg-slate-900 rounded-lg sm:rounded-[2rem] border border-slate-100 dark:border-slate-800 min-h-[82px] sm:min-h-0 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 group sm:flex sm:items-center sm:justify-between">
       <div>
-        <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1 group-hover:text-slate-500 dark:group-hover:text-slate-400 transition-colors">{label}</p>
-        <h2 className={`text-4xl sm:text-5xl font-black ${color}`}>{value}</h2>
+        <p className="text-[8px] sm:text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.12em] sm:tracking-widest mb-0.5 sm:mb-1 group-hover:text-slate-500 dark:group-hover:text-slate-400 transition-colors">{label}</p>
+        <h2 className={`text-2xl sm:text-5xl leading-none font-black ${color}`}>{value}</h2>
       </div>
-      <div className={`p-4 sm:p-5 rounded-2xl ${bg} ${color} transition-transform group-hover:scale-110`}>{icon}</div>
+      <div className={`hidden sm:flex p-5 rounded-2xl ${bg} ${color} transition-transform group-hover:scale-110 [&_svg]:h-6 [&_svg]:w-6`}>{icon}</div>
     </div>
   );
 }

@@ -5,6 +5,7 @@ import type { ResultSetHeader } from "mysql2/promise";
 import { createConnection } from "@/lib/db";
 import {
   notifyClearancePeriodLive,
+  syncEndedClearancePeriodNotifications,
   syncLiveClearancePeriodNotifications,
 } from "@/lib/liveClearanceNotify";
 
@@ -166,6 +167,7 @@ export async function GET(request: NextRequest) {
 
     await normalizePeriodStatuses(db);
     await syncLiveClearancePeriodNotifications(db);
+    await syncEndedClearancePeriodNotifications(db);
 
     const [rows] = (await db.query(`
       SELECT cp.*, CONCAT(u.first_name, ' ', u.last_name) AS set_by

@@ -26,9 +26,9 @@ function StatCard({ label, value, color }: { label: string; value: number; color
     amber:   "bg-white dark:bg-slate-900 text-amber-600 dark:text-amber-400 border-slate-200 dark:border-slate-800",
   };
   return (
-    <div className={`p-5 md:p-6 rounded-[1.5rem] md:rounded-[2rem] border transition-all hover:-translate-y-1 shadow-sm ${colors[color]}`}>
-      <p className={`text-[10px] font-black uppercase tracking-widest mb-2 ${color === "indigo" ? "opacity-80" : "text-slate-400 dark:text-slate-500"}`}>{label}</p>
-      <p className="text-3xl md:text-4xl font-black">{value}</p>
+    <div className={`p-2.5 md:p-5 rounded-lg md:rounded-2xl border transition-all hover:-translate-y-0.5 shadow-sm min-h-[68px] md:min-h-[112px] flex flex-col justify-between ${colors[color]}`}>
+      <p className={`text-[8px] md:text-[10px] font-black uppercase tracking-[0.12em] md:tracking-widest leading-none ${color === "indigo" ? "opacity-85" : "text-slate-400 dark:text-slate-500"}`}>{label}</p>
+      <p className="text-xl md:text-4xl font-black leading-none">{value}</p>
     </div>
   );
 }
@@ -105,7 +105,7 @@ export default function ManageRequirements() {
   const conditional = requirements.filter(r => r.format   === "Conditional").length;
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans pb-10 transition-colors">
+    <div className="min-h-screen bg-[#fbfcff] dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans pb-10 transition-colors">
 
       {/* ── STICKY HEADER ── */}
       <header className="sticky top-0 z-[20] bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200/60 dark:border-slate-800 px-2 sm:px-4 py-4 lg:px-12">
@@ -115,7 +115,7 @@ export default function ManageRequirements() {
               <Settings2 size={20} />
             </div>
             <div className="space-y-0.5">
-              <h1 className="text-lg sm:text-2xl font-black tracking-tight leading-none uppercase">
+              <h1 className="text-sm sm:text-2xl font-black tracking-tight leading-none uppercase">
                 Manage <span className="text-brand-600">Requirements</span>
               </h1>
               <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500">
@@ -134,7 +134,7 @@ export default function ManageRequirements() {
       <div className="max-w-6xl mx-auto p-2 sm:p-4 md:p-8 lg:p-12">
 
         {/* Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-6 gap-4 mb-10">
+        <div className="grid grid-cols-3 lg:grid-cols-6 gap-2 md:gap-4 mb-5 md:mb-10">
           <StatCard label="Total"    value={requirements.length} color="indigo" />
           <StatCard label="Active"   value={active}              color="emerald" />
           <StatCard label="Drafts"   value={drafts}              color="amber" />

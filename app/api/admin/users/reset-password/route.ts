@@ -7,6 +7,7 @@ import { isTrustedMutationOrigin } from "@/lib/auth";
 import { logAuthEvent } from "@/lib/authEvents";
 import { normalizeLastNameTokenForPassword } from "@/lib/defaultImportedUserCredentials";
 import { createNotification } from "@/lib/notifications";
+import { addSystemLogDb } from "@/lib/systemLogs";
 
 const RESET_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 
@@ -125,6 +126,15 @@ export async function POST(request: NextRequest) {
       });
     } catch {
       // non-blocking student notification
+    }
+
+    try {
+      await addSystemLogDb(db, {
+        type: "security",
+        message: `Admin ${actor.user_id} reset password for user ${rows[0].user_id}`,
+      });
+    } catch {
+      // non-blocking system log
     }
 
     return NextResponse.json({

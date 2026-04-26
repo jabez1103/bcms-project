@@ -19,9 +19,9 @@ type SignatoryStatus =
   | "Pending"
   | "Not Submitted";
   
-type Program = "BSCS" | "BSIT";
+type Program = "BSCS" | "BSIT" | "BSES" | "BEED" | "BEEDMATH" | "BTLED" | "HM";
 type Year = "1st Year" | "2nd Year" | "3rd Year" | "4th Year";
-type Section = "A" | "B";
+type Section = "A" | "B" | "C" | "D" | "E";
 
 interface SubmissionRow {
   id: string;
@@ -140,7 +140,7 @@ const toSignatoryStatus = (status: SignatoryStatus): ClearanceStatus => {
 
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 p-2 sm:p-4 md:p-10 font-sans text-slate-900 dark:text-slate-100 transition-colors">
+    <div className="min-h-screen bg-[#fbfcff] dark:bg-slate-950 p-2 sm:p-4 md:p-10 font-sans text-slate-900 dark:text-slate-100 transition-colors">
 
       {/* ── STICKY HEADER ── */}
       <header className="sticky top-0 z-[20] bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200/60 dark:border-slate-800 -mx-2 sm:-mx-4 md:-mx-10 px-2 sm:px-4 md:px-10 py-4 mb-5 md:mb-6">
@@ -150,7 +150,7 @@ const toSignatoryStatus = (status: SignatoryStatus): ClearanceStatus => {
               <GraduationCap size={20} />
             </div>
             <div className="space-y-0.5">
-              <h1 className="text-lg sm:text-2xl font-black tracking-tight leading-none uppercase">
+              <h1 className="text-sm sm:text-2xl font-black tracking-tight leading-none uppercase">
                 Student <span className="text-brand-600">Clearance Status</span>
               </h1>
               <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500">
@@ -165,18 +165,18 @@ const toSignatoryStatus = (status: SignatoryStatus): ClearanceStatus => {
       <div className="max-w-[1600px] mx-auto space-y-6">
         
         {/* --- HEADER & FILTERS --- */}
-        <div className="bg-white dark:bg-slate-900 p-4 sm:p-5 md:p-8 rounded-2xl md:rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm">
-          <div className="flex flex-col xl:flex-row gap-6 mb-8 items-start xl:items-center justify-between">
+        <div className="bg-white dark:bg-slate-900 p-2 sm:p-5 md:p-8 rounded-xl md:rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div className="flex flex-col xl:flex-row gap-2 sm:gap-6 mb-3 sm:mb-8 items-start xl:items-center justify-between">
             <div>
-              <h1 className="text-2xl md:text-3xl font-black tracking-tight uppercase">Clearance Status</h1>
-              <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1">Manage student submissions</p>
+              <h1 className="hidden sm:block text-2xl md:text-3xl font-black tracking-tight uppercase">Clearance Status</h1>
+              <p className="hidden sm:block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1">Manage student submissions</p>
             </div>
-            <div className="flex gap-2 p-1.5 bg-slate-100 dark:bg-slate-800 rounded-2xl w-full xl:w-auto">
+            <div className="flex gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-md w-full xl:w-auto">
               {["All", "Cleared", "Not Cleared"].map((s) => (
                 <button 
                   key={s} 
                   onClick={() => setStatusFilter(s as any)}
-                  className={`flex-1 xl:flex-none px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${statusFilter === s ? 'bg-white dark:bg-slate-700 text-brand-600 dark:text-brand-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+                  className={`flex-1 xl:flex-none px-3 sm:px-6 py-1.5 sm:py-2 rounded-md text-[9px] sm:text-[10px] font-black uppercase tracking-wider sm:tracking-widest transition-all ${statusFilter === s ? 'bg-white dark:bg-slate-700 text-brand-600 dark:text-brand-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
                 >
                   {s}
                 </button>
@@ -184,22 +184,22 @@ const toSignatoryStatus = (status: SignatoryStatus): ClearanceStatus => {
             </div>
           </div>
 
-          <div className="flex flex-col xl:flex-row gap-4">
+          <div className="flex flex-col xl:flex-row gap-2 sm:gap-4">
             <div className="relative flex-1">
-              <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" size={18} />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" size={16} />
               <input 
                 type="text" 
                 placeholder="Search by student ID or name..." 
-                className="w-full pl-12 pr-6 py-3.5 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-2xl text-sm font-bold outline-none focus:border-brand-500 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                className="w-full pl-10 pr-3 py-2.5 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-md text-[13px] sm:text-sm font-bold outline-none focus:border-brand-500 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
 
-            <div className="flex flex-wrap gap-3 items-center">
-              <FilterGroup icon={<GraduationCap size={16}/>} value={programFilter} onChange={setProgramFilter} options={["All", "BSCS", "BSIT"]} />
-              <FilterGroup icon={<Layers size={16}/>} value={yearFilter} onChange={setYearFilter} options={["All", "1st Year", "2nd Year", "3rd Year", "4th Year"]} />
-              <FilterGroup icon={<Hash size={16}/>} value={sectionFilter} onChange={setSectionFilter} options={["All", "A", "B"]} />
+            <div className="grid grid-cols-3 gap-1.5 sm:gap-2 items-center w-full xl:w-auto">
+              <FilterGroup icon={<GraduationCap size={14}/>} value={programFilter} onChange={setProgramFilter} options={["All", "BSIT", "BSCS", "BSES", "BEED", "BEEDMATH", "BTLED", "HM"]} />
+              <FilterGroup icon={<Layers size={14}/>} value={yearFilter} onChange={setYearFilter} options={["All", "1st Year", "2nd Year", "3rd Year", "4th Year"]} />
+              <FilterGroup icon={<Hash size={14}/>} value={sectionFilter} onChange={setSectionFilter} options={["All", "A", "B", "C", "D", "E"]} />
             </div>
           </div>
         </div>
@@ -395,10 +395,10 @@ const toSignatoryStatus = (status: SignatoryStatus): ClearanceStatus => {
 
 function FilterGroup({ icon, value, onChange, options }: any) {
     return (
-        <div className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm focus-within:border-brand-500 transition-all">
-            <span className="text-slate-400 dark:text-slate-500">{icon}</span>
-            <select value={value} onChange={(e) => onChange(e.target.value)} className="bg-transparent text-[11px] text-slate-700 dark:text-slate-200 font-black uppercase outline-none cursor-pointer">
-                {options.map((opt: string) => <option key={opt} value={opt} className="bg-white dark:bg-slate-900">{opt === "All" ? `All ${opt}` : opt}</option>)}
+        <div className="flex items-center gap-1 px-2 py-1.5 bg-white dark:bg-slate-800/50 rounded-md border border-slate-200 dark:border-slate-700 shadow-sm focus-within:border-brand-500 transition-all min-w-0">
+            <span className="text-slate-400 dark:text-slate-500 shrink-0">{icon}</span>
+            <select value={value} onChange={(e) => onChange(e.target.value)} className="bg-transparent text-[9px] sm:text-[10px] text-slate-700 dark:text-slate-200 font-black uppercase outline-none cursor-pointer min-w-0 w-full">
+                {options.map((opt: string) => <option key={opt} value={opt} className="bg-white dark:bg-slate-900">{opt}</option>)}
             </select>
         </div>
     );
@@ -408,12 +408,12 @@ function ClearancePill({ status }: { status: ClearanceStatus }) {
     Cleared:
       "bg-emerald-50 text-emerald-600 border-emerald-200",
     "Not Cleared":
-      "bg-rose-50 text-rose-600 border-rose-200",
+      "bg-orange-50 text-orange-600 border-orange-200",
   };
 
   const dot = {
     Cleared: "bg-emerald-500",
-    "Not Cleared": "bg-rose-500",
+    "Not Cleared": "bg-orange-500",
   };
 
   return (

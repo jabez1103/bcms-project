@@ -130,7 +130,7 @@ export default function ProfilePage() {
   }, [user]);
 
   if (loading) return (
-    <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 p-3 sm:p-5 md:p-12">
+    <div className="min-h-screen bg-[#fbfcff] dark:bg-slate-950 p-3 sm:p-5 md:p-12">
       <div className="max-w-6xl mx-auto mt-20">
         <SkeletonDetailView />
       </div>
@@ -146,7 +146,7 @@ export default function ProfilePage() {
   const isStudent = String(user.role ?? "").toLowerCase() === "student";
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 text-slate-900 dark:text-slate-100 pb-14 md:pb-24 selection:bg-brand-100 dark:selection:bg-brand-900/30">
+    <div className="min-h-screen bg-[#fbfcff] dark:bg-slate-950 text-slate-900 dark:text-slate-100 pb-14 md:pb-24 selection:bg-brand-100 dark:selection:bg-brand-900/30">
       {/* Banner - Dark Slate */}
       <div className="w-full h-28 md:h-48 bg-[#0F172A]" />
       

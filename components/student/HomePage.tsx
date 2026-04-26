@@ -71,7 +71,7 @@ export default function HomePage() {
     //activeFilter === 'All Statuses' ? true : item.status.trim() === activeFilter
 
   if (loading) return (
-    <div className="bg-[#F8FAFC] dark:bg-slate-950 min-h-screen min-w-full relative font-sans">
+    <div className="bg-[#fbfcff] dark:bg-slate-950 min-h-screen min-w-full relative font-sans">
       <div className="p-2 sm:p-4 md:p-10 pt-24 md:pt-28">
         <div className="max-w-7xl mx-auto">
           <div className="animate-pulse space-y-4">
@@ -86,7 +86,7 @@ export default function HomePage() {
   );
 
   return (
-    <div className="bg-[#F8FAFC] dark:bg-slate-950 min-h-screen relative font-sans transition-colors duration-300">
+    <div className="bg-[#fbfcff] dark:bg-slate-950 min-h-screen relative font-sans transition-colors duration-300">
       <PageHeader
         title="Clearance Status"
         description="Monitor your institutional clearances and department approvals in real-time."

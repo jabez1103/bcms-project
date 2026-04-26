@@ -67,7 +67,7 @@ export function PageHeader({
                   </div>
                 )}
                 <div className="min-w-0">
-                  <h1 className="text-[1.2rem] sm:text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight uppercase leading-tight truncate">
+                  <h1 className="text-sm sm:text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight uppercase leading-tight truncate">
                     {title}
                   </h1>
                   {description && (

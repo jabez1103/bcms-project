@@ -298,7 +298,7 @@ export function SkeletonLogFeed() {
 // Skeleton for Signatory Detail View
 export function SkeletonDetailView() {
   return (
-    <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 transition-colors">
+    <div className="min-h-screen bg-[#fbfcff] dark:bg-slate-950 transition-colors">
       <nav className="sticky top-0 border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-950/80 px-4 sm:px-6 py-4 flex items-center">
          <Skeleton className="h-5 w-32" />
       </nav>

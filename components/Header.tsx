@@ -336,7 +336,7 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
 
   if (loading) {
     return (
-      <header className="h-[6.8vh] md:h-[10vh] bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 px-1.5 sm:px-3 md:px-8 flex items-center justify-between animate-pulse">
+      <header className="h-[7.4vh] md:h-[10vh] bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 px-1.5 sm:px-3 md:px-8 flex items-center justify-between animate-pulse">
         <div className="flex items-center gap-2 md:gap-3">
           <div className="md:hidden w-7 h-7 rounded-md bg-slate-200 dark:bg-slate-800" />
           <div className="flex flex-col gap-1">
@@ -357,24 +357,24 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
 
   return (
     <>
-      <header className="bcms-mobile-shell flex justify-between items-center px-1.5 sm:px-3 md:px-8 h-[6.8vh] md:h-[10vh] bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 sticky top-0 z-40 transition-colors duration-300">
+      <header className="bcms-mobile-shell flex justify-between items-center px-1.5 sm:px-3 md:px-8 h-[7.4vh] md:h-[10vh] bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 sticky top-0 z-40 transition-colors duration-300">
         {/* LEFT SIDE: BRANDING */}
         <div className="flex items-center gap-2 md:gap-3">
           {/* HAMBURGER MENU (MOBILE ONLY) */}
           <button 
             onClick={onMobileMenuToggle}
-            className="md:hidden p-1 -ml-0.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md transition-colors"
+            className="md:hidden p-1.5 -ml-0.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md transition-colors"
             aria-label="Open sidebar"
           >
-            <Menu size={18} />
+            <Menu size={19} />
           </button>
 
           <img src="/logo.png" alt="BISU Logo" className="hidden md:block md:w-10 md:h-10 object-contain" />
           <div className="flex flex-col justify-center leading-none">
-            <h1 className="text-[11px] md:text-sm font-black tracking-tight text-slate-800 dark:text-slate-100 uppercase leading-none">
+            <h1 className="text-[12px] md:text-sm font-black tracking-tight text-slate-800 dark:text-slate-100 uppercase leading-none">
               {t("bisuClearance")}
             </h1>
-            <p className="text-[8px] md:text-[9px] font-bold tracking-[0.13em] text-slate-400 dark:text-slate-500 uppercase leading-none">
+            <p className="text-[8.5px] md:text-[9px] font-bold tracking-[0.13em] text-slate-400 dark:text-slate-500 uppercase leading-none">
               {t("managementSystem")}
             </p>
           </div>
@@ -464,8 +464,8 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
             {isNotifOpen && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => { setNotifOpen(false); setMenuOpen(false); }} />
-                <div className="absolute right-0 mt-2.5 w-[min(92vw,20rem)] md:w-96 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-20 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                  <div className="p-3.5 md:p-4 border-b border-slate-50 dark:border-slate-800 flex items-center justify-between">
+                <div className="fixed left-3 right-3 top-14 w-auto md:absolute md:left-auto md:right-0 md:top-auto md:mt-2.5 md:w-96 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl md:rounded-2xl shadow-2xl z-20 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                  <div className="p-3 md:p-4 border-b border-slate-50 dark:border-slate-800 flex items-center justify-between">
                     <h3 className="font-bold text-slate-900 dark:text-slate-100">{t("notifications")}</h3>
                     <div className="relative">
                       <button onClick={() => setMenuOpen(!isNotifMenuOpen)} className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors">
@@ -488,12 +488,12 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
                     </div>
                   </div>
 
-                  <div className="flex gap-2 p-2 bg-slate-50/50 dark:bg-slate-800/50">
+                  <div className="flex gap-1.5 p-1.5 md:gap-2 md:p-2 bg-slate-50/50 dark:bg-slate-800/50">
                     {["all", "unread"].map((tab) => (
                       <button
                         key={tab}
                         onClick={() => setActiveTab(tab as any)}
-                        className={`flex-1 py-1.5 rounded-lg text-xs font-bold capitalize transition-all ${
+                        className={`flex-1 py-1.5 md:py-2 rounded-md md:rounded-lg text-[11px] md:text-xs font-bold capitalize transition-all ${
                           activeTab === tab ? "bg-white dark:bg-slate-700 text-brand-600 dark:text-brand-400 shadow-sm" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
                         }`}
                       >
@@ -502,7 +502,7 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
                     ))}
                   </div>
 
-                  <div className="max-h-[68vh] md:max-h-[400px] overflow-y-auto">
+                  <div className="max-h-[52vh] md:max-h-[400px] overflow-y-auto">
                     {notifLoading ? (
                       <div className="flex items-center justify-center py-12 gap-3">
                         <div className="w-5 h-5 border-2 border-brand-200 border-t-brand-500 rounded-full animate-spin" />
@@ -513,21 +513,21 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
                         <div
                           key={notif.id}
                           onClick={() => handleNotifClick(notif)}
-                          className="p-3.5 md:p-4 flex gap-2.5 md:gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors border-b border-slate-50 dark:border-slate-800/50 last:border-0 relative"
+                          className="p-3 md:p-4 flex gap-2 md:gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors border-b border-slate-50 dark:border-slate-800/50 last:border-0 relative"
                         >
                           <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${notif.isRead ? "bg-transparent" : "bg-brand-500"}`} />
                           <div className="flex-1">
-                            <p className={`text-[13px] md:text-sm leading-snug ${notif.isRead ? "text-slate-500 dark:text-slate-400" : "text-slate-900 dark:text-slate-100 font-semibold"}`}>
+                            <p className={`text-xs md:text-sm leading-snug ${notif.isRead ? "text-slate-500 dark:text-slate-400" : "text-slate-900 dark:text-slate-100 font-semibold"}`}>
                               {notif.title}
                             </p>
-                            <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{notif.message}</p>
+                            <p className="text-[11px] md:text-xs text-slate-400 dark:text-slate-500 mt-0.5">{notif.message}</p>
                             <p className="text-[10px] text-brand-500 dark:text-brand-400 font-bold mt-2 uppercase">{relativeTime(notif.createdAt)}</p>
                           </div>
                         </div>
                       ))
                     ) : (
-                      <div className="py-12 text-center">
-                        <p className="text-sm text-slate-400 italic">{t("noNotificationsFound")}</p>
+                      <div className="py-8 md:py-12 text-center">
+                        <p className="text-xs md:text-sm text-slate-400 italic">{t("noNotificationsFound")}</p>
                       </div>
                     )}
                   </div>
@@ -562,7 +562,7 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
                   src={user?.avatar}
                   fullName={user?.full_name || user?.name}
                   alt="Profile"
-                  className="w-[30px] h-[30px] md:w-10 md:h-10 rounded-xl object-cover border-2 border-transparent group-hover:border-brand-100 transition-all"
+                  className="w-[30px] h-[30px] md:w-10 md:h-10 rounded-xl object-cover bg-slate-200 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 group-hover:border-brand-100 transition-all"
                   initialsClassName="border-2 border-transparent group-hover:border-brand-100 text-[9px] md:text-[11px]"
                 />
                 <div className="absolute -bottom-0.5 -right-0.5 w-2 h-2 md:w-3 md:h-3 bg-emerald-500 border-2 border-white rounded-full" />
@@ -586,7 +586,7 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
                       src={user?.avatar}
                       fullName={user?.full_name || user?.name}
                       alt="Profile"
-                      className="w-16 h-16 rounded-xl object-cover border border-brand-100 shadow-sm"
+                      className="w-16 h-16 rounded-xl object-cover bg-slate-200 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm"
                       initialsClassName="text-xl border border-brand-100 shadow-sm"
                     />
                     <div className="text-center mb-1">

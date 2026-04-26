@@ -2,7 +2,10 @@ import { verifySessionFromCookies } from "@/lib/requestSession";
 import { NextRequest, NextResponse } from "next/server";
 
 import { createConnection } from "@/lib/db";
-import { notifyClearancePeriodLive } from "@/lib/liveClearanceNotify";
+import {
+  notifyClearancePeriodClosed,
+  notifyClearancePeriodLive,
+} from "@/lib/liveClearanceNotify";
 
 type DbConnection = Awaited<ReturnType<typeof createConnection>>;
 type TokenPayload = {
@@ -219,6 +222,22 @@ export async function PUT(
         });
       } catch (err) {
         console.error("[clearance-periods PUT] notify live failed", err);
+      }
+    }
+
+    if (period_status === "ended" && previousStatus !== "ended") {
+      try {
+        const startDay = String(start_date).split("T")[0];
+        const endDay = String(end_date).split("T")[0];
+        await notifyClearancePeriodClosed(db, {
+          periodId: Number(id),
+          academicYear: academic_year,
+          semester: semester || null,
+          startDate: startDay,
+          endDate: endDay,
+        });
+      } catch (err) {
+        console.error("[clearance-periods PUT] notify ended failed", err);
       }
     }
 

@@ -65,6 +65,7 @@ export default function UltimateClearancePortal() {
   /* --- PAGINATION --- */
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [isPagePartiallySelected, setIsPagePartiallySelected] = useState(false);
 
   React.useEffect(() => {
     const fetchSubmissions = async () => {
@@ -136,11 +137,22 @@ export default function UltimateClearancePortal() {
     setShowBulkModal(null);
   };
 
+  const pageIds = useMemo(
+    () => paginatedData.map((s) => String(s.id)),
+    [paginatedData]
+  );
+
   const isPageSelected =
-    paginatedData.length > 0 && paginatedData.every((s) => selectedIds.includes(String(s.id)));
+    pageIds.length > 0 && pageIds.every((id) => selectedIds.includes(id));
+
+  useEffect(() => {
+    const selectedOnPageCount = pageIds.filter((id) => selectedIds.includes(id)).length;
+    setIsPagePartiallySelected(
+      selectedOnPageCount > 0 && selectedOnPageCount < pageIds.length
+    );
+  }, [pageIds, selectedIds]);
   
   const handleSelectPage = () => {
-    const pageIds = paginatedData.map(s => s.id);
     if (isPageSelected) {
       setSelectedIds(prev => prev.filter(id => !pageIds.includes(id)));
     } else {
@@ -164,7 +176,7 @@ export default function UltimateClearancePortal() {
               <Eye size={20} />
             </div>
             <div className="space-y-0.5">
-              <h1 className="text-lg sm:text-2xl font-black tracking-tight leading-none uppercase">
+              <h1 className="text-sm sm:text-2xl font-black tracking-tight leading-none uppercase">
                 Review <span className="text-brand-600">Submissions</span>
               </h1>
               <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500">
@@ -187,29 +199,75 @@ export default function UltimateClearancePortal() {
         </section>
 
         {/* --- SEARCH & SELECT ALL --- */}
-        <section className="space-y-4">
-          <div className="flex flex-col sm:flex-row gap-4">
+        <section className="space-y-3 sm:space-y-4">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
             <div className="relative flex-1">
-              <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-500" size={18} />
+              <Search className="absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 text-slate-300 dark:text-slate-500" size={16} />
               <input 
-                className="w-full pl-16 pr-6 py-5 bg-white dark:bg-slate-900 border-none rounded-[2rem] text-xs font-bold text-slate-800 dark:text-slate-200 shadow-sm focus:ring-4 ring-brand-500/5 transition-all outline-none"
+                className="w-full pl-11 sm:pl-16 pr-4 sm:pr-6 py-3 sm:py-5 bg-white dark:bg-slate-900 border-none rounded-xl sm:rounded-[2rem] text-[11px] sm:text-xs font-bold text-slate-800 dark:text-slate-200 shadow-sm focus:ring-4 ring-brand-500/5 transition-all outline-none"
                 placeholder="Filter submissions..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
-            <div className="flex bg-white dark:bg-slate-900 p-2 rounded-[2rem] shadow-sm shrink-0 items-center">
-              <button onClick={() => setViewMode("grid")} className={`px-4 py-3 rounded-2xl flex items-center gap-2 text-xs font-bold transition-all ${viewMode === "grid" ? "bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400" : "text-slate-400 hover:text-slate-600"}`}>
+            <div className="hidden sm:flex bg-white dark:bg-slate-900 p-1.5 sm:p-2 rounded-xl sm:rounded-[2rem] shadow-sm shrink-0 items-center">
+              <button onClick={() => setViewMode("grid")} className={`px-3 sm:px-4 py-2 sm:py-3 rounded-lg sm:rounded-2xl flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-bold transition-all ${viewMode === "grid" ? "bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400" : "text-slate-400 hover:text-slate-600"}`}>
                 <LayoutGrid size={16} /> <span className="hidden sm:inline">Grid</span>
               </button>
-              <button onClick={() => setViewMode("table")} className={`px-4 py-3 rounded-2xl flex items-center gap-2 text-xs font-bold transition-all ${viewMode === "table" ? "bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400" : "text-slate-400 hover:text-slate-600"}`}>
+              <button onClick={() => setViewMode("table")} className={`px-3 sm:px-4 py-2 sm:py-3 rounded-lg sm:rounded-2xl flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-bold transition-all ${viewMode === "table" ? "bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400" : "text-slate-400 hover:text-slate-600"}`}>
                 <TableIcon size={16} /> <span className="hidden sm:inline">Table</span>
               </button>
             </div>
           </div>
 
+          {/* MOBILE QUICK CONTROLS */}
+          <div className="grid grid-cols-4 gap-2 sm:hidden">
+            <button
+              onClick={() => setViewMode("grid")}
+              className={`h-10 rounded-lg border flex items-center justify-center transition-all ${
+                viewMode === "grid"
+                  ? "bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400 border-brand-200 dark:border-brand-500/30"
+                  : "bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700"
+              }`}
+              aria-label="Grid view"
+            >
+              <LayoutGrid size={15} />
+            </button>
+            <button
+              onClick={() => setViewMode("table")}
+              className={`h-10 rounded-lg border flex items-center justify-center transition-all ${
+                viewMode === "table"
+                  ? "bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400 border-brand-200 dark:border-brand-500/30"
+                  : "bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700"
+              }`}
+              aria-label="Table view"
+            >
+              <TableIcon size={15} />
+            </button>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as SubmissionStatus | "All")}
+              className="h-10 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 text-[10px] font-black uppercase tracking-[0.1em] px-2 outline-none"
+            >
+              <option value="All">All</option>
+              <option value="Pending">Pending</option>
+              <option value="Approved">Approved</option>
+              <option value="Rejected">Rejected</option>
+            </select>
+            <button
+              onClick={handleSelectPage}
+              className={`h-10 rounded-lg border text-[9px] font-black uppercase tracking-[0.1em] transition-all ${
+                isPageSelected || isPagePartiallySelected
+                  ? "bg-slate-900 dark:bg-brand-600 text-white border-slate-900 dark:border-brand-600"
+                  : "bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700"
+              }`}
+            >
+              Select All
+            </button>
+          </div>
+
           {/* STATUS FILTER PILLS */}
-          <div className="flex flex-wrap gap-2">
+          <div className="hidden sm:flex flex-wrap gap-1.5 sm:gap-2">
             {(["All", "Pending", "Approved", "Rejected"] as const).map((s) => {
               const count = s === "All" ? students.length : students.filter(x => x.status === s).length;
               const active = statusFilter === s;
@@ -223,10 +281,10 @@ export default function UltimateClearancePortal() {
                 <button
                   key={s}
                   onClick={() => setStatusFilter(s)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 ${colors[s]}`}
+                  className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-[0.12em] sm:tracking-widest transition-all active:scale-95 ${colors[s]}`}
                 >
                   {s}
-                  <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-black ${
+                  <span className={`px-1.5 py-0.5 rounded-full text-[8px] sm:text-[9px] font-black ${
                     active ? "bg-white/25 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
                   }`}>{count}</span>
                 </button>
@@ -234,21 +292,32 @@ export default function UltimateClearancePortal() {
             })}
           </div>
 
-          <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm p-6 rounded-[2rem] border border-slate-50 dark:border-slate-800 shadow-sm flex items-center justify-between sticky top-0 z-10">
-            <button onClick={handleSelectPage} className="flex items-center gap-4 text-[10px] font-black uppercase tracking-widest text-slate-700 dark:text-slate-300">
-              <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${isPageSelected ? 'bg-slate-900 dark:bg-brand-600 border-slate-900 dark:border-brand-600' : 'border-slate-200 dark:border-slate-700'}`}>
+          <div className="hidden sm:flex bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm p-4 sm:p-6 rounded-xl sm:rounded-[2rem] border border-slate-50 dark:border-slate-800 shadow-sm flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-0 sm:justify-between sticky top-0 z-10">
+            <button onClick={handleSelectPage} className="flex items-center gap-3 text-[9px] sm:text-[10px] font-black uppercase tracking-[0.12em] sm:tracking-widest text-slate-700 dark:text-slate-300">
+              <div className={`w-5 h-5 sm:w-6 sm:h-6 rounded-md sm:rounded-lg border-2 flex items-center justify-center transition-all ${isPageSelected || isPagePartiallySelected ? 'bg-slate-900 dark:bg-brand-600 border-slate-900 dark:border-brand-600' : 'border-slate-200 dark:border-slate-700'}`}>
                 {isPageSelected && <CheckSquare size={14} className="text-white" />}
+                {!isPageSelected && isPagePartiallySelected && (
+                  <div className="w-2.5 h-0.5 rounded bg-white" />
+                )}
               </div>
               Select All Page
             </button>
             {selectedIds.length > 0 && (
-                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                  <span className="text-[10px] font-black text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-500/10 px-3 py-1.5 rounded-full">{selectedIds.length} Selected</span>
-                  <button onClick={() => setShowBulkModal("Approve")} className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95">Approve</button>
-                  <button onClick={() => setShowBulkModal("Reject")} className="px-4 py-2 bg-rose-500 hover:bg-rose-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95">Reject</button>
+                <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                  <span className="text-[9px] sm:text-[10px] font-black text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-500/10 px-2.5 py-1 rounded-full">{selectedIds.length} Selected</span>
+                  <button onClick={() => setShowBulkModal("Approve")} className="px-3 sm:px-4 py-1.5 sm:py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg sm:rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-[0.12em] sm:tracking-widest transition-all active:scale-95">Approve</button>
+                  <button onClick={() => setShowBulkModal("Reject")} className="px-3 sm:px-4 py-1.5 sm:py-2 bg-rose-500 hover:bg-rose-600 text-white rounded-lg sm:rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-[0.12em] sm:tracking-widest transition-all active:scale-95">Reject</button>
                 </div>
             )}
           </div>
+
+          {selectedIds.length > 0 && (
+            <div className="sm:hidden flex flex-wrap items-center gap-2 rounded-lg border border-slate-100 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 p-2.5">
+              <span className="text-[9px] font-black text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-500/10 px-2 py-1 rounded-full">{selectedIds.length} Selected</span>
+              <button onClick={() => setShowBulkModal("Approve")} className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-[9px] font-black uppercase tracking-[0.12em] transition-all active:scale-95">Approve</button>
+              <button onClick={() => setShowBulkModal("Reject")} className="px-3 py-1.5 bg-rose-500 hover:bg-rose-600 text-white rounded-lg text-[9px] font-black uppercase tracking-[0.12em] transition-all active:scale-95">Reject</button>
+            </div>
+          )}
         </section>
 
         {/* MAIN LIST — single card wraps both views + pagination */}
@@ -314,8 +383,57 @@ export default function UltimateClearancePortal() {
             ))}
           </div>
 
+          {/* MOBILE TABLE VIEW */}
+          <div className={viewMode === "table" ? "block xl:hidden border-t border-slate-100 dark:border-slate-800" : "hidden"}>
+               <table className="w-full text-left border-collapse">
+                 <thead>
+                   <tr className="bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
+                     <th className="px-3 py-3 text-[9px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-[0.12em]">Student</th>
+                     <th className="px-3 py-3 text-[9px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-[0.12em] text-center">Status</th>
+                     <th className="px-3 py-3 text-[9px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-[0.12em] text-right">Action</th>
+                   </tr>
+                 </thead>
+                 <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
+                   {loading ? (
+                     <>
+                       <SkeletonTableRow cols={3} />
+                       <SkeletonTableRow cols={3} />
+                       <SkeletonTableRow cols={3} />
+                     </>
+                   ) : paginatedData.map((s) => (
+                     <tr key={s.id} className={`transition-colors ${selectedIds.includes(String(s.id)) ? 'bg-brand-50/30 dark:bg-brand-900/10' : ''}`}>
+                       <td className="px-3 py-3 align-top">
+                         <div className="flex items-start gap-2.5">
+                           <input
+                             type="checkbox"
+                             checked={selectedIds.includes(String(s.id))}
+                             onChange={() => toggleSelect(s.id)}
+                             className="mt-0.5 w-4 h-4 rounded border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-brand-600 focus:ring-brand-500 dark:focus:ring-brand-400 cursor-pointer"
+                           />
+                           <div className="min-w-0">
+                             <p className="text-xs font-black text-slate-900 dark:text-slate-100 truncate">{s.name}</p>
+                             <p className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wide mt-0.5 truncate">{s.id} • {s.program} • {s.year}</p>
+                             <p className="text-[9px] font-bold text-slate-500 dark:text-slate-400 mt-1 truncate">{s.requirement}</p>
+                           </div>
+                         </div>
+                       </td>
+                       <td className="px-3 py-3 text-center align-top"><div className="inline-flex"><StatusBadge status={s.status} /></div></td>
+                       <td className="px-3 py-3 text-right align-top">
+                         <button
+                           onClick={() => setSelectedStudent(s)}
+                           className="px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-[9px] font-black uppercase tracking-[0.12em] text-slate-600 dark:text-slate-300 hover:border-brand-500 dark:hover:border-brand-400 hover:text-brand-600 dark:hover:text-brand-400 transition-all active:scale-95"
+                         >
+                           Review
+                         </button>
+                       </td>
+                     </tr>
+                   ))}
+                 </tbody>
+               </table>
+          </div>
+
           {/* TABLE VIEW */}
-          <div className={viewMode === "table" ? "overflow-x-auto border-t border-slate-100 dark:border-slate-800" : "hidden"}>
+          <div className={viewMode === "table" ? "hidden xl:block overflow-x-auto border-t border-slate-100 dark:border-slate-800" : "hidden"}>
                <table className="w-full text-left border-collapse min-w-[800px]">
                  <thead>
                    <tr className="bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
@@ -577,7 +695,7 @@ export default function UltimateClearancePortal() {
 function StatusBadge({ status }: { status: SubmissionStatus }) {
   const styles = {
     Approved: "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-500/20",
-    Pending: "bg-[#EEF2FF] dark:bg-brand-500/10 text-[#6366F1] dark:text-brand-400 border-[#E0E7FF] dark:border-brand-500/20",
+    Pending: "bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-100 dark:border-amber-500/20",
     Rejected: "bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-100 dark:border-rose-500/20",
   };
   return (

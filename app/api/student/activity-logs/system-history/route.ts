@@ -9,7 +9,7 @@ import { createConnection } from "@/lib/db";
  * Returns a chronological list of major system events for the logged-in student:
  *   1. Account creation
  *   2. Enrollment info
- *   3. Auth events  (login / logout / password_changed) — from auth_events table
+ *   3. Auth events  (login / logout / password_changed / password_reset_by_admin) — from auth_events table
  *   4. Clearance periods they participated in
  */
 export async function GET(request: NextRequest) {
@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
       ip_address: null,
     });
 
-    /* ── 4. Auth events (login / logout / password_changed) ─── */
+    /* ── 4. Auth events (login / logout / password_changed / password_reset_by_admin) ─── */
     const [authRows]: any = await db.query(
       `SELECT event_id, event_type, ip_address, created_at
        FROM auth_events
@@ -88,6 +88,9 @@ export async function GET(request: NextRequest) {
       } else if (ev.event_type === "password_changed") {
         action = "Password changed";
         status = "password_changed";
+      } else if (ev.event_type === "password_reset_by_admin") {
+        action = "Password reset by admin";
+        status = "password_reset";
       }
 
       events.push({
@@ -142,8 +145,32 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    /* ── Sort by natural insertion order (already chronological) */
-    return NextResponse.json({ success: true, history: events });
+    /* ── 6. Admin period updates from notifications (open/closed) ── */
+    const [periodUpdateRows]: any = await db.query(
+      `SELECT type, title, created_at
+       FROM notifications
+       WHERE user_id = ?
+         AND role = 'student'
+         AND type IN ('period_opened', 'period_closed')
+       ORDER BY created_at ASC`,
+      [payload.user_id]
+    );
+
+    for (const row of periodUpdateRows) {
+      const isOpened = row.type === "period_opened";
+      events.push({
+        id: idCounter++,
+        event_type: row.type,
+        action: String(row.title || (isOpened ? "Clearance period opened" : "Clearance period ended")),
+        status: isOpened ? "active" : "neutral",
+        time: formatDateTime(row.created_at),
+        ip_address: null,
+      });
+    }
+
+    /* ── Keep latest 15 and show newest first */
+    const history = events.slice(-15).reverse();
+    return NextResponse.json({ success: true, history });
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   } finally {

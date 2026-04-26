@@ -161,21 +161,34 @@ const SystemHistoryPage = () => {
               </p>
             </div>
 
-            {/* Search */}
-            <div className="relative w-full sm:w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search history..."
-                className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-lg text-xs outline-none transition-all focus:bg-white dark:focus:bg-slate-950 focus:ring-4 focus:ring-brand-500/5 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500"
-              />
+            {/* Search + mobile category dropdown */}
+            <div className="grid grid-cols-[2fr_1fr] gap-2 w-full sm:w-auto sm:flex sm:items-center">
+              <div className="relative min-w-0 flex-1 sm:w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search history..."
+                  className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-lg text-xs outline-none transition-all focus:bg-white dark:focus:bg-slate-950 focus:ring-4 focus:ring-brand-500/5 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                />
+              </div>
+              <select
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value)}
+                className="sm:hidden min-w-0 px-2 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-[10px] font-black uppercase text-slate-600 dark:text-slate-300 outline-none cursor-pointer"
+              >
+                {categories.map((cat) => (
+                  <option key={cat} value={cat} className="text-black bg-white">
+                    {cat}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
           {/* Category filter pills */}
-          <div className="flex flex-wrap gap-1.5">
+          <div className="hidden sm:flex flex-wrap gap-1.5">
             {categories.map((cat) => (
               <button
                 key={cat}

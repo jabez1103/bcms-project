@@ -90,8 +90,8 @@ const RecentLogsPage = () => {
             </div>
 
             {/* Controls row */}
-            <div className="flex flex-col xs:flex-row gap-2 w-full sm:w-auto">
-              <div className="relative flex-1 sm:w-56">
+            <div className="grid grid-cols-[2fr_1fr] gap-2 w-full sm:flex sm:w-auto">
+              <div className="relative min-w-0 flex-1 sm:w-56">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                 <input
                   type="text"
@@ -104,7 +104,7 @@ const RecentLogsPage = () => {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value as any)}
-                className="px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-[11px] font-bold text-slate-600 dark:text-slate-300 outline-none cursor-pointer"
+                className="min-w-0 px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-[11px] font-bold text-slate-600 dark:text-slate-300 outline-none cursor-pointer"
               >
                 <option value="All">All Status</option>
                 <option value="success">Approved</option>

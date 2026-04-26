@@ -159,7 +159,7 @@ export default function SignatoryDetails() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 transition-colors text-slate-900 dark:text-slate-100">
+    <div className="min-h-screen bg-[#fbfcff] dark:bg-slate-950 transition-colors text-slate-900 dark:text-slate-100">
 
       {/* NAV */}
       <nav className="sticky top-0 border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md px-4 sm:px-6 py-4 flex items-center z-20 transition-colors">
@@ -341,9 +341,9 @@ export default function SignatoryDetails() {
 
             {/* ── DIGITAL INFO PANEL ── */}
             {!isPhysical && (
-              <div className="bg-white dark:bg-slate-900 rounded-3xl border-2 border-sky-100 dark:border-sky-500/20 shadow-xl overflow-hidden">
-                <div className="bg-sky-50 dark:bg-sky-500/10 px-8 py-4 border-b border-sky-100 dark:border-sky-500/20 flex items-center gap-3">
-                  <div className="p-2 bg-sky-600 rounded-lg text-white shadow-lg shadow-sky-200 dark:shadow-none">
+              <div className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-3xl border border-sky-100 dark:border-sky-500/20 shadow-lg sm:shadow-xl overflow-hidden">
+                <div className="bg-sky-50/80 dark:bg-sky-500/10 px-4 sm:px-8 py-3.5 sm:py-4 border-b border-sky-100 dark:border-sky-500/20 flex items-center gap-2.5 sm:gap-3">
+                  <div className="p-2 bg-sky-600 rounded-md sm:rounded-lg text-white shadow-md shadow-sky-200/60 dark:shadow-none">
                     <HardDrive size={18} />
                   </div>
                   <div>
@@ -353,7 +353,7 @@ export default function SignatoryDetails() {
                     </p>
                   </div>
                 </div>
-                <div className="p-8 grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="p-4 sm:p-8 grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-6">
                   {signatory.end_date && (
                     <InfoRow
                       icon={<Calendar size={14} className="text-rose-500" />}
@@ -370,14 +370,14 @@ export default function SignatoryDetails() {
                   )}
                   {signatory.required_documents && (
                     <div className="sm:col-span-2">
-                      <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-5 border border-slate-200 dark:border-slate-700">
+                      <div className="bg-slate-50/80 dark:bg-slate-800/50 rounded-xl sm:rounded-2xl p-3.5 sm:p-5 border border-slate-200 dark:border-slate-700">
                         <div className="flex items-center gap-2 mb-3">
                           <FileText size={14} className="text-slate-500" />
                           <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Required Documents</p>
                         </div>
                         <ul className="space-y-1.5">
                           {signatory.required_documents.split(",").map((doc, i) => (
-                            <li key={i} className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
+                            <li key={i} className="flex items-center gap-2 text-[13px] sm:text-sm font-medium text-slate-700 dark:text-slate-300">
                               <span className="w-1.5 h-1.5 rounded-full bg-sky-400 shrink-0" />
                               {doc.trim()}
                             </li>
@@ -489,11 +489,13 @@ export default function SignatoryDetails() {
             )}
 
             {!uploadAllowed && (
-              <div className="bg-amber-50 dark:bg-amber-500/10 border-l-4 border-amber-500 p-5 rounded-r-xl flex gap-4">
-                <AlertCircle className="text-amber-500 shrink-0" />
+              <div className="bg-amber-50/95 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 p-4 sm:p-5 rounded-xl flex gap-3 sm:gap-4">
+                <div className="w-9 h-9 rounded-lg bg-amber-100 dark:bg-amber-500/15 flex items-center justify-center shrink-0">
+                  <AlertCircle className="text-amber-500" size={18} />
+                </div>
                 <div>
                   <h4 className="text-sm font-bold text-amber-900 dark:text-amber-300">Upload Disabled</h4>
-                  <p className="text-sm text-amber-800 dark:text-amber-200 mt-1">
+                  <p className="text-[13px] sm:text-sm text-amber-800 dark:text-amber-200 mt-1 leading-relaxed">
                     File upload is disabled for this requirement. Please follow the signatory instructions above.
                   </p>
                 </div>
@@ -501,9 +503,11 @@ export default function SignatoryDetails() {
             )}
 
             {/* Info note */}
-            <div className="bg-indigo-50 dark:bg-indigo-500/10 rounded-2xl p-6 flex gap-4">
-              <Info className="text-indigo-500 dark:text-indigo-400 shrink-0" size={20} />
-              <p className="text-sm text-indigo-900 dark:text-indigo-200 leading-relaxed">
+            <div className="bg-indigo-50/90 dark:bg-indigo-500/10 rounded-xl sm:rounded-2xl p-4 sm:p-6 flex gap-3 sm:gap-4 border border-indigo-100 dark:border-indigo-500/20">
+              <div className="w-9 h-9 rounded-lg bg-indigo-100 dark:bg-indigo-500/15 flex items-center justify-center shrink-0">
+                <Info className="text-indigo-500 dark:text-indigo-400" size={18} />
+              </div>
+              <p className="text-[13px] sm:text-sm text-indigo-900 dark:text-indigo-200 leading-relaxed">
                 {isPhysical
                   ? "Visit the office listed above during the available schedule. Bring all required documents and have this clearance stamped."
                   : uploadAllowed

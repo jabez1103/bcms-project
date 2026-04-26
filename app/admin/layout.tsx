@@ -56,8 +56,8 @@ export default function AdminLayout({
         />
 
         {/* MAIN WRAPPER */}
-        <div className="flex-1 flex flex-col min-w-0 bg-[#f4f6f9] dark:bg-slate-950 overflow-y-auto">
-          <main className="flex-1 p-2.5 sm:p-4 bg-transparent">{children}</main>
+        <div className="flex-1 flex flex-col min-w-0 bg-[#fbfcff] dark:bg-slate-950 overflow-y-auto">
+          <main className="flex-1 p-1.5 sm:p-4 bg-transparent">{children}</main>
 
           <Footer />
         </div>

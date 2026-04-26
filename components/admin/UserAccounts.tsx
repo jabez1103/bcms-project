@@ -861,7 +861,7 @@ export default function UserAccounts() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 p-2 sm:p-4 md:p-12 font-sans">
+      <div className="min-h-screen bg-[#fbfcff] dark:bg-slate-950 p-2 sm:p-4 md:p-12 font-sans">
         <div className="max-w-6xl mx-auto">
           <SkeletonUserHeader />
 
@@ -905,7 +905,7 @@ export default function UserAccounts() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 transition-colors">
+    <div className="min-h-screen bg-[#fbfcff] dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 transition-colors">
       <PageHeader
         title="User Accounts"
         description="Comprehensive directory for managing institutional stakeholders and system access."

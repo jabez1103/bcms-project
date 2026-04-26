@@ -34,15 +34,15 @@ export default function MobileLogin() {
           </Link>
 
           {/* LOGO & TITLE */}
-          <div className="flex items-center gap-2.5">
-            <div className="relative h-8 w-8 overflow-hidden rounded-lg bg-white/10 p-1.5 backdrop-blur-md border border-white/20">
+          <div className="flex items-center gap-3">
+            <div className="relative h-9 w-9 overflow-hidden rounded-lg bg-white/10 p-1.5 backdrop-blur-md border border-white/20">
               <Image src="/logo.png" alt="Logo" fill sizes="36px" className="object-contain p-0.5" />
             </div>
             <div className="flex flex-col">
-              <h1 className="text-[10px] sm:text-[11px] font-black tracking-tighter leading-none text-white">
+              <h1 className="text-[11px] sm:text-[12px] font-black tracking-tighter leading-none text-white">
                 BISU CLEARANCE
               </h1>
-              <p className="text-[7px] sm:text-[8px] font-bold tracking-[0.18em] text-white/50">
+              <p className="text-[7.5px] sm:text-[8.5px] font-bold tracking-[0.18em] text-white/50">
                 MANAGEMENT SYSTEM
               </p>
             </div>

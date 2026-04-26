@@ -20,6 +20,16 @@ export default function AppearanceSettings() {
 
   const fontSizes = ["Small", "Standard", "Large"];
 
+  const applyThemeFallback = (nextTheme: "light" | "dark" | "system") => {
+    if (typeof window === "undefined") return;
+    const root = document.documentElement;
+    const resolved =
+      nextTheme === "system"
+        ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+        : nextTheme;
+    root.classList.toggle("dark", resolved === "dark");
+  };
+
   useEffect(() => {
     setMounted(true);
     const prefs = getAppearancePreferences();
@@ -84,6 +94,7 @@ export default function AppearanceSettings() {
                   onClick={() => {
                     setSaved(false);
                     setTheme(t);
+                    applyThemeFallback(t as "light" | "dark" | "system");
                   }}
                   className={`px-3 md:px-4 py-1.5 md:py-2 text-[11px] md:text-xs font-bold rounded-lg md:rounded-xl transition-all capitalize ${theme === t ? 'bg-white dark:bg-slate-700 shadow-md text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`}
                 >

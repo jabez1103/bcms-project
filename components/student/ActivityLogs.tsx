@@ -80,7 +80,7 @@ export default function ActivityLogs() {
   const isLoading = activeTab === "recent" ? loadingRecent : loadingHistory;
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 transition-colors">
+    <div className="min-h-screen bg-[#fbfcff] dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 transition-colors">
       <PageHeader
         title="Activity Logs"
         description="Chronological record of your submissions, approvals, and system interactions."
