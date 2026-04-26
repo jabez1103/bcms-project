@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   AUTH_COOKIE_NAME,
   isAllowedRole,
+  verifyToken,
   type UserRole,
 } from "@/lib/auth";
 
@@ -111,7 +112,11 @@ export async function proxy(request: NextRequest) {
 
     const session = await validateActiveSession(request);
     if (!session) {
-      return createUnauthorizedResponse(request, 401);
+      const fallbackPayload = await verifyToken(token);
+      if (!fallbackPayload) {
+        return createUnauthorizedResponse(request, 401);
+      }
+      return NextResponse.next();
     }
     if ("reason" in session) {
       const response = createUnauthorizedResponse(
@@ -143,7 +148,15 @@ export async function proxy(request: NextRequest) {
   const session = await validateActiveSession(request);
 
   if (!session) {
-    return createUnauthorizedResponse(request, 401);
+    const fallbackPayload = await verifyToken(token);
+    if (!fallbackPayload) {
+      return createUnauthorizedResponse(request, 401);
+    }
+    const requiredRole = PROTECTED[matchedBase];
+    if (!isAllowedRole(fallbackPayload.role, [requiredRole])) {
+      return createUnauthorizedResponse(request, 403);
+    }
+    return NextResponse.next();
   }
 
   if ("reason" in session) {
