@@ -8,9 +8,9 @@ import { AppearancePreferenceBootstrap } from "@/components/AppearancePreference
 
 export const metadata: Metadata = {
   icons: {
-    icon: "/logo.png",
-    shortcut: "/logo.png",
-    apple: "/logo.png",
+    icon: "/icon.svg",
+    shortcut: "/icon.svg",
+    apple: "/apple-icon.svg",
   },
 };
 
@@ -32,7 +32,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`mobile-compact ${poppins.variable} ${inter.variable} bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-300`}>
+      <body className={`${poppins.variable} ${inter.variable} bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-300`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

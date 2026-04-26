@@ -48,8 +48,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Failed to save push subscription.";
-    return NextResponse.json({ success: false, message }, { status: 500 });
+    console.error("[push/subscribe] save failed", error);
+    return NextResponse.json({ success: false, message: "Failed to save push subscription." }, { status: 500 });
   } finally {
     await db.end();
   }
@@ -83,8 +83,8 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Failed to remove push subscription.";
-    return NextResponse.json({ success: false, message }, { status: 500 });
+    console.error("[push/subscribe] remove failed", error);
+    return NextResponse.json({ success: false, message: "Failed to remove push subscription." }, { status: 500 });
   } finally {
     await db.end();
   }

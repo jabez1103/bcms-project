@@ -20,6 +20,7 @@ import {
   Search
 } from "lucide-react";
 import { PageType, UserRole } from "@/types/index";
+import { useAppLanguage } from "@/lib/language";
 
 type Signatory = {
   id: number;
@@ -39,6 +40,7 @@ interface SidebarProps {
 export function Sidebar({ role, activePage, onPageClick, isMobileOpen, onMobileClose }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const { t } = useAppLanguage();
   const isSignatoriesRoute = useMemo(
     () => pathname.startsWith(`/${role}/signatories`),
     [pathname, role]
@@ -182,6 +184,13 @@ export function Sidebar({ role, activePage, onPageClick, isMobileOpen, onMobileC
     return `/${role}/${slug}`;
   };
 
+  const getDisplayLabel = (label: string) => {
+    if (label === "Home") return t("home");
+    if (label === "Signatories") return t("signatories");
+    if (label === "Activity Logs") return t("activityLogs");
+    return label;
+  };
+
   const getStatusDot = (status: string) => {
     switch (status?.toLowerCase()) {
       case 'approved': return 'bg-emerald-400';
@@ -307,7 +316,7 @@ export function Sidebar({ role, activePage, onPageClick, isMobileOpen, onMobileC
                     {(!isCollapsed || isMobileOpen) && (
                       <>
                         <span className={`flex-1 text-[13px] md:text-sm font-bold text-left ${isOpen || isActive ? "text-white" : "group-hover:text-brand-600 dark:group-hover:text-brand-400"}`}>
-                          {item.label}
+                          {getDisplayLabel(item.label)}
                         </span>
                         <ChevronDown size={14} className={`transition-transform duration-300 ${isOpen ? "rotate-180 text-white" : isActive ? "text-white" : "group-hover:text-brand-600 dark:group-hover:text-brand-400"}`} />
                       </>
@@ -325,7 +334,7 @@ export function Sidebar({ role, activePage, onPageClick, isMobileOpen, onMobileC
                       </span>
                       {(!isCollapsed || isMobileOpen) && (
                         <span className="text-[13px] md:text-sm font-bold">
-                          {item.label}
+                          {getDisplayLabel(item.label)}
                         </span>
                       )}
                     </div>
@@ -356,10 +365,10 @@ export function Sidebar({ role, activePage, onPageClick, isMobileOpen, onMobileC
                     {isActivityLogs && (
                       <>
                         <Link href={linkToRoute("Recent Logs")} onClick={() => { if (isMobileOpen && onMobileClose) onMobileClose(); }} className="block py-1.5 md:py-2 text-[11px] md:text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">
-                          Recent Logs
+                          {t("recentLogs")}
                         </Link>
                         <Link href={linkToRoute("System History")} onClick={() => { if (isMobileOpen && onMobileClose) onMobileClose(); }} className="block py-1.5 md:py-2 text-[11px] md:text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">
-                          System History
+                          {t("systemHistory")}
                         </Link>
                       </>
                     )}
@@ -379,8 +388,8 @@ export function Sidebar({ role, activePage, onPageClick, isMobileOpen, onMobileC
             <HelpCircle size={18} className="text-slate-400 dark:text-slate-500 group-hover:text-white shrink-0" />
             {(!isCollapsed || isMobileOpen) && (
               <div className="flex flex-col items-start leading-tight">
-                <span className="text-[13px] md:text-sm font-bold">Help & Support</span>
-                <span className="text-[10px] text-slate-400 dark:text-slate-500 group-hover:text-brand-100">Documentation</span>
+                <span className="text-[13px] md:text-sm font-bold">{t("helpAndSupport")}</span>
+                <span className="text-[10px] text-slate-400 dark:text-slate-500 group-hover:text-brand-100">{t("documentation")}</span>
               </div>
             )}
           </Link>

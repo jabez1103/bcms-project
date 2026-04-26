@@ -89,9 +89,13 @@ export function setSecurityPreferences(value: SecurityPreferences): void {
 export function applyAppearancePreferences(prefs: AppearancePreferences): void {
   if (typeof document === "undefined") return;
   const root = document.documentElement;
+  const body = document.body;
   root.dataset.layout = prefs.layout;
   root.dataset.lang = prefs.language;
+  root.lang = prefs.language === "fil" ? "fil" : "en";
   root.classList.toggle("high-contrast", prefs.highContrast);
+  root.classList.toggle("mobile-compact", prefs.layout === "compact");
+  body?.classList.toggle("mobile-compact", prefs.layout === "compact");
 
   const fontSizeMap: Record<AppearancePreferences["fontSize"], string> = {
     small: "15px",

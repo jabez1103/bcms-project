@@ -138,8 +138,8 @@ export async function POST(request: NextRequest) {
       temporaryPassword,
     });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to reset password.";
-    return NextResponse.json({ success: false, message }, { status: 500 });
+    console.error("[admin/users/reset-password] unexpected error", error);
+    return NextResponse.json({ success: false, message: "Failed to reset password." }, { status: 500 });
   } finally {
     await db.end();
   }

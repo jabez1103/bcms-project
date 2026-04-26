@@ -62,6 +62,7 @@ body {
   --bcms-radius-xl: 0.5rem;
   --bcms-radius-2xl: 0.625rem;
   --bcms-radius-3xl: 0.75rem;
+  --bcms-form-radius: 0.5rem;
 }
 
 .rounded-none { border-radius: 0 !important; }
@@ -75,6 +76,32 @@ body {
 .rounded-\[1\.75rem\],
 .rounded-\[2rem\] { border-radius: 0.625rem !important; }
 .rounded-\[2\.5rem\] { border-radius: 0.75rem !important; }
+
+/* Force form controls/buttons to use sharper corners site-wide */
+button,
+input,
+select,
+textarea,
+fieldset,
+[role="button"] {
+  border-radius: var(--bcms-radius-lg) !important;
+}
+
+/* Form-heavy layouts: force flatter corners for all rounded utilities */
+:where(form, [role="dialog"], [aria-modal="true"]) :is(
+  .rounded-sm,
+  .rounded,
+  .rounded-md,
+  .rounded-lg,
+  .rounded-xl,
+  .rounded-2xl,
+  .rounded-3xl,
+  .rounded-\[1\.75rem\],
+  .rounded-\[2rem\],
+  .rounded-\[2\.5rem\]
+) {
+  border-radius: var(--bcms-form-radius) !important;
+}
 
 html.high-contrast {
   filter: contrast(1.1) saturate(1.05);

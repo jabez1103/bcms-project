@@ -31,7 +31,7 @@ export default function SignatoryLayout({
   };
 
   return (
-    <div className="mobile-compact flex flex-col h-screen overflow-hidden">
+    <div className="flex flex-col h-screen overflow-hidden">
       <Suspense fallback={null}>
         <NotificationQueryAck />
       </Suspense>

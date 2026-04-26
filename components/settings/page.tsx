@@ -141,6 +141,17 @@ export default function SettingsModal({ onClose, isOpen, defaultTab }: SettingsM
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, [isOpen, onClose]);
+
   const handleTabClick = (id: string) => {
     setActiveTab(id);
     if (isMobile) setShowMobileContent(true);

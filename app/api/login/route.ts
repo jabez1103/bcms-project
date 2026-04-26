@@ -194,8 +194,8 @@ export async function POST(req: NextRequest) {
 
     return response;
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Login failed.";
-    return NextResponse.json({ success: false, message }, { status: 500 });
+    console.error("[login] unexpected error", error);
+    return NextResponse.json({ success: false, message: "Login failed." }, { status: 500 });
   } finally {
     await db.end();
   }

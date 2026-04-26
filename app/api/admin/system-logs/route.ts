@@ -36,8 +36,8 @@ export async function GET(request: NextRequest) {
     const logs = await fetchSystemLogsDb(db, limit);
     return NextResponse.json({ success: true, logs, cleaned });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to fetch system logs";
-    return NextResponse.json({ success: false, error: message }, { status: 500 });
+    console.error("[admin/system-logs] fetch failed", error);
+    return NextResponse.json({ success: false, error: "Failed to fetch system logs" }, { status: 500 });
   } finally {
     await db.end();
   }
@@ -61,8 +61,8 @@ export async function POST(request: NextRequest) {
     const id = await addSystemLogDb(db, { type, message });
     return NextResponse.json({ success: true, id });
   } catch (error: unknown) {
-    const errMessage = error instanceof Error ? error.message : "Failed to add system log";
-    return NextResponse.json({ success: false, error: errMessage }, { status: 500 });
+    console.error("[admin/system-logs] add failed", error);
+    return NextResponse.json({ success: false, error: "Failed to add system log" }, { status: 500 });
   } finally {
     await db.end();
   }

@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   X, Paperclip, MessageSquare, Settings2,
   HardDrive, HandMetal, Building2,
@@ -45,6 +45,18 @@ export function RequirementModal({
   const [showPreview, setShowPreview] = useState(false);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState("");
+
+  const closeTopLayer = () => {
+    if (showPreview) {
+      setShowPreview(false);
+      return;
+    }
+    if (showConfirm) {
+      setShowConfirm(false);
+      return;
+    }
+    onClose();
+  };
 
   const set = (patch: Partial<typeof formData>) => setFormData(p => ({ ...p, ...patch }));
   const setAllowFileUpload = (next: boolean) => {
@@ -132,9 +144,19 @@ export function RequirementModal({
     }));
   };
 
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        closeTopLayer();
+      }
+    };
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, [showPreview, showConfirm, onClose]);
+
   return (
     <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-0 md:p-4">
-      <div className="absolute inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm" onClick={closeTopLayer} />
 
       {/* PREVIEW PANEL */}
       {showPreview && (

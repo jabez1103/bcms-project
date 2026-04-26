@@ -27,6 +27,7 @@ import {
   getNotificationPreferences,
   type NotificationPreferences,
 } from "@/lib/userPreferences";
+import { useAppLanguage } from "@/lib/language";
 
 interface HeaderProps {
   role: UserRole;
@@ -81,6 +82,7 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
   );
 
   const { user, loading } = useCurrentUser();
+  const { t } = useAppLanguage();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -225,6 +227,20 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
     return () => document.removeEventListener("mousedown", onClickOutside);
   }, []);
 
+  useEffect(() => {
+    const onEscapeClose = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setMenuOpen(false);
+      setNotifOpen(false);
+      setDropdownOpen(false);
+      setSearchOpen(false);
+      setSettingsOpen(false);
+      setLogoutOpen(false);
+    };
+    window.addEventListener("keydown", onEscapeClose);
+    return () => window.removeEventListener("keydown", onEscapeClose);
+  }, []);
+
   const openSearchResult = (href: string) => {
     setSearchOpen(false);
     setSearchValue("");
@@ -320,8 +336,19 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
 
   if (loading) {
     return (
-      <header className="h-[6.8vh] md:h-[10vh] flex items-center justify-center bg-white border-b border-gray-100">
-        <div className="w-8 h-8 border-4 border-brand-500/20 border-t-brand-500 rounded-full animate-spin" />
+      <header className="h-[6.8vh] md:h-[10vh] bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 px-1.5 sm:px-3 md:px-8 flex items-center justify-between animate-pulse">
+        <div className="flex items-center gap-2 md:gap-3">
+          <div className="md:hidden w-7 h-7 rounded-md bg-slate-200 dark:bg-slate-800" />
+          <div className="flex flex-col gap-1">
+            <div className="w-24 md:w-40 h-2.5 md:h-3 bg-slate-200 dark:bg-slate-800 rounded-md" />
+            <div className="w-16 md:w-28 h-2 bg-slate-100 dark:bg-slate-800/70 rounded-md" />
+          </div>
+        </div>
+        <div className="flex items-center gap-2 md:gap-4">
+          <div className="hidden sm:block w-36 md:w-52 h-8 md:h-10 rounded-xl bg-slate-100 dark:bg-slate-800" />
+          <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-slate-200 dark:bg-slate-800" />
+          <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-slate-200 dark:bg-slate-800" />
+        </div>
       </header>
     );
   }
@@ -332,23 +359,23 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
     <>
       <header className="bcms-mobile-shell flex justify-between items-center px-1.5 sm:px-3 md:px-8 h-[6.8vh] md:h-[10vh] bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 sticky top-0 z-40 transition-colors duration-300">
         {/* LEFT SIDE: BRANDING */}
-        <div className="flex items-center gap-1.5 md:gap-3">
+        <div className="flex items-center gap-2 md:gap-3">
           {/* HAMBURGER MENU (MOBILE ONLY) */}
           <button 
             onClick={onMobileMenuToggle}
-            className="md:hidden p-0.5 -ml-0.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md transition-colors"
+            className="md:hidden p-1 -ml-0.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md transition-colors"
             aria-label="Open sidebar"
           >
-            <Menu size={16} />
+            <Menu size={18} />
           </button>
 
-          <img src="/logo.png" alt="BISU Logo" className="w-6 h-6 md:w-10 md:h-10 object-contain" />
+          <img src="/logo.png" alt="BISU Logo" className="hidden md:block md:w-10 md:h-10 object-contain" />
           <div className="flex flex-col justify-center leading-none">
-            <h1 className="text-[10px] md:text-sm font-black tracking-tight text-slate-800 dark:text-slate-100 uppercase leading-none">
-              BISU CLEARANCE
+            <h1 className="text-[11px] md:text-sm font-black tracking-tight text-slate-800 dark:text-slate-100 uppercase leading-none">
+              {t("bisuClearance")}
             </h1>
-            <p className="text-[7px] md:text-[9px] font-bold tracking-[0.13em] text-slate-400 dark:text-slate-500 uppercase leading-none">
-              Management System
+            <p className="text-[8px] md:text-[9px] font-bold tracking-[0.13em] text-slate-400 dark:text-slate-500 uppercase leading-none">
+              {t("managementSystem")}
             </p>
           </div>
         </div>
@@ -360,7 +387,7 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
             <input
               type="text"
-              placeholder="Search pages, users, requirements..."
+              placeholder={t("searchPlaceholder")}
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
               onFocus={() => setSearchOpen(true)}
@@ -382,16 +409,16 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
               <div className="absolute right-0 mt-2 w-80 lg:w-[30rem] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden z-50">
                 <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800">
                   <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
-                    Global Search
+                    {t("globalSearch")}
                   </p>
                 </div>
                 <div className="max-h-80 overflow-y-auto">
                   {searchLoading ? (
-                    <div className="p-4 text-xs text-slate-500 dark:text-slate-400">Searching...</div>
+                    <div className="p-4 text-xs text-slate-500 dark:text-slate-400">{t("searching")}</div>
                   ) : searchValue.trim().length < 2 ? (
-                    <div className="p-4 text-xs text-slate-500 dark:text-slate-400">Type at least 2 characters.</div>
+                    <div className="p-4 text-xs text-slate-500 dark:text-slate-400">{t("typeAtLeastTwoChars")}</div>
                   ) : searchResults.length === 0 ? (
-                    <div className="p-4 text-xs text-slate-500 dark:text-slate-400">No matching results.</div>
+                    <div className="p-4 text-xs text-slate-500 dark:text-slate-400">{t("noMatchingResults")}</div>
                   ) : (
                     searchResults.slice(0, 12).map((item) => (
                       <button
@@ -414,7 +441,11 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
           {/* NOTIFICATIONS */}
           <div className="relative">
             <button
-              onClick={() => setNotifOpen(!isNotifOpen)}
+              onClick={() => {
+                setNotifOpen((prev) => !prev);
+                setDropdownOpen(false);
+                setSearchOpen(false);
+              }}
               className={`p-1.5 md:p-2.5 rounded-xl transition-all relative ${
                 isNotifOpen ? "bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400" : "text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"
               }`}
@@ -435,7 +466,7 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
                 <div className="fixed inset-0 z-10" onClick={() => { setNotifOpen(false); setMenuOpen(false); }} />
                 <div className="absolute right-0 mt-2.5 w-[min(92vw,20rem)] md:w-96 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-20 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                   <div className="p-3.5 md:p-4 border-b border-slate-50 dark:border-slate-800 flex items-center justify-between">
-                    <h3 className="font-bold text-slate-900 dark:text-slate-100">Notifications</h3>
+                    <h3 className="font-bold text-slate-900 dark:text-slate-100">{t("notifications")}</h3>
                     <div className="relative">
                       <button onClick={() => setMenuOpen(!isNotifMenuOpen)} className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors">
                         <MoreHorizontal size={18} className="text-slate-500" />
@@ -444,13 +475,13 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
                       {isNotifMenuOpen && (
                         <div className="absolute right-0 mt-2 w-52 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-xl rounded-xl p-1.5 z-30">
                           <button onClick={markAllAsRead} className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors">
-                            <Check size={14} className="text-emerald-500" /> Mark all as read
+                            <Check size={14} className="text-emerald-500" /> {t("markAllAsRead")}
                           </button>
                           <button 
                             onClick={openNotificationSettings}
                             className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors text-left"
                           >
-                            <Settings2 size={14} className="text-brand-500" /> Notification Settings
+                            <Settings2 size={14} className="text-brand-500" /> {t("notificationSettings")}
                           </button>
                         </div>
                       )}
@@ -496,7 +527,7 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
                       ))
                     ) : (
                       <div className="py-12 text-center">
-                        <p className="text-sm text-slate-400 italic">No notifications found</p>
+                        <p className="text-sm text-slate-400 italic">{t("noNotificationsFound")}</p>
                       </div>
                     )}
                   </div>
@@ -506,7 +537,7 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
                         onClick={() => setShowAllNotifications((prev) => !prev)}
                         className="w-full py-2 rounded-lg text-[10px] font-black uppercase tracking-widest text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-500/10 hover:bg-brand-100 dark:hover:bg-brand-500/20 transition-colors"
                       >
-                        {showAllNotifications ? "Show less" : "See more"}
+                        {showAllNotifications ? t("showLess") : t("seeMore")}
                       </button>
                     </div>
                   )}
@@ -517,7 +548,15 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
 
           {/* PROFILE */}
           <div className="relative border-l border-slate-100 pl-2 md:pl-6">
-            <button onClick={() => setDropdownOpen(!isDropdownOpen)} className="flex items-center gap-1.5 md:gap-3 group">
+            <button
+              onClick={() => {
+                setDropdownOpen((prev) => !prev);
+                setNotifOpen(false);
+                setMenuOpen(false);
+                setSearchOpen(false);
+              }}
+              className="flex items-center gap-1.5 md:gap-3 group"
+            >
               <div className="relative">
                 <ProfileAvatar
                   src={user?.avatar}
@@ -574,7 +613,7 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
                     className="hidden md:flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-brand-50 dark:hover:bg-slate-800 hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
                   >
                     <UserIcon size={16} />
-                    Profile
+                    {t("profile")}
                   </Link>
                   <button 
                     onClick={() => {
@@ -586,7 +625,7 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
                     className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-brand-50 dark:hover:bg-slate-800 hover:text-brand-600 dark:hover:text-brand-400 transition-colors text-left"
                   >
                  
-                    <SettingsIcon size={16} /> Settings
+                    <SettingsIcon size={16} /> {t("settings")}
                     
                   </button>
                   <div className="h-px bg-slate-50 dark:bg-slate-800 my-1" />
@@ -594,7 +633,7 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
                     onClick={() => { setLogoutOpen(true); setDropdownOpen(false); }} 
                     className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors text-left"
                   >
-                    <LogOut size={16} /> Logout
+                    <LogOut size={16} /> {t("logout")}
                   </button>
                 </div>
               </>

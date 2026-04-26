@@ -125,7 +125,7 @@ export function LogoutModal({ onClose, isOpen }: LogoutModalProps) {
             <button
               onClick={handleLogout}
               disabled={isExiting}
-              className="flex-[1.5] px-4 py-3.5 bg-red-600 text-white rounded-2xl text-xs font-bold uppercase tracking-widest hover:bg-red-700 shadow-lg shadow-red-200 transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-70"
+              className="flex-[1.5] px-4 py-3.5 bg-red-600 text-white rounded-2xl text-xs font-bold uppercase tracking-widest hover:bg-red-700 transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-70"
             >
               {isExiting ? (
                 <>

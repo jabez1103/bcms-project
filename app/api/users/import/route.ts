@@ -3,6 +3,8 @@ import { createConnection } from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { resolveImportEmail, resolveImportPassword } from "@/lib/defaultImportedUserCredentials";
 import { MIN_PASSWORD_LENGTH } from "@/lib/passwordPolicy";
+import { isTrustedMutationOrigin } from "@/lib/auth";
+import { verifySessionFromCookies } from "@/lib/requestSession";
 
 const ALLOWED_ROLES = new Set(["student", "signatory", "admin"]);
 const COMPOUND_FIRST_NAME_PARTS = new Set([
@@ -54,6 +56,18 @@ function normalizeImportedNameParts(firstName: unknown, middleName: unknown) {
 }
 
 export async function POST(request: NextRequest) {
+  if (!isTrustedMutationOrigin(request)) {
+    return NextResponse.json(
+      { error: "Untrusted request origin." },
+      { status: 403 }
+    );
+  }
+
+  const payload = await verifySessionFromCookies(request);
+  if (!payload || String(payload.role).toLowerCase() !== "admin") {
+    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  }
+
   const { users } = await request.json();
 
   if (!Array.isArray(users) || users.length === 0) {

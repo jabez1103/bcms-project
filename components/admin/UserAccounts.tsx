@@ -742,6 +742,32 @@ export default function UserAccounts() {
     });
   }
 
+  async function parseExcelRows(file: File): Promise<any[]> {
+    const ExcelJS = await import("exceljs");
+    const workbook = new ExcelJS.Workbook();
+    const arrayBuffer = await file.arrayBuffer();
+    await workbook.xlsx.load(arrayBuffer);
+    const sheet = workbook.worksheets[0];
+    if (!sheet) return [];
+
+    const headers = (sheet.getRow(1).values as unknown[])
+      .slice(1)
+      .map((value) => String(value ?? "").trim().toLowerCase().replace(/\s+/g, "_"));
+
+    const rows: any[] = [];
+    sheet.eachRow((row, rowNumber) => {
+      if (rowNumber === 1) return;
+      const cells = (row.values as unknown[]).slice(1);
+      const normalizedRow = headers.reduce((acc: Record<string, unknown>, key, index) => {
+        acc[key] = cells[index] ?? "";
+        return acc;
+      }, {});
+      rows.push(normalizedRow);
+    });
+
+    return rows;
+  }
+
   const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -752,18 +778,7 @@ export default function UserAccounts() {
     setFileType(ext === "xlsx" ? "xlsx" : "csv");
 
     if (ext === "xlsx") {
-      // Parse Excel
-      const XLSX = await import("xlsx");
-      const arrayBuffer = await file.arrayBuffer();
-      const workbook = XLSX.read(arrayBuffer, { type: "array" });
-      const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      const data = XLSX.utils.sheet_to_json(sheet, { defval: "" });
-      // Normalize keys
-      const normalized = (data as any[]).map(row =>
-        Object.fromEntries(
-          Object.entries(row).map(([k, v]) => [k.toLowerCase().replace(/\s+/g, "_"), v])
-        )
-      );
+      const normalized = await parseExcelRows(file);
       setImportPreview(normalized.slice(0, 5));
     } else {
       // Parse CSV
@@ -784,16 +799,7 @@ export default function UserAccounts() {
       let users: any[] = [];
 
       if (fileType === "xlsx") {
-        const XLSX = await import("xlsx");
-        const arrayBuffer = await importFile.arrayBuffer();
-        const workbook = XLSX.read(arrayBuffer, { type: "array" });
-        const sheet = workbook.Sheets[workbook.SheetNames[0]];
-        const data = XLSX.utils.sheet_to_json(sheet, { defval: "" });
-        users = (data as any[]).map(row =>
-          Object.fromEntries(
-            Object.entries(row).map(([k, v]) => [k.toLowerCase().replace(/\s+/g, "_"), v])
-          )
-        );
+        users = await parseExcelRows(importFile);
       } else {
         const reader = new FileReader();
         await new Promise<void>(resolve => {
@@ -835,11 +841,19 @@ export default function UserAccounts() {
       const blob = new Blob([csv], { type: "text/csv" });
       const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "sample_users.csv"; a.click();
     } else {
-      import("xlsx").then(XLSX => {
-        const ws = XLSX.utils.json_to_sheet(rows);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Users");
-        XLSX.writeFile(wb, "sample_users.xlsx");
+      import("exceljs").then(async (ExcelJS) => {
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet("Users");
+        worksheet.columns = Object.keys(rows[0]).map((key) => ({ header: key, key }));
+        rows.forEach((row) => worksheet.addRow(row));
+        const content = await workbook.xlsx.writeBuffer();
+        const blob = new Blob([content], {
+          type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "sample_users.xlsx";
+        a.click();
       });
     }
   };
