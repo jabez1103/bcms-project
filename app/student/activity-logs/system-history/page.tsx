@@ -6,6 +6,7 @@ import {
   LogIn, LogOut, KeyRound, Wifi,
 } from "lucide-react";
 import { SkeletonLogFeed, SkeletonTableRow } from "@/components/ui/Skeleton";
+import { PageHeader } from "@/components/shared/PageHeader";
 
 interface HistoryItem {
   id: number;
@@ -143,26 +144,39 @@ const SystemHistoryPage = () => {
   });
 
   return (
-    <div className="w-full p-1 lg:p-2 bg-transparent font-sans transition-colors text-slate-900 dark:text-slate-100">
+    <div className="min-h-screen px-3 sm:px-4 lg:px-6 bg-[#fbfcff] dark:bg-slate-950 font-sans transition-colors text-slate-900 dark:text-slate-100">
+      <PageHeader
+        title="System History"
+        description="Login, security & clearance events."
+        icon={History}
+        containerClassName="px-2 sm:px-4 py-2 sm:py-4 lg:px-6"
+      />
+
+      <div className="max-w-[1600px] mx-auto px-0 py-2 sm:py-4 md:py-8">
       <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07)] overflow-hidden transition-colors">
 
-        {/* HEADER */}
-        <div className="sticky top-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-100 dark:border-slate-800 px-4 sm:px-6 py-4 sm:py-5 flex flex-col gap-3 transition-colors">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <div className="flex items-center gap-3">
-                <div className="p-1.5 bg-brand-50 dark:bg-brand-500/10 rounded-lg">
-                  <History className="w-4 h-4 text-brand-600 dark:text-brand-400" />
-                </div>
-                <h1 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">System History</h1>
-              </div>
-              <p className="text-[10px] text-slate-400 mt-0.5 pl-9 font-medium uppercase tracking-wider">
-                Login, security &amp; clearance events
-              </p>
+        {/* Controls */}
+        <div className="border-b border-slate-100 dark:border-slate-800 px-4 sm:px-6 py-4 sm:py-5 flex flex-col gap-3 transition-colors">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            {/* Category filter pills (desktop) */}
+            <div className="hidden sm:flex flex-wrap gap-1.5">
+              {categories.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setCategoryFilter(cat)}
+                  className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider transition-all border ${
+                    categoryFilter === cat
+                      ? "bg-brand-600 text-white border-brand-600 shadow-sm"
+                      : "bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-brand-400"
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
             </div>
 
             {/* Search + mobile category dropdown */}
-            <div className="grid grid-cols-[2fr_1fr] gap-2 w-full sm:w-auto sm:flex sm:items-center">
+            <div className="grid grid-cols-[2fr_1fr] gap-2 w-full sm:w-auto sm:flex sm:items-center sm:justify-end">
               <div className="relative min-w-0 flex-1 sm:w-64">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                 <input
@@ -185,23 +199,6 @@ const SystemHistoryPage = () => {
                 ))}
               </select>
             </div>
-          </div>
-
-          {/* Category filter pills */}
-          <div className="hidden sm:flex flex-wrap gap-1.5">
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setCategoryFilter(cat)}
-                className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider transition-all border ${
-                  categoryFilter === cat
-                    ? "bg-brand-600 text-white border-brand-600 shadow-sm"
-                    : "bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-brand-400"
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
           </div>
         </div>
 
@@ -311,6 +308,7 @@ const SystemHistoryPage = () => {
           </div>
           <p className="text-[10px] text-slate-400 font-bold">{filtered.length} event{filtered.length !== 1 ? "s" : ""}</p>
         </div>
+      </div>
       </div>
     </div>
   );

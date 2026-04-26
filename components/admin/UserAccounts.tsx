@@ -743,29 +743,21 @@ export default function UserAccounts() {
   }
 
   async function parseExcelRows(file: File): Promise<any[]> {
-    const ExcelJS = await import("exceljs");
-    const workbook = new ExcelJS.Workbook();
-    const arrayBuffer = await file.arrayBuffer();
-    await workbook.xlsx.load(arrayBuffer);
-    const sheet = workbook.worksheets[0];
-    if (!sheet) return [];
+    const { readSheet } = await import("read-excel-file/browser");
+    const sheetRows = await readSheet(file);
+    if (!sheetRows.length) return [];
 
-    const headers = (sheet.getRow(1).values as unknown[])
-      .slice(1)
-      .map((value) => String(value ?? "").trim().toLowerCase().replace(/\s+/g, "_"));
+    const headers = (sheetRows[0] ?? []).map((value) =>
+      String(value ?? "").trim().toLowerCase().replace(/\s+/g, "_"),
+    );
 
-    const rows: any[] = [];
-    sheet.eachRow((row, rowNumber) => {
-      if (rowNumber === 1) return;
-      const cells = (row.values as unknown[]).slice(1);
-      const normalizedRow = headers.reduce((acc: Record<string, unknown>, key, index) => {
-        acc[key] = cells[index] ?? "";
+    return sheetRows.slice(1).map((row) =>
+      headers.reduce((acc: Record<string, unknown>, key, index) => {
+        const cell = row[index];
+        acc[key] = cell == null ? "" : String(cell).trim();
         return acc;
-      }, {});
-      rows.push(normalizedRow);
-    });
-
-    return rows;
+      }, {}),
+    );
   }
 
   const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -841,19 +833,12 @@ export default function UserAccounts() {
       const blob = new Blob([csv], { type: "text/csv" });
       const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "sample_users.csv"; a.click();
     } else {
-      import("exceljs").then(async (ExcelJS) => {
-        const workbook = new ExcelJS.Workbook();
-        const worksheet = workbook.addWorksheet("Users");
-        worksheet.columns = Object.keys(rows[0]).map((key) => ({ header: key, key }));
-        rows.forEach((row) => worksheet.addRow(row));
-        const content = await workbook.xlsx.writeBuffer();
-        const blob = new Blob([content], {
-          type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        });
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(blob);
-        a.download = "sample_users.xlsx";
-        a.click();
+      import("write-excel-file/browser").then(async ({ default: writeXlsxFile }) => {
+        const sheetData = [
+          Object.keys(rows[0]),
+          ...rows.map((row) => Object.values(row)),
+        ];
+        await writeXlsxFile(sheetData).toFile("sample_users.xlsx");
       });
     }
   };
@@ -861,7 +846,7 @@ export default function UserAccounts() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#fbfcff] dark:bg-slate-950 p-2 sm:p-4 md:p-12 font-sans">
+      <div className="min-h-screen px-3 sm:px-4 lg:px-6 bg-[#fbfcff] dark:bg-slate-950 py-0 sm:py-4 md:py-12 font-sans">
         <div className="max-w-6xl mx-auto">
           <SkeletonUserHeader />
 
@@ -905,13 +890,14 @@ export default function UserAccounts() {
   }
 
   return (
-    <div className="min-h-screen bg-[#fbfcff] dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 transition-colors">
+    <div className="min-h-screen px-3 sm:px-4 lg:px-6 bg-[#fbfcff] dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 transition-colors">
       <PageHeader
         title="User Accounts"
         description="Comprehensive directory for managing institutional stakeholders and system access."
         icon={Users}
+        containerClassName="px-2 sm:px-4 py-2 sm:py-4 lg:px-6"
         actions={
-          <div className="flex items-center gap-3">
+          <div className="flex w-full sm:w-auto flex-wrap items-center justify-start sm:justify-end gap-2">
             <button
               onClick={() => {
                 setShowImportModal(true);
@@ -921,20 +907,20 @@ export default function UserAccounts() {
                 setFileType(null);
                 setActiveResultTab("skipped");
               }}
-              className="px-5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 dark:hover:bg-slate-800 transition-all flex items-center gap-2 shadow-sm"
+              className="h-9 sm:h-10 min-w-[122px] px-3 sm:px-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-[0.09em] sm:tracking-widest hover:bg-slate-50 dark:hover:bg-slate-800 transition-all inline-flex items-center justify-center gap-1.5 sm:gap-2 shadow-sm"
             >
               <Upload size={14} /> Import
             </button>
             <button
               onClick={() => handleOpenModal()}
-              className="px-5 py-2.5 bg-brand-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-brand-700 transition-all flex items-center gap-2 shadow-lg shadow-brand-200 dark:shadow-none active:scale-95"
+              className="h-9 sm:h-10 min-w-[122px] px-3 sm:px-4 bg-brand-600 text-white rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-[0.09em] sm:tracking-widest hover:bg-brand-700 transition-all inline-flex items-center justify-center gap-1.5 sm:gap-2 shadow-sm active:scale-95"
             >
               <UserPlus size={14} /> Add User
             </button>
           </div>
         }
       />
-      <div className="max-w-[1600px] mx-auto p-1.5 sm:p-4 md:p-10">
+      <div className="max-w-[1600px] mx-auto px-0 pt-4 sm:pt-6 md:pt-8 pb-0 sm:pb-4 md:pb-10">
 
         {notice && (
           <div
@@ -954,7 +940,7 @@ export default function UserAccounts() {
           </div>
         )}
 
-        <div className="flex flex-col lg:flex-row items-center justify-between mb-4 md:mb-8 bg-white dark:bg-slate-900 p-1.5 md:p-3 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm gap-2.5 md:gap-4">
+        <div className="flex flex-col lg:flex-row items-center justify-between mb-4 md:mb-8 bg-white dark:bg-slate-900 p-2.5 md:p-3 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm gap-2.5 md:gap-4">
           <div className="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-xl overflow-x-auto w-full no-scrollbar">
             <div className="flex min-w-full sm:min-w-0">
               {["all", "student", "signatory", "admin"].map((role) => (

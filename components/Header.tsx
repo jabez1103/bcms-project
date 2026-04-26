@@ -77,6 +77,7 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifLoading, setNotifLoading] = useState(false);
+  const shouldAcknowledgeOnCloseRef = useRef(false);
   const [notificationPrefs, setNotificationPrefs] = useState<NotificationPreferences>(
     DEFAULT_NOTIFICATION_PREFERENCES
   );
@@ -152,18 +153,38 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
   // --- Fetch full list when panel opens ---
   useEffect(() => {
     if (!isNotifOpen) return;
+    shouldAcknowledgeOnCloseRef.current = false;
     setNotifLoading(true);
     fetch("/api/notifications")
       .then((r) => r.json())
       .then((data) => {
         if (data.success) {
           const nextNotifications = Array.isArray(data.notifications) ? data.notifications : [];
+          shouldAcknowledgeOnCloseRef.current = nextNotifications.some(
+            (n: Notification) => !n.isRead
+          );
           setNotifications(nextNotifications);
           setUnreadCount(nextNotifications.filter((n: Notification) => !n.isRead).length);
         }
       })
       .catch(() => {})
       .finally(() => setNotifLoading(false));
+  }, [isNotifOpen]);
+
+  // Treat opened notifications as seen so refresh won't recount the same old items.
+  useEffect(() => {
+    if (isNotifOpen) return;
+    if (!shouldAcknowledgeOnCloseRef.current) return;
+
+    shouldAcknowledgeOnCloseRef.current = false;
+    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    setUnreadCount(0);
+
+    void fetch("/api/notifications/read", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ all: true }),
+    }).catch(() => {});
   }, [isNotifOpen]);
 
   // Derived
@@ -363,7 +384,7 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
           {/* HAMBURGER MENU (MOBILE ONLY) */}
           <button 
             onClick={onMobileMenuToggle}
-            className="md:hidden p-1.5 -ml-0.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md transition-colors"
+            className="md:hidden h-8 w-8 inline-flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md transition-colors"
             aria-label="Open sidebar"
           >
             <Menu size={19} />
@@ -446,7 +467,7 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
                 setDropdownOpen(false);
                 setSearchOpen(false);
               }}
-              className={`p-1.5 md:p-2.5 rounded-xl transition-all relative ${
+              className={`group h-8 w-8 md:h-10 md:w-10 inline-flex items-center justify-center rounded-full transition-all relative ${
                 isNotifOpen ? "bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400" : "text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800"
               }`}
             >
@@ -454,7 +475,7 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
               {!isNotifOpen && unreadCount > 0 && (
                 <span className="absolute top-1.5 right-1.5 flex h-3.5 w-3.5">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                  <span className="relative inline-flex items-center justify-center rounded-full h-3.5 w-3.5 bg-rose-500 border-2 border-white text-[8px] text-white font-bold">
+                  <span className="relative inline-flex items-center justify-center rounded-full h-3.5 w-3.5 bg-rose-500 border-2 border-white text-[8px] text-white font-bold transition-transform md:group-hover:scale-110 md:group-hover:ring-2 md:group-hover:ring-rose-200 dark:md:group-hover:ring-rose-500/40">
                     {unreadCount > 9 ? "9+" : unreadCount}
                   </span>
                 </span>
@@ -468,18 +489,18 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
                   <div className="p-3 md:p-4 border-b border-slate-50 dark:border-slate-800 flex items-center justify-between">
                     <h3 className="font-bold text-slate-900 dark:text-slate-100">{t("notifications")}</h3>
                     <div className="relative">
-                      <button onClick={() => setMenuOpen(!isNotifMenuOpen)} className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors">
+                      <button onClick={() => setMenuOpen(!isNotifMenuOpen)} className="p-1.5 rounded-lg transition-colors md:hover:bg-slate-100 dark:md:hover:bg-slate-800">
                         <MoreHorizontal size={18} className="text-slate-500" />
                       </button>
                       
                       {isNotifMenuOpen && (
                         <div className="absolute right-0 mt-2 w-52 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-xl rounded-xl p-1.5 z-30">
-                          <button onClick={markAllAsRead} className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors">
+                          <button onClick={markAllAsRead} className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 rounded-lg transition-colors md:hover:bg-slate-50 dark:md:hover:bg-slate-800">
                             <Check size={14} className="text-emerald-500" /> {t("markAllAsRead")}
                           </button>
                           <button 
                             onClick={openNotificationSettings}
-                            className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors text-left"
+                            className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 rounded-lg transition-colors text-left md:hover:bg-slate-50 dark:md:hover:bg-slate-800"
                           >
                             <Settings2 size={14} className="text-brand-500" /> {t("notificationSettings")}
                           </button>
@@ -494,7 +515,7 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
                         key={tab}
                         onClick={() => setActiveTab(tab as any)}
                         className={`flex-1 py-1.5 md:py-2 rounded-md md:rounded-lg text-[11px] md:text-xs font-bold capitalize transition-all ${
-                          activeTab === tab ? "bg-white dark:bg-slate-700 text-brand-600 dark:text-brand-400 shadow-sm" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
+                          activeTab === tab ? "bg-white dark:bg-slate-700 text-brand-600 dark:text-brand-400 shadow-sm" : "text-slate-500 dark:text-slate-400 md:hover:text-slate-700 dark:md:hover:text-slate-300"
                         }`}
                       >
                         {tab}
@@ -513,7 +534,7 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
                         <div
                           key={notif.id}
                           onClick={() => handleNotifClick(notif)}
-                          className="p-3 md:p-4 flex gap-2 md:gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors border-b border-slate-50 dark:border-slate-800/50 last:border-0 relative"
+                          className="p-3 md:p-4 flex gap-2 md:gap-3 cursor-pointer transition-colors border-b border-slate-50 dark:border-slate-800/50 last:border-0 relative md:hover:bg-slate-50 dark:md:hover:bg-slate-800/50"
                         >
                           <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${notif.isRead ? "bg-transparent" : "bg-brand-500"}`} />
                           <div className="flex-1">
@@ -535,7 +556,7 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
                     <div className="p-2.5 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
                       <button
                         onClick={() => setShowAllNotifications((prev) => !prev)}
-                        className="w-full py-2 rounded-lg text-[10px] font-black uppercase tracking-widest text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-500/10 hover:bg-brand-100 dark:hover:bg-brand-500/20 transition-colors"
+                        className="w-full py-2 rounded-lg text-[10px] font-black uppercase tracking-widest text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-500/10 transition-colors md:hover:bg-brand-100 dark:md:hover:bg-brand-500/20"
                       >
                         {showAllNotifications ? t("showLess") : t("seeMore")}
                       </button>
@@ -622,7 +643,7 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
                       setSettingsOpen(true);
                       setDropdownOpen(false);
                     }} 
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-brand-50 dark:hover:bg-slate-800 hover:text-brand-600 dark:hover:text-brand-400 transition-colors text-left"
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-brand-50 dark:hover:bg-slate-800 hover:text-brand-600 dark:hover:text-brand-400 transition-colors text-left rounded-none"
                   >
                  
                     <SettingsIcon size={16} /> {t("settings")}
@@ -631,7 +652,7 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
                   <div className="h-px bg-slate-50 dark:bg-slate-800 my-1" />
                   <button 
                     onClick={() => { setLogoutOpen(true); setDropdownOpen(false); }} 
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors text-left"
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors text-left rounded-none"
                   >
                     <LogOut size={16} /> {t("logout")}
                   </button>

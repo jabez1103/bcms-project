@@ -3,6 +3,7 @@
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import ProfileAvatar from "@/components/ui/ProfileAvatar";
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   User, Mail, Phone, CreditCard, Edit3, KeyRound, ChevronRight,
   Save, X, ShieldCheck, BadgeCheck
@@ -11,6 +12,7 @@ import { SkeletonDetailView } from "@/components/ui/Skeleton";
 
 export default function ProfilePage() {
   const { user, loading } = useCurrentUser();
+  const router = useRouter();
   
   /* --- UI States --- */
   const [isEditing, setIsEditing] = useState(false);
@@ -129,6 +131,12 @@ export default function ProfilePage() {
     fetchEligibility();
   }, [user]);
 
+  useEffect(() => {
+    if (!loading && !user) {
+      router.replace("/login");
+    }
+  }, [loading, router, user]);
+
   if (loading) return (
     <div className="min-h-screen bg-[#fbfcff] dark:bg-slate-950 p-3 sm:p-5 md:p-12">
       <div className="max-w-6xl mx-auto mt-20">
@@ -138,8 +146,8 @@ export default function ProfilePage() {
   );
   
   if (!user) return (
-    <div className="min-h-screen flex items-center justify-center bg-white dark:bg-slate-950 text-rose-500 font-bold">
-      AUTH ERROR
+    <div className="min-h-screen flex items-center justify-center bg-white dark:bg-slate-950 text-slate-500 dark:text-slate-400 font-semibold">
+      Redirecting to login...
     </div>
   );
 
@@ -150,7 +158,7 @@ export default function ProfilePage() {
       {/* Banner - Dark Slate */}
       <div className="w-full h-28 md:h-48 bg-[#0F172A]" />
       
-      <div className="max-w-6xl mx-auto px-2 sm:px-4 md:px-6">
+      <div className="max-w-6xl mx-auto px-0 sm:px-4 md:px-6 lg:px-10">
         {/* Header Section */}
         <header className="relative flex flex-col md:flex-row items-center md:items-end justify-between gap-3 md:gap-6 -mt-10 md:-mt-16 mb-5 md:mb-12">
           <div className="flex flex-col md:flex-row items-center md:items-end gap-3 md:gap-6">
@@ -225,10 +233,10 @@ export default function ProfilePage() {
           </div>
         )}
 
-        <div className="grid grid-cols-12 gap-8">
+        <div className="grid grid-cols-12 gap-8 lg:gap-10">
           {/* Main Content Area */}
           <div className="col-span-12 lg:col-span-8 space-y-3 md:space-y-6">
-            <div className={`bg-white dark:bg-slate-900 border rounded-2xl shadow-sm overflow-hidden transition-all ${isEditing ? "border-brand-200 dark:border-brand-500/30 ring-4 ring-brand-50 dark:ring-brand-500/10" : "border-slate-200 dark:border-slate-800"}`}>
+            <div className={`bg-white dark:bg-slate-900 border [border-radius:0] md:[border-radius:0.75rem] shadow-sm overflow-hidden transition-all ${isEditing ? "border-brand-200 dark:border-brand-500/30 ring-4 ring-brand-50 dark:ring-brand-500/10" : "border-slate-200 dark:border-slate-800"}`}>
               <div className="px-4 py-3 md:px-6 md:py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
                 <div className="flex items-center gap-2">
                   <User size={18} className={isEditing ? "text-brand-500" : "text-slate-400"} />
@@ -263,7 +271,7 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            <div className="p-4 md:p-6 bg-brand-50/50 dark:bg-brand-950/30 border border-brand-100 dark:border-brand-900/50 rounded-2xl flex items-center gap-3 md:gap-4">
+            <div className="p-4 md:p-6 bg-brand-50/50 dark:bg-brand-950/30 border border-brand-100 dark:border-brand-900/50 [border-radius:0] md:[border-radius:0.75rem] md:overflow-hidden flex items-center gap-3 md:gap-4">
               <div className="p-2.5 md:p-3 bg-white dark:bg-slate-800 rounded-xl shadow-sm">
                 <ShieldCheck className="w-5 h-5 md:w-6 md:h-6 text-brand-600" />
               </div>
@@ -277,7 +285,7 @@ export default function ProfilePage() {
           {/* Sidebar Area */}
           <div className="col-span-12 lg:col-span-4 space-y-3 md:space-y-6">
             {isStudent && (
-              <div className={`p-4 md:p-6 rounded-2xl border shadow-sm ${isEligible ? "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-100 dark:border-emerald-900/50" : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"}`}>
+              <div className={`p-4 md:p-6 [border-radius:0] md:[border-radius:0.75rem] md:overflow-hidden border shadow-sm ${isEligible ? "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-100 dark:border-emerald-900/50" : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"}`}>
                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">
                   Enrollment Eligibility
                 </p>
@@ -303,7 +311,7 @@ export default function ProfilePage() {
             )}
 
             {/* Password Section - Always Enabled */}
-            <div className="bg-white dark:bg-slate-900 p-4 md:p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div className="bg-white dark:bg-slate-900 p-4 md:p-6 [border-radius:0] md:[border-radius:0.75rem] md:overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm">
               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3 md:mb-6">Security Settings</p>
               
               {!showPassForm ? (

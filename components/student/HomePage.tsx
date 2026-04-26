@@ -71,9 +71,9 @@ export default function HomePage() {
     //activeFilter === 'All Statuses' ? true : item.status.trim() === activeFilter
 
   if (loading) return (
-    <div className="bg-[#fbfcff] dark:bg-slate-950 min-h-screen min-w-full relative font-sans">
-      <div className="p-2 sm:p-4 md:p-10 pt-24 md:pt-28">
-        <div className="max-w-7xl mx-auto">
+    <div className="bg-[#fbfcff] dark:bg-slate-950 min-h-screen min-w-full relative font-sans px-3 sm:px-4 lg:px-6">
+      <div className="py-2 sm:py-4 md:py-10 pt-24 md:pt-28">
+        <div className="max-w-[1600px] mx-auto px-0">
           <div className="animate-pulse space-y-4">
             <div className="h-16 bg-slate-200 dark:bg-slate-800 rounded-2xl w-full"></div>
             <div className="h-16 bg-slate-200 dark:bg-slate-800 rounded-2xl w-full"></div>
@@ -86,23 +86,24 @@ export default function HomePage() {
   );
 
   return (
-    <div className="bg-[#fbfcff] dark:bg-slate-950 min-h-screen relative font-sans transition-colors duration-300">
+    <div className="bg-[#fbfcff] dark:bg-slate-950 min-h-screen relative font-sans transition-colors duration-300 px-3 sm:px-4 lg:px-6">
       <PageHeader
         title="Clearance Status"
         description="Monitor your institutional clearances and department approvals in real-time."
         icon={Sparkles}
+        containerClassName="px-2 sm:px-4 py-2 sm:py-4 lg:px-6"
         actions={
-          <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl shadow-inner">
+          <div className="hidden md:flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl shadow-inner">
             <button
               onClick={() => setViewMode('cards')}
-              className={`p-1.5 rounded-lg transition-all ${viewMode === 'cards' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-600 dark:text-brand-400' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-200'}`}
+              className={`px-1.5 py-1 rounded-lg transition-all ${viewMode === 'cards' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-600 dark:text-brand-400' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-200'}`}
               aria-label="Cards view"
             >
               <LayoutGrid size={16} />
             </button>
             <button
               onClick={() => setViewMode('table')}
-              className={`p-1.5 rounded-lg transition-all ${viewMode === 'table' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-600 dark:text-brand-400' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-200'}`}
+              className={`px-1.5 py-1 rounded-lg transition-all ${viewMode === 'table' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-600 dark:text-brand-400' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-200'}`}
               aria-label="Table view"
             >
               <List size={16} />
@@ -111,10 +112,49 @@ export default function HomePage() {
         }
       />
 
-      <div className="max-w-[1600px] mx-auto p-2 sm:p-4 md:p-10">
+      <div className="max-w-[1600px] mx-auto px-0 py-2 sm:py-4 md:py-10">
         {/* --- FILTERS --- */}
-        <div className="flex flex-col lg:flex-row items-center justify-between gap-6 mb-10">
-          <div className="flex flex-wrap gap-2 p-1.5 bg-slate-100 dark:bg-slate-800 rounded-2xl w-fit shadow-inner">
+        <div className="flex flex-col gap-3 mb-10">
+          <div className="md:hidden w-full overflow-x-auto no-scrollbar">
+            <div className="flex items-center gap-2 min-w-max">
+              <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl shadow-inner">
+                <button
+                  onClick={() => setViewMode('cards')}
+                  className={`h-8 w-8 flex items-center justify-center rounded-lg transition-all ${viewMode === 'cards' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-600 dark:text-brand-400' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-200'}`}
+                  aria-label="Cards view"
+                >
+                  <LayoutGrid size={16} />
+                </button>
+                <button
+                  onClick={() => setViewMode('table')}
+                  className={`h-8 w-8 flex items-center justify-center rounded-lg transition-all ${viewMode === 'table' ? 'bg-white dark:bg-slate-700 shadow-sm text-brand-600 dark:text-brand-400' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-200'}`}
+                  aria-label="Table view"
+                >
+                  <List size={16} />
+                </button>
+              </div>
+              <div className="flex flex-nowrap gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl shadow-inner">
+                {filters.map((filter) => {
+                  const isActive = activeFilter === filter;
+                  return (
+                    <button
+                      key={filter}
+                      onClick={() => setActiveFilter(filter)}
+                      className={`h-8 px-4 inline-flex items-center rounded-xl text-xs font-bold whitespace-nowrap transition-all duration-300 ${
+                        isActive
+                          ? 'bg-white dark:bg-slate-700 text-brand-600 dark:text-brand-400 shadow-sm scale-105'
+                          : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-white/50 dark:hover:bg-slate-700/50'
+                      }`}
+                    >
+                      {filter}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          <div className="hidden md:flex flex-wrap gap-2 p-1.5 bg-slate-100 dark:bg-slate-800 rounded-2xl w-fit shadow-inner">
               {filters.map((filter) => {
                 const isActive = activeFilter === filter;
                 return (
@@ -133,7 +173,7 @@ export default function HomePage() {
               })}
             </div>
           </div>
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-7xl mx-auto px-0">
           {filteredData.length === 0 ? (
             <div className="text-center py-20 bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-slate-800 shadow-sm">
               <p className="text-slate-400 font-bold uppercase tracking-widest text-sm">No requirements found.</p>
@@ -167,7 +207,7 @@ export default function HomePage() {
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 px-1 sm:px-0">
               {filteredData.map((req) => (
                 <SignatoryCard key={req.id} person={req} />
               ))}
@@ -323,7 +363,7 @@ function SignatoryCard({ person }: { person: Signatory }) {
   const fallbackRole = person.role || "Unknown Office";
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07)] border border-slate-100 dark:border-slate-800 flex flex-col overflow-hidden transition-all duration-300 hover:shadow-[0_20px_25px_-5px_rgba(0,0,0,0.1)] hover:-translate-y-1 group">
+    <div className="mx-1.5 sm:mx-0 bg-white dark:bg-slate-900 rounded-2xl shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07)] border border-slate-100 dark:border-slate-800 flex flex-col overflow-hidden transition-all duration-300 hover:shadow-[0_20px_25px_-5px_rgba(0,0,0,0.1)] hover:-translate-y-1 group">
       {/* --- HEADER --- */}
       <div className={`${theme.color} p-5 flex justify-between items-center text-white`}>
         <div className="flex-1 pr-3">

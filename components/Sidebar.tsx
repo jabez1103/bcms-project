@@ -215,7 +215,7 @@ export function Sidebar({ role, activePage, onPageClick, isMobileOpen, onMobileC
         bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 
         text-slate-600 dark:text-slate-300 transition-transform duration-300 ease-in-out
         ${isMobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
-        ${isCollapsed ? "md:w-20" : "md:w-64"}
+        ${isCollapsed ? "md:w-24" : "md:w-64"}
         w-[76vw] sm:w-80 md:w-auto
       `}>
         
@@ -307,6 +307,7 @@ export function Sidebar({ role, activePage, onPageClick, isMobileOpen, onMobileC
                     }}
                     className={`
                       flex items-center gap-2.5 px-2.5 md:px-3 py-2 md:py-2.5 rounded-xl transition-all w-full group
+                      ${isCollapsed ? "md:justify-center md:px-2.5" : ""}
                       ${isOpen || isActive ? "bg-brand-600 text-white" : "hover:bg-brand-50 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400"}
                     `}
                   >
@@ -327,6 +328,7 @@ export function Sidebar({ role, activePage, onPageClick, isMobileOpen, onMobileC
                   <Link href={linkToRoute(item.label)} onClick={() => { if (isMobileOpen && onMobileClose) onMobileClose(); }}>
                     <div className={`
                       flex items-center gap-2.5 px-2.5 md:px-3 py-2 md:py-2.5 rounded-xl transition-all cursor-pointer group
+                      ${isCollapsed ? "md:justify-center md:px-2.5" : ""}
                       ${isActive ? "bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400" : "hover:bg-brand-600 hover:text-white text-slate-500 dark:text-slate-400"}
                     `}>
                       <span className={`${isActive ? "text-brand-600 dark:text-brand-400" : "text-slate-400 dark:text-slate-500 group-hover:text-white"}`}>

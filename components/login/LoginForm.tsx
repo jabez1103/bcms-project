@@ -189,9 +189,9 @@ export default function LoginForm({ mobile = false }: LoginFormProps) {
   className={`
     relative overflow-hidden flex flex-col items-center font-body z-10 transition-all duration-700
     rounded-[2rem] border border-slate-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl
-    p-4 sm:p-8 ${mobile ? "px-3.5 sm:px-6 pt-4.5 sm:pt-6 pb-3.5 sm:pb-5" : "sm:p-12"} shadow-[0_32px_64px_-12px_rgba(0,0,0,0.08)]          
+    p-4 sm:p-8 ${mobile ? "px-3.5 sm:px-6 pt-3.5 sm:pt-6 pb-2.5 sm:pb-5" : "sm:p-12"} shadow-[0_32px_64px_-12px_rgba(0,0,0,0.08)]          
     w-[94%] sm:w-full max-w-[460px] mx-auto animate-fade-in-up
-    ${mobile ? "my-4" : "relative"}
+    ${mobile ? "my-2.5" : "relative"}
   `}
 >
   {/* Local purple cursor aura (form-only) */}
@@ -231,7 +231,7 @@ export default function LoginForm({ mobile = false }: LoginFormProps) {
     </p>
 
   {/* INPUTS */}
-  <div className="mt-5 sm:mt-9 w-full space-y-5 sm:space-y-6">
+  <div className="mt-4 sm:mt-9 w-full space-y-5 sm:space-y-6">
     {/* Email */}
     <div className="flex flex-col gap-1.5">
       <label className="text-[clamp(10px,1.5vw,11px)] font-bold uppercase tracking-widest text-gray-400 dark:text-slate-500">
@@ -286,7 +286,7 @@ export default function LoginForm({ mobile = false }: LoginFormProps) {
   </div>
 
   {/* Remember Me & Forgot Password */}
-  <div className="mt-5 flex w-full flex-wrap items-center justify-between gap-1.5 px-0.5">
+  <div className="mt-4 flex w-full flex-wrap items-center justify-between gap-1.5 px-0.5">
     <label className="group flex cursor-pointer items-center gap-2">
       <input
         type="checkbox"
@@ -323,7 +323,7 @@ export default function LoginForm({ mobile = false }: LoginFormProps) {
   </div>
 
   {/* Sign In Button */}
-  <div className="w-full h-[96px] sm:h-[88px] flex items-center">
+  <div className="w-full h-[84px] sm:h-[88px] flex items-center">
     <button
       type="submit"
       disabled={isLoading}

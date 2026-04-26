@@ -13,7 +13,18 @@ async function fetchCurrentUserWithRetry(): Promise<{ data: CurrentUserResponse;
             credentials: "include",
             cache: "no-store",
         });
-        const data = (await res.json()) as CurrentUserResponse;
+
+        // Some failures (proxy/middleware/runtime) can return an empty or non-JSON body.
+        // Parse defensively so callers do not crash on `res.json()`.
+        const raw = await res.text();
+        let data: CurrentUserResponse = {};
+        if (raw) {
+            try {
+                data = JSON.parse(raw) as CurrentUserResponse;
+            } catch {
+                data = {};
+            }
+        }
         return { res, data };
     };
 
@@ -50,6 +61,10 @@ export function useCurrentUser() {
                     return;
                 }
                 if (data?.success) setUser(data.user);
+            })
+            .catch(() => {
+                if (cancelled) return;
+                setUser(null);
             })
             .finally(() => {
                 if (!cancelled) setLoading(false);

@@ -140,17 +140,17 @@ const toSignatoryStatus = (status: SignatoryStatus): ClearanceStatus => {
 
 
   return (
-    <div className="min-h-screen bg-[#fbfcff] dark:bg-slate-950 p-2 sm:p-4 md:p-10 font-sans text-slate-900 dark:text-slate-100 transition-colors">
+    <div className="min-h-screen px-3 sm:px-4 lg:px-6 py-2 sm:py-4 font-sans text-slate-900 dark:text-slate-100 bg-[#fbfcff] dark:bg-slate-950 transition-colors">
 
       {/* ── STICKY HEADER ── */}
-      <header className="sticky top-0 z-[20] bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200/60 dark:border-slate-800 -mx-2 sm:-mx-4 md:-mx-10 px-2 sm:px-4 md:px-10 py-4 mb-5 md:mb-6">
+      <header className="sticky top-0 z-[20] bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200/60 dark:border-slate-800 px-2 sm:px-4 lg:px-6 py-3 mb-5 md:mb-6">
         <div className="max-w-[1600px] mx-auto flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 bg-slate-900 dark:bg-slate-800 rounded-xl flex items-center justify-center text-white shadow-lg shadow-slate-200 dark:shadow-none">
-              <GraduationCap size={20} />
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-slate-900 dark:bg-slate-800 rounded-lg sm:rounded-xl flex items-center justify-center text-white shadow-lg shadow-slate-200 dark:shadow-none">
+              <GraduationCap size={16} />
             </div>
             <div className="space-y-0.5">
-              <h1 className="text-sm sm:text-2xl font-black tracking-tight leading-none uppercase">
+              <h1 className="text-[13px] sm:text-2xl font-black tracking-tight leading-none uppercase">
                 Student <span className="text-brand-600">Clearance Status</span>
               </h1>
               <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500">

@@ -228,17 +228,17 @@ export default function SignatoryDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-[#fbfcff] dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans">
+    <div className="min-h-screen px-3 sm:px-4 lg:px-6 bg-[#fbfcff] dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans">
       
       {/* STICKY HEADER COMPONENT */}
-      <header className="sticky top-0 z-[20] bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200/60 dark:border-slate-800 px-3 py-4 sm:px-5 lg:px-12">
+      <header className="sticky top-0 z-[20] bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200/60 dark:border-slate-800 px-2 py-3 sm:px-4 lg:px-6">
         <div className="max-w-[1600px] mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 bg-slate-900 dark:bg-slate-800 rounded-xl flex items-center justify-center text-white shadow-lg shadow-slate-200 dark:shadow-none">
-                <ShieldCheck size={20} />
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-slate-900 dark:bg-slate-800 rounded-lg sm:rounded-xl flex items-center justify-center text-white shadow-lg shadow-slate-200 dark:shadow-none">
+                <ShieldCheck size={16} />
             </div>
             <div className="space-y-0.5">
-              <h1 className="text-sm sm:text-2xl font-black tracking-tight leading-none uppercase">
+              <h1 className="text-[13px] sm:text-2xl font-black tracking-tight leading-none uppercase">
                 Signatory <span className="text-blue-600">Portal</span>
               </h1>
               <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500">
@@ -252,7 +252,7 @@ export default function SignatoryDashboard() {
         </div>
       </header>
 
-      <main className="max-w-[1600px] mx-auto px-2 sm:px-4 py-6 sm:py-8 lg:px-12">
+      <main className="max-w-[1600px] mx-auto px-0 py-6 sm:py-8">
         
         {/* ANALYTICS GRID */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-12">
@@ -325,7 +325,7 @@ export default function SignatoryDashboard() {
         </div>
 
         {/* TABLE SECTION */}
-        <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200/60 dark:border-slate-800 shadow-sm overflow-hidden">
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/60 dark:border-slate-800 shadow-sm overflow-hidden">
           <div className="p-6 sm:p-8 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 bg-slate-50/50 dark:bg-slate-800/50">
             <div className="flex items-center gap-4">
               <div className="hidden sm:flex p-3.5 bg-slate-900 rounded-2xl text-white"><LayoutGrid size={22} /></div>
@@ -363,7 +363,7 @@ export default function SignatoryDashboard() {
               </select>
               <button
                 onClick={handleSelectPage}
-                className="sm:hidden min-w-0 h-11 px-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-[8px] font-black uppercase tracking-[0.08em] text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all whitespace-nowrap"
+                className="sm:hidden min-w-0 h-11 px-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-[10px] font-black uppercase tracking-[0.08em] text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all whitespace-nowrap"
               >
                 Select
               </button>

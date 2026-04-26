@@ -159,10 +159,10 @@ export default function SignatoryDetails() {
   };
 
   return (
-    <div className="min-h-screen bg-[#fbfcff] dark:bg-slate-950 transition-colors text-slate-900 dark:text-slate-100">
+    <div className="min-h-screen px-3 sm:px-4 lg:px-6 bg-[#fbfcff] dark:bg-slate-950 transition-colors text-slate-900 dark:text-slate-100">
 
       {/* NAV */}
-      <nav className="sticky top-0 border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md px-4 sm:px-6 py-4 flex items-center z-20 transition-colors">
+      <nav className="sticky top-0 border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md px-2 sm:px-4 lg:px-6 py-4 flex items-center z-20 transition-colors">
         <button
           onClick={() => router.back()}
           className="flex items-center gap-2 text-sm font-bold text-slate-900 dark:text-slate-100 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors group"
@@ -182,8 +182,8 @@ export default function SignatoryDetails() {
         </div>
       </nav>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <main className="max-w-7xl mx-auto px-0 py-8 pb-12">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
 
           {/* ── LEFT COLUMN ── */}
           <div className="lg:col-span-4 space-y-6 lg:sticky lg:top-24">
@@ -503,18 +503,18 @@ export default function SignatoryDetails() {
             )}
 
             {/* Info note */}
-            <div className="bg-indigo-50/90 dark:bg-indigo-500/10 rounded-xl sm:rounded-2xl p-4 sm:p-6 flex gap-3 sm:gap-4 border border-indigo-100 dark:border-indigo-500/20">
-              <div className="w-9 h-9 rounded-lg bg-indigo-100 dark:bg-indigo-500/15 flex items-center justify-center shrink-0">
-                <Info className="text-indigo-500 dark:text-indigo-400" size={18} />
+            {(isPhysical || uploadAllowed) && (
+              <div className="bg-indigo-50/90 dark:bg-indigo-500/10 rounded-xl sm:rounded-2xl p-4 sm:p-6 flex gap-3 sm:gap-4 border border-indigo-100 dark:border-indigo-500/20">
+                <div className="w-9 h-9 rounded-lg bg-indigo-100 dark:bg-indigo-500/15 flex items-center justify-center shrink-0">
+                  <Info className="text-indigo-500 dark:text-indigo-400" size={18} />
+                </div>
+                <p className="text-[13px] sm:text-sm text-indigo-900 dark:text-indigo-200 leading-relaxed">
+                  {isPhysical
+                    ? "Visit the office listed above during the available schedule. Bring all required documents and have this clearance stamped."
+                    : "Upload your file below. It will be reviewed by the signatory in the order received. You will be notified once your status is updated."}
+                </p>
               </div>
-              <p className="text-[13px] sm:text-sm text-indigo-900 dark:text-indigo-200 leading-relaxed">
-                {isPhysical
-                  ? "Visit the office listed above during the available schedule. Bring all required documents and have this clearance stamped."
-                  : uploadAllowed
-                    ? "Upload your file below. It will be reviewed by the signatory in the order received. You will be notified once your status is updated."
-                    : "Follow the signatory instructions above. Upload submission is currently disabled for this requirement."}
-              </p>
-            </div>
+            )}
 
           </div>
         </div>

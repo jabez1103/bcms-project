@@ -166,17 +166,17 @@ export default function UltimateClearancePortal() {
   };
 
   return (
-    <div className="w-full h-full font-sans text-slate-900 dark:text-slate-100">
+    <div className="w-full h-full px-3 sm:px-4 lg:px-6 font-sans text-slate-900 dark:text-slate-100">
 
       {/* ── STICKY HEADER ── */}
-      <header className="sticky top-0 z-[20] bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200/60 dark:border-slate-800 px-4 py-4 sm:px-8 lg:px-12">
+      <header className="sticky top-0 z-[20] bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200/60 dark:border-slate-800 px-2 py-3 sm:px-4 lg:px-6">
         <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 bg-slate-900 dark:bg-slate-800 rounded-xl flex items-center justify-center text-white shadow-lg shadow-slate-200 dark:shadow-none">
-              <Eye size={20} />
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-slate-900 dark:bg-slate-800 rounded-lg sm:rounded-xl flex items-center justify-center text-white shadow-lg shadow-slate-200 dark:shadow-none">
+              <Eye size={16} />
             </div>
             <div className="space-y-0.5">
-              <h1 className="text-sm sm:text-2xl font-black tracking-tight leading-none uppercase">
+              <h1 className="text-[13px] sm:text-2xl font-black tracking-tight leading-none uppercase">
                 Review <span className="text-brand-600">Submissions</span>
               </h1>
               <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500">
@@ -189,7 +189,7 @@ export default function UltimateClearancePortal() {
       </header>
 
       {/* MAIN CONTENT AREA */}
-      <main className="max-w-6xl mx-auto p-4 md:p-8 space-y-8">
+      <main className="max-w-6xl mx-auto px-0 py-4 md:py-8 space-y-8">
         
         {/* SEARCH & SELECT ALL */}
         <section className="space-y-4">

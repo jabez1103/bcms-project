@@ -232,7 +232,7 @@ export default function ClearanceProgress() {
   };
 
   if (loading) return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-2 sm:p-4 md:p-10">
+    <div className="min-h-screen px-3 sm:px-4 lg:px-6 bg-slate-50 dark:bg-slate-950 py-0 sm:py-4 md:py-10">
       <div className="max-w-6xl mx-auto space-y-10">
 
         {/* Header skeleton */}
@@ -249,14 +249,14 @@ export default function ClearanceProgress() {
         </div>
 
         {/* Filter bar skeleton */}
-        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6 animate-pulse flex gap-4">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl md:rounded-3xl border border-slate-100 dark:border-slate-800 p-6 animate-pulse flex gap-4">
           <div className="h-10 flex-1 bg-slate-200 dark:bg-slate-800 rounded-xl" />
           <div className="h-10 flex-1 bg-slate-200 dark:bg-slate-800 rounded-xl" />
           <div className="h-10 w-36 bg-slate-200 dark:bg-slate-800 rounded-xl" />
         </div>
 
         {/* Table skeleton */}
-        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 overflow-hidden">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl md:rounded-3xl border border-slate-100 dark:border-slate-800 overflow-hidden">
           <div className="block md:hidden divide-y divide-slate-100 dark:divide-slate-800/50">
             {Array.from({ length: 5 }).map((_, i) => (
               <SkeletonMobileCard key={i} />
@@ -277,16 +277,17 @@ export default function ClearanceProgress() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 p-2 sm:p-4 md:p-10">
+    <div className="min-h-screen px-3 sm:px-4 lg:px-6 bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 py-0 sm:py-4 md:py-10">
       <PageHeader
         title="Clearance Progress"
         description="Monitor real-time approval rates and identify bottlenecks across all departments."
         icon={BarChart3}
+        containerClassName="px-2 sm:px-4 py-2 sm:py-4 lg:px-6"
         actions={
           <button
             type="button"
             onClick={exportAnalytics}
-            className="flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-sm"
+            className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2 sm:py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 rounded-xl text-[clamp(7px,2.5vw,9px)] sm:text-[10px] font-black uppercase tracking-[0.1em] sm:tracking-widest hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-sm"
           >
             <FileDown size={14} />
             Export Analytics
@@ -294,14 +295,14 @@ export default function ClearanceProgress() {
         }
       />
 
-      <div className="max-w-[1600px] mx-auto p-1.5 sm:p-4 md:p-10">
+      <div className="max-w-[1600px] mx-auto px-0 py-0 sm:py-4 md:py-10">
 
         {/* STATS GRID */}
         <div className="mb-4 md:mb-10">
           <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-3 gap-2.5 sm:gap-5 md:gap-6">
             {stats.map((stat, i) => (
               <div key={i} className="bg-white dark:bg-slate-900 p-2.5 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl md:rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 flex items-center justify-center sm:justify-start gap-2 sm:gap-4 md:gap-5">
-                <div className={`hidden sm:flex text-base md:text-2xl w-8 h-8 md:w-12 md:h-12 items-center justify-center rounded-lg md:rounded-2xl ${stat.color} dark:bg-opacity-10`}>
+                <div className={`hidden sm:flex text-base md:text-2xl w-8 h-8 md:w-12 md:h-12 items-center justify-center rounded-lg md:rounded-2xl bcms-keep-rounded ${stat.color} dark:bg-opacity-10`}>
                   {stat.icon}
                 </div>
                 <div className="text-center sm:text-left">
@@ -368,7 +369,7 @@ export default function ClearanceProgress() {
         </section>
 
         {/* TABLE */}
-        <section className="bg-white dark:bg-slate-900 rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 overflow-hidden">
+        <section className="bg-white dark:bg-slate-900 rounded-2xl md:rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 overflow-hidden">
           {/* MOBILE LIST VIEW */}
           <div className="block md:hidden divide-y divide-slate-100 dark:divide-slate-800/50">
             {paginated.length === 0 ? (

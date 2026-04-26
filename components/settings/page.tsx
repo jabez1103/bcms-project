@@ -184,7 +184,7 @@ export default function SettingsModal({ onClose, isOpen, defaultTab }: SettingsM
               {showMobileContent ? menuItems.find((i) => i.id === activeTab)?.label : "Settings"}
             </h2>
           </div>
-          <button onClick={onClose} className="px-3 py-1.5 bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 font-bold text-[11px] uppercase rounded-full">
+          <button onClick={onClose} className="px-3 py-1.5 text-gray-700 dark:text-slate-300 font-bold text-base uppercase rounded-full">
             Back
           </button>
         </header>

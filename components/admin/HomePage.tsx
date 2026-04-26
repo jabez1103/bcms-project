@@ -258,15 +258,15 @@ export default function AdminHomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#fbfcff] dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans">
-      <header className="sticky top-0 z-[20] bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200/60 dark:border-slate-800 px-3 py-4 sm:px-5 lg:px-12">
+    <div className="min-h-screen px-3 sm:px-4 lg:px-6 bg-[#fbfcff] dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans">
+      <header className="sticky top-0 z-[20] bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200/60 dark:border-slate-800 px-2 sm:px-4 py-3 lg:px-6">
         <div className="max-w-[1600px] mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 bg-slate-900 dark:bg-slate-800 rounded-xl flex items-center justify-center text-white shadow-lg shadow-slate-200 dark:shadow-none">
-              <LayoutGrid size={20} />
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-slate-900 dark:bg-slate-800 rounded-lg sm:rounded-xl flex items-center justify-center text-white shadow-lg shadow-slate-200 dark:shadow-none">
+              <LayoutGrid size={16} />
             </div>
             <div className="space-y-0.5">
-              <h1 className="text-sm sm:text-2xl font-black tracking-tight leading-none uppercase">
+              <h1 className="text-[13px] sm:text-2xl font-black tracking-tight leading-none uppercase">
                 Admin <span className="text-brand-600 dark:text-brand-400">Dashboard</span>
               </h1>
               <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500">
@@ -275,16 +275,16 @@ export default function AdminHomePage() {
               </div>
             </div>
           </div>
-          <div className="inline-flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-[10px] font-black uppercase tracking-wider shadow-sm">
-            <Users size={14} />
+          <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-[clamp(8px,2.6vw,10px)] sm:text-[10px] font-black uppercase tracking-[0.1em] sm:tracking-wider shadow-sm">
+            <Users size={13} />
             {stats.total} Total Students
           </div>
         </div>
       </header>
 
-      <main className="max-w-[1600px] mx-auto px-2 sm:px-4 py-6 sm:py-8 lg:px-12">
+      <main className="max-w-[1600px] mx-auto px-0 py-6 sm:py-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-12">
-          <div className="lg:col-span-8 bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-[2.5rem] border border-slate-200/60 dark:border-slate-800 shadow-sm">
+          <div className="lg:col-span-8 bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-2xl sm:rounded-[2.5rem] border border-slate-200/60 dark:border-slate-800 shadow-sm">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-10">
               <div>
                 <h3 className="font-black text-[10px] uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1">
@@ -292,11 +292,11 @@ export default function AdminHomePage() {
                 </h3>
                 <p className="text-xl font-black">Clearance Status Overview</p>
               </div>
-              <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1.5 rounded-2xl w-full sm:w-auto">
+              <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-1.5 rounded-2xl bcms-keep-rounded w-full sm:w-auto">
                 <div className="flex gap-1 mr-2">
                   <button
                     onClick={() => setChartView("pie")}
-                    className={`p-2 rounded-xl transition-all ${
+                    className={`p-2 rounded-xl bcms-keep-rounded transition-all ${
                       chartView === "pie"
                         ? "bg-white dark:bg-slate-700 text-brand-600 dark:text-brand-400 shadow-sm"
                         : "text-slate-400 dark:text-slate-500"
@@ -306,7 +306,7 @@ export default function AdminHomePage() {
                   </button>
                   <button
                     onClick={() => setChartView("bar")}
-                    className={`p-2 rounded-xl transition-all ${
+                    className={`p-2 rounded-xl bcms-keep-rounded transition-all ${
                       chartView === "bar"
                         ? "bg-white dark:bg-slate-700 text-brand-600 dark:text-brand-400 shadow-sm"
                         : "text-slate-400 dark:text-slate-500"
@@ -375,7 +375,7 @@ export default function AdminHomePage() {
           </div>
         </div>
 
-        <section className="bg-white dark:bg-slate-900 rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 overflow-hidden">
+        <section className="bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 overflow-hidden">
           <div className="p-6 sm:p-8 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 bg-slate-50/50 dark:bg-slate-800/50">
             <div className="flex items-center gap-4">
               <div className="hidden sm:flex p-3.5 bg-slate-900 rounded-2xl text-white">
@@ -588,7 +588,7 @@ function StatCard({
         <p className="text-[8px] sm:text-[9px] lg:text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider lg:tracking-widest mb-0.5">{label}</p>
         <h2 className={`text-2xl sm:text-3xl lg:text-5xl font-black leading-none ${color}`}>{value}</h2>
       </div>
-      <div className={`p-2 sm:p-2.5 lg:p-5 rounded-lg sm:rounded-xl lg:rounded-2xl ${bg} ${color}`}>{icon}</div>
+      <div className={`p-2 sm:p-2.5 lg:p-5 rounded-lg sm:rounded-xl lg:rounded-2xl bcms-keep-rounded ${bg} ${color}`}>{icon}</div>
     </div>
   );
 }

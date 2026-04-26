@@ -127,7 +127,7 @@ export default function LandingPage() {
           <div className="flex justify-end">
             <button 
               onClick={() => setMobileMenuOpen(false)}
-              className="p-2.5 sm:p-4 rounded-2xl bg-white/10 text-white active:scale-90 transition-transform"
+              className="p-2.5 sm:p-4 rounded-xl bg-white/10 text-white active:scale-90 transition-transform"
             >
               <X size={24} />
             </button>
@@ -154,7 +154,7 @@ export default function LandingPage() {
             {mounted && (
               <button
                 onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                className="mt-5 sm:mt-8 self-start inline-flex items-center gap-2.5 px-4 py-2.5 sm:px-6 sm:py-3 rounded-2xl bg-white/10 text-white font-bold text-base sm:text-xl hover:bg-white/20 transition-all active:scale-95"
+                className="mt-5 sm:mt-8 self-start inline-flex items-center gap-2.5 px-4 py-2.5 sm:px-6 sm:py-3 rounded-xl bg-white/10 text-white font-bold text-base sm:text-xl hover:bg-white/20 transition-all active:scale-95"
               >
                 {theme === 'dark' ? (
                   <><Sun size={24} /> Light Mode</>
@@ -295,13 +295,13 @@ export default function LandingPage() {
           </div>
 
           <div className="mt-7 sm:mt-12 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-5">
-            <Link href="/login" className="group h-11 sm:h-14 px-7 sm:px-10 flex items-center justify-center rounded-2xl bg-white dark:bg-slate-900 text-brand-900 dark:text-brand-100 font-black text-[11px] sm:text-sm uppercase tracking-widest shadow-[0_20px_40px_-10px_rgba(255,255,255,0.3)] dark:shadow-[0_20px_40px_-10px_rgba(124,58,237,0.3)] transition-all hover:scale-[1.02] hover:bg-brand-50 dark:hover:bg-slate-800 active:scale-95">
+            <Link href="/login" className="group h-11 sm:h-14 px-7 sm:px-10 flex items-center justify-center rounded-xl bg-white dark:bg-slate-900 text-brand-900 dark:text-brand-100 font-black text-[11px] sm:text-sm uppercase tracking-widest shadow-[0_20px_40px_-10px_rgba(255,255,255,0.3)] dark:shadow-[0_20px_40px_-10px_rgba(124,58,237,0.3)] transition-all hover:scale-[1.02] hover:bg-brand-50 dark:hover:bg-slate-800 active:scale-95">
               Access Portal
               <ArrowRight size={16} className="ml-2 group-hover:translate-x-1.5 transition-transform" />
             </Link>
             <button
               onClick={() => handleNavAction("#policy")}
-              className="h-11 sm:h-14 px-7 sm:px-10 flex items-center justify-center rounded-2xl bg-white/10 backdrop-blur-md border border-white/25 text-white font-black text-[11px] sm:text-sm uppercase tracking-widest hover:bg-white/15 transition-all active:scale-95"
+              className="h-11 sm:h-14 px-7 sm:px-10 flex items-center justify-center rounded-xl bg-white/10 backdrop-blur-md border border-white/25 text-white font-black text-[11px] sm:text-sm uppercase tracking-widest hover:bg-white/15 transition-all active:scale-95"
             >
               System Guide
             </button>
@@ -345,8 +345,8 @@ export default function LandingPage() {
                 color: "bg-emerald-500"
               }
             ].map((step, i) => (
-              <div key={i} className="group relative p-5 md:p-10 rounded-2xl md:rounded-3xl bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 transition-all duration-500 hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.05)] dark:hover:shadow-none hover:-translate-y-2 hover:border-brand-100 dark:hover:border-brand-900">
-                <div className={`mb-4 md:mb-8 inline-flex p-2.5 md:p-3.5 rounded-xl md:rounded-2xl text-white ${step.color} shadow-lg shadow-inherit transition-transform group-hover:rotate-12`}>
+              <div key={i} className="group relative p-5 md:p-10 rounded-xl bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 transition-all duration-500 hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.05)] dark:hover:shadow-none hover:-translate-y-2 hover:border-brand-100 dark:hover:border-brand-900">
+                <div className={`mb-4 md:mb-8 inline-flex p-2.5 md:p-3.5 rounded-xl text-white ${step.color} shadow-lg shadow-inherit transition-transform group-hover:rotate-12`}>
                   {step.icon}
                 </div>
                 <h5 className="text-base md:text-lg font-black text-gray-900 dark:text-white mb-2.5 md:mb-4 tracking-tight">{step.title}</h5>
@@ -391,7 +391,7 @@ export default function LandingPage() {
             ].map((item, i) => (
               <article
                 key={i}
-                className="rounded-2xl md:rounded-3xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/70 p-5 md:p-8 hover:border-brand-200 dark:hover:border-brand-700 transition-all duration-300 hover:shadow-sm"
+                className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/70 p-5 md:p-8 hover:border-brand-200 dark:hover:border-brand-700 transition-all duration-300 hover:shadow-sm"
               >
                 <p className="text-[10px] font-black text-brand-600 dark:text-brand-400 uppercase tracking-widest mb-3">
                   Rule {String(i + 1).padStart(2, "0")}
@@ -430,7 +430,7 @@ export default function LandingPage() {
             ].map((item, i) => (
               <article
                 key={i}
-                className="rounded-2xl md:rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 md:p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300"
+                className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 md:p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300"
               >
                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2">
                   Office

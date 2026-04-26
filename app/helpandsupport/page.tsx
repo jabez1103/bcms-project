@@ -136,9 +136,9 @@ export default function HelpAndSupport() {
   })();
 
   return (
-    <div id="help-top" className="min-h-screen bg-[#fbfcff] dark:bg-slate-950 pb-20 font-sans transition-colors duration-300">
+    <div id="help-top" className="min-h-screen px-3 sm:px-4 lg:px-6 bg-[#fbfcff] dark:bg-slate-950 pb-20 font-sans transition-colors duration-300">
       {/* PREMIUM HEADER: High-contrast Navy with Glassmorphism */}
-      <div className="relative bg-[#0f172a] dark:bg-slate-950 text-white pt-14 md:pt-20 pb-20 md:pb-32 px-3 md:px-8 overflow-hidden transition-colors">
+      <div className="relative bg-[#0f172a] dark:bg-slate-950 text-white pt-14 md:pt-20 pb-20 md:pb-32 px-2 sm:px-4 lg:px-6 overflow-hidden transition-colors">
         {/* Decorative elements to match your UI style */}
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-brand-600/10 rounded-full blur-[120px] -mr-48 -mt-48" />
         <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-blue-600/10 rounded-full blur-[100px] -ml-24 -mb-24" />
@@ -174,7 +174,7 @@ export default function HelpAndSupport() {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-3 md:px-8 -mt-10 md:-mt-14 relative z-20">
+      <div className="max-w-6xl mx-auto px-0 -mt-10 md:-mt-14 relative z-20">
         {/* SEARCH BAR: Enhanced Shadow and Interaction */}
         <div className="relative mb-8 md:mb-12 group">
           <div className="absolute -inset-1 bg-gradient-to-r from-brand-500/20 to-blue-500/20 rounded-[2.2rem] blur-xl opacity-0 group-focus-within:opacity-100 transition-opacity"></div>

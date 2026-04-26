@@ -105,17 +105,17 @@ export default function ManageRequirements() {
   const conditional = requirements.filter(r => r.format   === "Conditional").length;
 
   return (
-    <div className="min-h-screen bg-[#fbfcff] dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans pb-10 transition-colors">
+    <div className="min-h-screen px-3 sm:px-4 lg:px-6 bg-[#fbfcff] dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans pb-10 transition-colors">
 
       {/* ── STICKY HEADER ── */}
-      <header className="sticky top-0 z-[20] bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200/60 dark:border-slate-800 px-2 sm:px-4 py-4 lg:px-12">
+      <header className="sticky top-0 z-[20] bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200/60 dark:border-slate-800 px-2 sm:px-4 py-3 lg:px-6">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 bg-brand-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-brand-200 dark:shadow-none">
-              <Settings2 size={20} />
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-brand-600 rounded-lg sm:rounded-xl flex items-center justify-center text-white shadow-lg shadow-brand-200 dark:shadow-none">
+              <Settings2 size={16} />
             </div>
             <div className="space-y-0.5">
-              <h1 className="text-sm sm:text-2xl font-black tracking-tight leading-none uppercase">
+              <h1 className="text-[13px] sm:text-2xl font-black tracking-tight leading-none uppercase">
                 Manage <span className="text-brand-600">Requirements</span>
               </h1>
               <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500">
@@ -125,13 +125,13 @@ export default function ManageRequirements() {
             </div>
           </div>
           <button onClick={openCreate}
-            className="flex items-center justify-center gap-2 px-5 py-2.5 bg-slate-900 dark:bg-brand-600 text-white rounded-xl font-black uppercase text-xs tracking-widest hover:bg-brand-600 dark:hover:bg-brand-500 transition-all shadow-lg active:scale-95">
-            <Plus size={15} /> New Requirement
+            className="flex items-center justify-center gap-1.5 sm:gap-2 px-3.5 sm:px-5 py-2 sm:py-2.5 bg-slate-900 dark:bg-brand-600 text-white rounded-xl font-black uppercase text-[clamp(8px,2.6vw,11px)] sm:text-xs tracking-[0.1em] sm:tracking-widest hover:bg-brand-600 dark:hover:bg-brand-500 transition-all shadow-lg active:scale-95">
+            <Plus size={14} /> New Requirement
           </button>
         </div>
       </header>
 
-      <div className="max-w-6xl mx-auto p-2 sm:p-4 md:p-8 lg:p-12">
+      <div className="max-w-6xl mx-auto px-0 py-2 sm:py-4 md:py-8">
 
         {/* Stats */}
         <div className="grid grid-cols-3 lg:grid-cols-6 gap-2 md:gap-4 mb-5 md:mb-10">

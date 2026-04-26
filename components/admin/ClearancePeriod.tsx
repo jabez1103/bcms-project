@@ -123,7 +123,7 @@ export default function ClearancePeriodPage() {
   };
 
   if (loading) return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-2 sm:p-4 md:p-10">
+    <div className="min-h-screen px-3 sm:px-4 lg:px-6 bg-slate-50 dark:bg-slate-950 py-0 sm:py-4 md:py-10">
       <div className="max-w-6xl mx-auto">
 
         {/* Header skeleton */}
@@ -144,7 +144,7 @@ export default function ClearancePeriodPage() {
 
           {/* Table skeleton */}
           <section className="lg:col-span-8">
-            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 overflow-hidden shadow-xl">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl md:rounded-3xl border border-slate-100 dark:border-slate-800 overflow-hidden shadow-xl">
 
               {/* Table header */}
               <div className="px-8 py-6 border-b border-slate-50 dark:border-slate-800/50 flex justify-between items-center bg-slate-50/30 dark:bg-slate-800/30 animate-pulse">
@@ -177,28 +177,31 @@ export default function ClearancePeriodPage() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100">
+    <div className="min-h-screen px-3 sm:px-4 lg:px-6 bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100">
       <PageHeader
         title="Clearance Management"
         description="Define and enforce submission timelines."
         icon={CalendarRange}
+        containerClassName="px-2 sm:px-4 py-2 sm:py-4 lg:px-6"
         actions={
-          <div className="flex items-center gap-3 px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-sm">
+          <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm">
             <div className="flex -space-x-1">
-              <span className="h-3 w-3 rounded-full bg-emerald-500 border-2 border-white dark:border-slate-900"></span>
-              <span className="h-3 w-3 rounded-full bg-blue-500 border-2 border-white dark:border-slate-900"></span>
+              <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 border border-white dark:border-slate-900"></span>
+              <span className="h-2.5 w-2.5 rounded-full bg-blue-500 border border-white dark:border-slate-900"></span>
             </div>
-            <span className="text-sm font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">Auto-Status Active</span>
+            <span className="text-[10px] sm:text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-[0.08em] whitespace-nowrap">
+              Auto-Status Active
+            </span>
           </div>
         }
       />
 
-      <div className="max-w-6xl mx-auto p-4 md:p-10">
+      <div className="max-w-6xl mx-auto px-0 pt-4 sm:pt-6 md:pt-8 pb-0 sm:pb-4 md:pb-10">
         <main className="grid grid-cols-1 lg:grid-cols-12 gap-10">
 
           {/* FORM */}
           <section className="lg:col-span-4 space-y-6">
-            <div className={`rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-none border p-8 transition-all duration-300 ${editingId ? 'bg-brand-50 dark:bg-brand-900/20 border-brand-200 dark:border-brand-500/30 ring-2 ring-brand-500/20' : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800'}`}>
+            <div className={`rounded-2xl md:rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-none border p-8 transition-all duration-300 ${editingId ? 'bg-brand-50 dark:bg-brand-900/20 border-brand-200 dark:border-brand-500/30 ring-2 ring-brand-500/20' : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800'}`}>
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">
                   {editingId ? 'Modify Period' : 'New Timeline'}
@@ -272,7 +275,7 @@ export default function ClearancePeriodPage() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className={`w-full text-white font-extrabold py-4 rounded-2xl shadow-lg transition-all hover:-translate-y-0.5 active:scale-95 disabled:opacity-60 ${editingId ? 'bg-brand-600 shadow-brand-200 hover:bg-brand-700' : 'bg-slate-800 shadow-slate-200 hover:bg-slate-900'}`}
+                  className="w-full bg-white text-slate-900 dark:bg-white dark:text-slate-900 border border-slate-200 font-extrabold py-4 rounded-2xl transition-all hover:bg-slate-100 active:scale-95 disabled:opacity-60"
                 >
                   {submitting ? "Saving..." : editingId ? "Update Timeline" : "Set Timeline"}
                 </button>
@@ -282,7 +285,7 @@ export default function ClearancePeriodPage() {
 
           {/* TABLE */}
           <section className="lg:col-span-8">
-            <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 overflow-hidden">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl md:rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 overflow-hidden">
               <div className="px-8 py-6 border-b border-slate-50 dark:border-slate-800/50 flex justify-between items-center bg-slate-50/30 dark:bg-slate-800/30">
                 <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">History & Status</h2>
                 <span className="text-xs font-black text-slate-400 uppercase tracking-widest">{periods.length} Periods</span>
