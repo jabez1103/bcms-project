@@ -36,12 +36,14 @@ export default function StudentLayout({
         <NotificationQueryAck />
       </Suspense>
       {/* HEADER */}
-      <Header
-        role="student"
-        activePage={activePage}
-        onPageClick={handlePageClick}
-        onMobileMenuToggle={() => setIsMobileSidebarOpen(true)}
-      />
+      <Suspense fallback={null}>
+        <Header
+          role="student"
+          activePage={activePage}
+          onPageClick={handlePageClick}
+          onMobileMenuToggle={() => setIsMobileSidebarOpen(true)}
+        />
+      </Suspense>
 
       <div className="flex flex-1 overflow-hidden relative">
         {/* SIDEBAR */}

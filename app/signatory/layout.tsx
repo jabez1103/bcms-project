@@ -36,12 +36,14 @@ export default function SignatoryLayout({
         <NotificationQueryAck />
       </Suspense>
       {/* HEADER */}
-      <Header
-        role="signatory"
-        activePage={activePage}
-        onPageClick={handlePageClick}
-        onMobileMenuToggle={() => setIsMobileSidebarOpen(true)}
-      />
+      <Suspense fallback={null}>
+        <Header
+          role="signatory"
+          activePage={activePage}
+          onPageClick={handlePageClick}
+          onMobileMenuToggle={() => setIsMobileSidebarOpen(true)}
+        />
+      </Suspense>
 
       <div className="flex flex-1 overflow-hidden relative">
         {/* SIDEBAR */}
