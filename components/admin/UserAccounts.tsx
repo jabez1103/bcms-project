@@ -1235,7 +1235,7 @@ export default function UserAccounts() {
 
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/60 backdrop-blur-sm transition-opacity">
-          <div className="bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl shadow-2xl w-full max-w-xl max-h-[95vh] flex flex-col overflow-hidden animate-in slide-in-from-bottom sm:zoom-in-95 duration-200">
+          <div className="bg-white dark:bg-slate-900 rounded-t-2xl sm:rounded-2xl shadow-2xl w-full max-w-xl max-h-[95vh] flex flex-col overflow-hidden animate-in slide-in-from-bottom sm:zoom-in-95 duration-200">
             <div className="p-4 sm:p-5 md:p-8 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center shrink-0">
               <div>
                 <h2 className="text-xl md:text-2xl font-black text-slate-900 dark:text-slate-100 uppercase tracking-tight">
@@ -1547,7 +1547,7 @@ export default function UserAccounts() {
               <button
                 onClick={modifyUser}
                 disabled={saving}
-                className="order-1 sm:order-2 bg-brand-600 hover:bg-brand-700 text-white px-8 py-3.5 rounded-xl md:rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-brand-100 transition-all active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
+                className="order-1 sm:order-2 bg-brand-600 hover:bg-brand-700 text-white px-8 py-3.5 rounded-xl md:rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {saving
                   ? isEditing
@@ -1564,7 +1564,7 @@ export default function UserAccounts() {
 
       {showImportModal && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl shadow-2xl w-full max-w-2xl max-h-[95vh] flex flex-col overflow-hidden animate-in slide-in-from-bottom sm:zoom-in-95 duration-200">
+          <div className="bg-white dark:bg-slate-900 rounded-t-2xl sm:rounded-2xl shadow-2xl w-full max-w-2xl max-h-[95vh] flex flex-col overflow-hidden animate-in slide-in-from-bottom sm:zoom-in-95 duration-200">
 
             {/* HEADER */}
             <div className="p-4 sm:p-5 md:p-8 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center shrink-0">

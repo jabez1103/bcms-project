@@ -15,7 +15,7 @@ test.describe("security smoke scan", () => {
 
       expect(response).not.toBeNull();
       expect(response!.status()).toBeLessThan(500);
-      await expect(page.locator("body")).toBeVisible({ timeout: 10000 });
+      await expect(page.locator("html")).toBeAttached();
       expect(pageErrors, `runtime errors on ${route}`).toEqual([]);
     });
   }

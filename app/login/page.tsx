@@ -16,8 +16,19 @@ export default function LoginLayout() {
     setIsMounted(true);
 
     const onChange = () => sync();
-    query.addEventListener("change", onChange);
-    return () => query.removeEventListener("change", onChange);
+
+    if (typeof query.addEventListener === "function") {
+      query.addEventListener("change", onChange);
+      return () => query.removeEventListener("change", onChange);
+    }
+
+    // WebKit fallback
+    if (typeof query.addListener === "function") {
+      query.addListener(onChange);
+      return () => query.removeListener(onChange);
+    }
+
+    return undefined;
   }, []);
 
   if (!isMounted) return null;
