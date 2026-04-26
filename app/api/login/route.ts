@@ -159,7 +159,7 @@ export async function POST(req: NextRequest) {
       {
         user_id: user.user_id,
         full_name: buildFullName(user.first_name, user.middle_name, user.last_name),
-        email: user.email,
+        email: user.email,  
         role,
         avatar: user.profile_picture,
         sid,

@@ -1,9 +1,18 @@
+import type { Metadata } from "next";
 import { Poppins, Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { AuthCrossTabSync } from "@/components/AuthCrossTabSync";
 import { RouteDocumentTitle } from "@/components/RouteDocumentTitle";
 import { AppearancePreferenceBootstrap } from "@/components/AppearancePreferenceBootstrap";
+
+export const metadata: Metadata = {
+  icons: {
+    icon: "/logo.png",
+    shortcut: "/logo.png",
+    apple: "/logo.png",
+  },
+};
 
 const poppins = Poppins({
   subsets: ["latin"],

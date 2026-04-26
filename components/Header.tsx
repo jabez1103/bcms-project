@@ -3,7 +3,7 @@
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Bell,
   Search,
@@ -43,6 +43,7 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
   // Modal States
   const [isSettingsOpen, setSettingsOpen] = useState(false);
   const [isNotifSettingsOpen, setNotifSettingsOpen] = useState(false);
+  const [settingsDefaultTab, setSettingsDefaultTab] = useState<string | undefined>(undefined);
   const [isLogoutOpen, setLogoutOpen] = useState(false);
 
   const [searchValue, setSearchValue] = useState("");
@@ -80,6 +81,8 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
 
   const { user, loading } = useCurrentUser();
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   const isNotificationEnabled = useCallback(
     (type: string) => {
@@ -252,10 +255,37 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
 
   const openNotificationSettings = () => {
     setNotifSettingsOpen(true);
+    setSettingsDefaultTab("Notifications");
     setSettingsOpen(true);
     setMenuOpen(false);
     setNotifOpen(false);
   };
+
+  useEffect(() => {
+    const shouldOpenSettings = searchParams.get("openSettings");
+    if (!shouldOpenSettings) return;
+
+    const slugToTab: Record<string, string> = {
+      account: "Account",
+      appearance: "Appearance",
+      notifications: "Notifications",
+      security: "Security",
+    };
+    const settingsSlug = (searchParams.get("settings") || "").toLowerCase();
+    const nextDefaultTab = slugToTab[settingsSlug] ?? "Account";
+
+    setNotifSettingsOpen(nextDefaultTab === "Notifications");
+    setSettingsDefaultTab(nextDefaultTab);
+    setSettingsOpen(true);
+    setSearchOpen(false);
+    setSearchValue("");
+    setSearchResults([]);
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("openSettings");
+    const nextUrl = params.toString() ? `${pathname}?${params.toString()}` : pathname;
+    router.replace(nextUrl);
+  }, [pathname, router, searchParams]);
 
   /** Navigate using backend-provided deep link when available. */
   const handleNotifClick = async (notif: Notification) => {
@@ -531,7 +561,12 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
                     Profile
                   </Link>
                   <button 
-                    onClick={() => { setNotifSettingsOpen(false); setSettingsOpen(true); setDropdownOpen(false); }} 
+                    onClick={() => {
+                      setNotifSettingsOpen(false);
+                      setSettingsDefaultTab(undefined);
+                      setSettingsOpen(true);
+                      setDropdownOpen(false);
+                    }} 
                     className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-brand-50 dark:hover:bg-slate-800 hover:text-brand-600 dark:hover:text-brand-400 transition-colors text-left"
                   >
                  
@@ -555,8 +590,12 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
       {/* MODALS */}
       <SettingsModal 
         isOpen={isSettingsOpen} 
-        onClose={() => { setSettingsOpen(false); setNotifSettingsOpen(false); }}
-        defaultTab={isNotifSettingsOpen ? "Notifications" : undefined}
+        onClose={() => {
+          setSettingsOpen(false);
+          setNotifSettingsOpen(false);
+          setSettingsDefaultTab(undefined);
+        }}
+        defaultTab={settingsDefaultTab}
       />
 
       

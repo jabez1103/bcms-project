@@ -339,10 +339,16 @@ export default function SignatoryDashboard() {
               <div className="relative flex-grow sm:w-80">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" size={16} />
                 <input 
+                  type="text"
                   className="w-full pl-11 pr-4 py-3.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 dark:text-slate-200 rounded-2xl text-xs font-bold outline-none focus:ring-2 ring-blue-500/10 transition-all shadow-inner"
                   placeholder="Search by ID or Name..."
                   value={tableSearch}
                   onChange={(e) => setTableSearch(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                    }
+                  }}
                 />
               </div>
               <select 
