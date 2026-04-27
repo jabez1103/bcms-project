@@ -241,7 +241,7 @@ export default function LoginForm({ mobile = false }: LoginFormProps) {
         type="email"
         name="email"
         required
-        placeholder="institutional-email@bisu.edu.ph"
+        placeholder="firstname.lastname@bisu.edu.ph"
         className="h-[42px] sm:h-12 w-full rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 px-4 sm:px-5 text-[13px] sm:text-sm text-slate-900 dark:text-white outline-none transition focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-brand-500/5 dark:focus:ring-brand-400/10"
         value={email}
         onChange={(e) => {
@@ -261,7 +261,7 @@ export default function LoginForm({ mobile = false }: LoginFormProps) {
           type={showPassword ? "text" : "password"} 
           name="password"
           required
-          placeholder="•••••••••••••"
+          placeholder=""
           className="h-[42px] sm:h-12 w-full rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 px-4 sm:px-5 pr-11 sm:pr-12 text-[13px] sm:text-sm text-slate-900 dark:text-white outline-none transition focus:bg-white dark:focus:bg-slate-900 focus:ring-4 focus:ring-brand-500/5 dark:focus:ring-brand-400/10"
           value={password}
           onChange={(e) => {
