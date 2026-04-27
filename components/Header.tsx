@@ -355,25 +355,7 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
   
   
 
-  if (loading) {
-    return (
-      <header className="h-[7.4vh] md:h-[10vh] bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 px-1.5 sm:px-3 md:px-8 flex items-center justify-between animate-pulse">
-        <div className="flex items-center gap-2 md:gap-3">
-          <div className="md:hidden w-7 h-7 rounded-md bg-slate-200 dark:bg-slate-800" />
-          <div className="flex flex-col gap-1">
-            <div className="w-24 md:w-40 h-2.5 md:h-3 bg-slate-200 dark:bg-slate-800 rounded-md" />
-            <div className="w-16 md:w-28 h-2 bg-slate-100 dark:bg-slate-800/70 rounded-md" />
-          </div>
-        </div>
-        <div className="flex items-center gap-2 md:gap-4">
-          <div className="hidden sm:block w-36 md:w-52 h-8 md:h-10 rounded-xl bg-slate-100 dark:bg-slate-800" />
-          <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-slate-200 dark:bg-slate-800" />
-          <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-slate-200 dark:bg-slate-800" />
-        </div>
-      </header>
-    );
-  }
-
+  if (loading && !user) return null;
   if (!user) return null;
 
   return (

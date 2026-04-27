@@ -112,7 +112,13 @@ export function StudentClearanceRequirementsPanel({
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-            {requirements.map((r) => (
+            {requirements.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="px-4 py-16 text-center text-sm font-semibold text-slate-400 dark:text-slate-500">
+                  Table is empty.
+                </td>
+              </tr>
+            ) : requirements.map((r) => (
               <tr key={r.requirementId} className="bg-white dark:bg-slate-900/40 hover:bg-slate-50/80 dark:hover:bg-slate-800/40">
                 <td className="px-4 py-3 align-top">
                   <p className="font-bold text-slate-800 dark:text-slate-100">{r.requirementName}</p>

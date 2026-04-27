@@ -457,6 +457,12 @@ export default function AdminHomePage() {
               <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
                 {loading ? (
                   Array.from({ length: 5 }).map((_, i) => <SkeletonTableRow key={i} cols={4} />)
+                ) : paginatedData.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="px-8 py-16 text-center text-sm font-semibold text-slate-400 dark:text-slate-500">
+                      Table is empty.
+                    </td>
+                  </tr>
                 ) : (
                   paginatedData.map((s) => (
                     <tr key={s.student_id} className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">

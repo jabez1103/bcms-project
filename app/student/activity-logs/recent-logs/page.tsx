@@ -160,7 +160,7 @@ const RecentLogsPage = () => {
               {loading ? (
                 <><SkeletonTableRow cols={3} /><SkeletonTableRow cols={3} /><SkeletonTableRow cols={3} /><SkeletonTableRow cols={3} /></>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={3} className="px-6 py-16 text-center text-sm text-slate-400 italic">No logs found.</td></tr>
+                <tr><td colSpan={3} className="px-6 py-16 text-center text-sm text-slate-400 italic">Table is empty.</td></tr>
               ) : filtered.map((log) => {
                 const { label, cls, accent } = getStatusBadge(log.status);
                 return (

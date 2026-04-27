@@ -283,6 +283,12 @@ const toSignatoryStatus = (status: SignatoryStatus): ClearanceStatus => {
                     <SkeletonTableRow cols={5} />
                     <SkeletonTableRow cols={5} />
                   </>
+                ) : paginatedData.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-8 py-16 text-center text-sm font-semibold text-slate-400 dark:text-slate-500">
+                      Table is empty.
+                    </td>
+                  </tr>
                 ) : paginatedData.map((row) => (
                   <tr key={row.id} className="group hover:bg-slate-50/80 dark:hover:bg-slate-800/80 transition-all">
                     <td className="px-8 py-5">

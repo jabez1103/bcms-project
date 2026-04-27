@@ -345,8 +345,10 @@ export default function SignatoryDashboard() {
                   value={tableSearch}
                   onChange={(e) => setTableSearch(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter") {
+                    // Guard against accidental parent form submission/navigation.
+                    if (e.key === "Enter" || e.key === "NumpadEnter") {
                       e.preventDefault();
+                      e.stopPropagation();
                     }
                   }}
                 />
@@ -365,7 +367,7 @@ export default function SignatoryDashboard() {
                 onClick={handleSelectPage}
                 className="sm:hidden min-w-0 h-11 px-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-[10px] font-black uppercase tracking-[0.08em] text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all whitespace-nowrap"
               >
-                Select
+                {isPageSelected ? "Unselect" : "Select"}
               </button>
             </div>
           </div>
@@ -383,7 +385,7 @@ export default function SignatoryDashboard() {
               }`}>
                 {isPageSelected && <span className="text-white text-[10px] font-black">&#10003;</span>}
               </div>
-              Select Page
+              {isPageSelected ? "Unselect Page" : "Select Page"}
             </button>
             {selectedIds.length > 0 && (
               <div className="flex items-center gap-2">
@@ -453,6 +455,12 @@ export default function SignatoryDashboard() {
               <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
                 {loading ? (
                   Array.from({ length: 5 }).map((_, i) => <SkeletonTableRow key={i} cols={5} />)
+                ) : paginatedData.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="px-8 py-16 text-center text-sm font-semibold text-slate-400 dark:text-slate-500">
+                      Table is empty.
+                    </td>
+                  </tr>
                 ) : paginatedData.map((s) => (
                   <tr key={s.id} className={`group hover:bg-slate-50/80 dark:hover:bg-slate-800/80 transition-all ${
                     selectedIds.includes(String(s.id)) ? 'bg-brand-50/30 dark:bg-brand-900/10' : ''

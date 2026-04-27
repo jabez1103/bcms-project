@@ -256,7 +256,7 @@ const SystemHistoryPage = () => {
               {loading ? (
                 <><SkeletonTableRow cols={5} /><SkeletonTableRow cols={5} /><SkeletonTableRow cols={5} /></>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={5} className="px-6 py-16 text-center text-sm text-slate-400 italic">No history found.</td></tr>
+                <tr><td colSpan={5} className="px-6 py-16 text-center text-sm text-slate-400 italic">Table is empty.</td></tr>
               ) : filtered.map((item) => {
                 const style = getItemStyle(item);
                 return (

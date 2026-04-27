@@ -132,7 +132,13 @@ export default function LoginForm({ mobile = false }: LoginFormProps) {
           (typeof data.user?.role === "string" ? data.user.role : "");
         navigateToRoleHome(redirectRole);
       } else {
-        setError(data.message || "Invalid credentials");
+        if (data.reason === "account_inactive") {
+          setError(
+            "Your account is inactive. It may have been deactivated by an administrator."
+          );
+        } else {
+          setError(data.message || "Invalid credentials");
+        }
       }
     } catch {
       setError("Something went wrong. Please try again.");

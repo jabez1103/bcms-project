@@ -105,7 +105,12 @@ export async function POST(req: NextRequest) {
     if (user.account_status && String(user.account_status).toLowerCase() !== "active") {
       registerFailedLoginAttempt(rateLimitKey);
       return NextResponse.json(
-        { success: false, message: "This account is not active." },
+        {
+          success: false,
+          reason: "account_inactive",
+          message:
+            "Your account is inactive. It may have been deactivated by an administrator.",
+        },
         { status: 403 }
       );
     }

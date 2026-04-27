@@ -189,6 +189,36 @@ describe("API route integration tests (mocked DB/auth)", () => {
     expect(data.user.email).toBe("admin@bisu.edu.ph");
   });
 
+  it("login route rejects inactive accounts with explicit reason", async () => {
+    const { POST } = await import("@/app/api/login/route");
+    mockDb.query.mockResolvedValueOnce([
+      [
+        {
+          user_id: 2,
+          first_name: "Inactive",
+          last_name: "User",
+          email: "inactive@bisu.edu.ph",
+          password: "password123",
+          role: "student",
+          profile_picture: null,
+          account_status: "inactive",
+        },
+      ],
+    ]);
+
+    const response = await POST(
+      makeRequest({
+        body: { email: "inactive@bisu.edu.ph", password: "password123" },
+      }) as never
+    );
+
+    expect(response.status).toBe(403);
+    const data = await response.json();
+    expect(data.success).toBe(false);
+    expect(data.reason).toBe("account_inactive");
+    expect(data.message).toContain("deactivated");
+  });
+
   it("logout route clears session cookie", async () => {
     const { POST } = await import("@/app/api/logout/route");
     mockVerifyToken.mockResolvedValueOnce({

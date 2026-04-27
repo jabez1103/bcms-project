@@ -1082,7 +1082,7 @@ export default function UserAccounts() {
                   <tr>
                     <td colSpan={4} className="px-8 py-16 text-center">
                       <p className="text-sm font-bold text-slate-500 dark:text-slate-400">
-                        No users found for the selected filter.
+                        Table is empty.
                       </p>
                     </td>
                   </tr>

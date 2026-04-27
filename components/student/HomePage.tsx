@@ -199,7 +199,13 @@ export default function HomePage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
-                    {filteredData.map((req) => (
+                    {filteredData.length === 0 ? (
+                      <tr>
+                        <td colSpan={4} className="px-8 py-16 text-center text-sm font-semibold text-slate-400 dark:text-slate-500">
+                          Table is empty.
+                        </td>
+                      </tr>
+                    ) : filteredData.map((req) => (
                       <RequirementRow key={req.id} requirement={req} />
                     ))}
                   </tbody>

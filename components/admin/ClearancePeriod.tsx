@@ -373,7 +373,7 @@ export default function ClearancePeriodPage() {
                         <SkeletonPeriodRow />
                       </>
                     ) : periods.length === 0 ? (
-                      <tr><td colSpan={5} className="px-8 py-10 text-center text-slate-400">No clearance periods found.</td></tr>
+                      <tr><td colSpan={5} className="px-8 py-10 text-center text-slate-400">Table is empty.</td></tr>
                     ) : periods.map((item) => {
                       const isEditing = editingId === item.period_id;
                       const statusStyle = STATUS_STYLES[item.period_status] ?? STATUS_STYLES.disabled;

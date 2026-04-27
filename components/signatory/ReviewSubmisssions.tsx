@@ -208,6 +208,13 @@ export default function UltimateClearancePortal() {
                 placeholder="Filter submissions..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={(e) => {
+                  // Guard against accidental parent form submission/navigation.
+                  if (e.key === "Enter" || e.key === "NumpadEnter") {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }
+                }}
               />
             </div>
             <div className="hidden sm:flex bg-white dark:bg-slate-900 p-1.5 sm:p-2 rounded-xl sm:rounded-[2rem] shadow-sm shrink-0 items-center">
@@ -400,6 +407,12 @@ export default function UltimateClearancePortal() {
                        <SkeletonTableRow cols={3} />
                        <SkeletonTableRow cols={3} />
                      </>
+                   ) : paginatedData.length === 0 ? (
+                     <tr>
+                       <td colSpan={3} className="px-3 py-16 text-center text-sm font-semibold text-slate-400 dark:text-slate-500">
+                         Table is empty.
+                       </td>
+                     </tr>
                    ) : paginatedData.map((s) => (
                      <tr key={s.id} className={`transition-colors ${selectedIds.includes(String(s.id)) ? 'bg-brand-50/30 dark:bg-brand-900/10' : ''}`}>
                        <td className="px-3 py-3 align-top">
@@ -453,6 +466,12 @@ export default function UltimateClearancePortal() {
                        <SkeletonTableRow cols={5} />
                        <SkeletonTableRow cols={5} />
                      </>
+                   ) : paginatedData.length === 0 ? (
+                     <tr>
+                       <td colSpan={5} className="px-6 py-16 text-center text-sm font-semibold text-slate-400 dark:text-slate-500">
+                         Table is empty.
+                       </td>
+                     </tr>
                    ) : paginatedData.map((s) => (
                      <tr key={s.id} className={`group hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors ${selectedIds.includes(String(s.id)) ? 'bg-brand-50/30 dark:bg-brand-900/10' : ''}`}>
                        <td className="px-6 py-5">

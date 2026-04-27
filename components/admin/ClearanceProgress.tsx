@@ -448,7 +448,7 @@ export default function ClearanceProgress() {
                 {paginated.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="py-20 text-center text-slate-300 font-black uppercase tracking-widest">
-                      No records found
+                      Table is empty.
                     </td>
                   </tr>
                 ) : (paginated as Student[]).map((student) => {
