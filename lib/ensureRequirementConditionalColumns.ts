@@ -33,6 +33,44 @@ async function ensureColumn(
 }
 
 async function migrateRequirementConditionalColumns(db: DbQueryable): Promise<void> {
+  const [typeRows] = (await db.query(
+    `SELECT DATA_TYPE AS dataType,
+            COLUMN_TYPE AS columnType,
+            CHARACTER_MAXIMUM_LENGTH AS maxLen
+       FROM INFORMATION_SCHEMA.COLUMNS
+      WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = 'requirements'
+        AND COLUMN_NAME = 'requirement_type'
+      LIMIT 1`
+  )) as [RowDataPacket[], unknown];
+
+  const typeRow = typeRows[0] as
+    | { dataType?: string; columnType?: string; maxLen?: number | null }
+    | undefined;
+  const dataType = String(typeRow?.dataType ?? "").toLowerCase();
+  const columnType = String(typeRow?.columnType ?? "").toLowerCase();
+  const maxLen = Number(typeRow?.maxLen ?? 0);
+
+  // Older schemas often have enum('digital','physical') or a short VARCHAR.
+  // Ensure "conditional" can be stored to avoid truncation errors.
+  if (dataType === "enum") {
+    const rawValues = columnType.match(/'([^']*)'/g) ?? [];
+    const values = rawValues.map((v) => v.slice(1, -1));
+    if (!values.some((v) => v.toLowerCase() === "conditional")) {
+      const nextValues = [...values, "conditional"];
+      const enumSql = nextValues
+        .map((v) => `'${v.replace(/'/g, "''")}'`)
+        .join(", ");
+      await db.query(
+        `ALTER TABLE requirements MODIFY COLUMN requirement_type ENUM(${enumSql}) NOT NULL`
+      );
+    }
+  } else if ((dataType === "varchar" || dataType === "char") && maxLen > 0 && maxLen < 11) {
+    await db.query(
+      "ALTER TABLE requirements MODIFY COLUMN requirement_type VARCHAR(32) NOT NULL"
+    );
+  }
+
   await ensureColumn(db, "conditional_signatory_ids", "TEXT NULL");
   await ensureColumn(db, "conditional_policy", "VARCHAR(32) NULL");
 }
