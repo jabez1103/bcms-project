@@ -68,6 +68,12 @@ describe("conditional requirement flow", () => {
     mockDb.query
       .mockResolvedValueOnce([[{ signatory_id: 77, department: "Director, Student Development Services" }]])
       .mockResolvedValueOnce([[{ period_id: 1 }]])
+      .mockResolvedValueOnce([
+        [
+          { signatoryId: 3, department: "Registrar" },
+          { signatoryId: 4, department: "Library" },
+        ],
+      ])
       .mockResolvedValueOnce([{ insertId: 501 }]);
 
     const response = await POST(

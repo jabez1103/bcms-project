@@ -129,11 +129,11 @@ async function applyConditionalAutoApprovals(
 
       if (ownerScope === "director_sds") {
         // Director SDS stage: requires all initial signatories
-        // except Dean and the Director SDS owner signatory.
+        // except Dean/Director scope signatories and the owner signatory.
         const neededIds = Array.from(requiredInitialSignatorySet).filter((requiredId) => {
           if (requiredId === requirementOwnerSignatoryId) return false;
           const scope = signatoryScopeMap.get(requiredId) ?? "normal";
-          return scope !== "dean";
+          return scope !== "dean" && scope !== "director_sds";
         });
         isCleared =
           neededIds.length > 0 &&

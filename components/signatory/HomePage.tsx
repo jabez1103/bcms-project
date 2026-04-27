@@ -46,6 +46,7 @@ interface StudentSubmission {
   name: string;
   level: YearLevel;
   program: string;
+  section: string;
   status: SubmissionStatus;
   requirementType: string;
   submissionDate: string;
@@ -89,6 +90,9 @@ export default function SignatoryDashboard() {
   const [viewMode, setViewMode] = useState<ChartView>("pie");
   const [tableSearch, setTableSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<SubmissionStatus | "All">("All");
+  const [programFilter, setProgramFilter] = useState<string | "All">("All");
+  const [levelFilter, setLevelFilter] = useState<YearLevel | "All">("All");
+  const [sectionFilter, setSectionFilter] = useState<string | "All">("All");
   const [selectedSubmission, setSelectedSubmission] = useState<StudentSubmission | null>(null);
 
   /* --- PAGINATION STATE --- */
@@ -114,6 +118,7 @@ export default function SignatoryDashboard() {
             name: s.name,
             level: s.year,
             program: s.program,
+            section: String(s.section ?? "A"),
             status: s.status,
             requirementType: s.requirement,
             submissionDate: s.submittedAt,
@@ -144,7 +149,23 @@ export default function SignatoryDashboard() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [tableSearch, statusFilter]);
+  }, [tableSearch, statusFilter, programFilter, levelFilter, sectionFilter]);
+
+  const programOptions = useMemo(
+    () =>
+      Array.from(new Set(submissions.map((s) => String(s.program ?? "").trim()).filter(Boolean))).sort(),
+    [submissions]
+  );
+  const levelOptions = useMemo(
+    () =>
+      Array.from(new Set(submissions.map((s) => String(s.level ?? "").trim()).filter(Boolean))) as YearLevel[],
+    [submissions]
+  );
+  const sectionOptions = useMemo(
+    () =>
+      Array.from(new Set(submissions.map((s) => String(s.section ?? "").trim()).filter(Boolean))).sort(),
+    [submissions]
+  );
 
   const analyticsData = useMemo(() => {
     const filtered = globalLevelFilter === "All" ? submissions : submissions.filter(s => s.level === globalLevelFilter);
@@ -156,12 +177,22 @@ export default function SignatoryDashboard() {
   }, [submissions, globalLevelFilter]);
 
   const filteredData = useMemo(() => {
+    const normalizedSearch = String(tableSearch ?? "").toLowerCase().trim();
     return submissions.filter((s) => {
       const matchStatus = statusFilter === "All" || s.status === statusFilter;
-      const matchSearch = s.name.toLowerCase().includes(tableSearch.toLowerCase()) || s.id.includes(tableSearch);
-      return matchStatus && matchSearch;
+      const matchProgram = programFilter === "All" || String(s.program ?? "") === programFilter;
+      const matchLevel = levelFilter === "All" || String(s.level ?? "") === levelFilter;
+      const matchSection = sectionFilter === "All" || String(s.section ?? "") === sectionFilter;
+      const matchFilters = matchStatus && matchProgram && matchLevel && matchSection;
+      if (!normalizedSearch) {
+        return matchFilters;
+      }
+      const name = String(s.name ?? "").toLowerCase();
+      const id = String(s.id ?? "").toLowerCase();
+      const matchSearch = name.includes(normalizedSearch) || id.includes(normalizedSearch);
+      return matchFilters && matchSearch;
     });
-  }, [submissions, tableSearch, statusFilter]);
+  }, [submissions, tableSearch, statusFilter, programFilter, levelFilter, sectionFilter]);
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
   const paginatedData = useMemo(() => {
@@ -173,11 +204,11 @@ export default function SignatoryDashboard() {
     paginatedData.length > 0 && paginatedData.every((s) => selectedIds.includes(String(s.id)));
 
   const handleSelectPage = () => {
-    const pageIds = paginatedData.map(s => s.id);
+    const pageIds = paginatedData.map((s) => String(s.id));
     if (isPageSelected) {
-      setSelectedIds(prev => prev.filter(id => !pageIds.includes(id)));
+      setSelectedIds((prev) => prev.filter((id) => !pageIds.includes(id)));
     } else {
-      setSelectedIds(prev => Array.from(new Set([...prev, ...pageIds])));
+      setSelectedIds((prev) => Array.from(new Set([...prev, ...pageIds])));
     }
   };
 
@@ -234,7 +265,7 @@ export default function SignatoryDashboard() {
       <header className="sticky top-0 z-[20] bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200/60 dark:border-slate-800 px-2 py-3 sm:px-4 lg:px-6">
         <div className="max-w-[1600px] mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-slate-900 dark:bg-slate-800 rounded-lg sm:rounded-xl flex items-center justify-center text-white shadow-lg shadow-slate-200 dark:shadow-none">
+            <div className="hidden sm:flex w-8 h-8 sm:w-10 sm:h-10 bg-slate-900 dark:bg-slate-800 rounded-lg sm:rounded-xl items-center justify-center text-white shadow-lg shadow-slate-200 dark:shadow-none">
                 <ShieldCheck size={16} />
             </div>
             <div className="space-y-0.5">
@@ -369,6 +400,45 @@ export default function SignatoryDashboard() {
               >
                 {isPageSelected ? "Unselect" : "Select"}
               </button>
+            </div>
+
+            <div className="w-full grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
+              <select
+                value={programFilter}
+                onChange={(e) => setProgramFilter(e.target.value)}
+                className="h-11 sm:h-auto px-3 sm:px-4 py-0 sm:py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg sm:rounded-2xl text-[10px] sm:text-xs font-black uppercase tracking-[0.08em] outline-none cursor-pointer"
+              >
+                <option value="All">All Programs</option>
+                {programOptions.map((opt) => (
+                  <option key={opt} value={opt}>
+                    {opt}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={levelFilter}
+                onChange={(e) => setLevelFilter(e.target.value as YearLevel | "All")}
+                className="h-11 sm:h-auto px-3 sm:px-4 py-0 sm:py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg sm:rounded-2xl text-[10px] sm:text-xs font-black uppercase tracking-[0.08em] outline-none cursor-pointer"
+              >
+                <option value="All">All Levels</option>
+                {levelOptions.map((opt) => (
+                  <option key={opt} value={opt}>
+                    {opt}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={sectionFilter}
+                onChange={(e) => setSectionFilter(e.target.value)}
+                className="h-11 sm:h-auto px-3 sm:px-4 py-0 sm:py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg sm:rounded-2xl text-[10px] sm:text-xs font-black uppercase tracking-[0.08em] outline-none cursor-pointer"
+              >
+                <option value="All">All Sections</option>
+                {sectionOptions.map((opt) => (
+                  <option key={opt} value={opt}>
+                    {opt}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 

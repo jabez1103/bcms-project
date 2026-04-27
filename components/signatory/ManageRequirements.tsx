@@ -111,7 +111,7 @@ export default function ManageRequirements() {
       <header className="sticky top-0 z-[20] bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200/60 dark:border-slate-800 px-2 sm:px-4 py-3 lg:px-6">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-brand-600 rounded-lg sm:rounded-xl flex items-center justify-center text-white shadow-lg shadow-brand-200 dark:shadow-none">
+            <div className="hidden sm:flex w-8 h-8 sm:w-10 sm:h-10 bg-brand-600 rounded-lg sm:rounded-xl items-center justify-center text-white shadow-lg shadow-brand-200 dark:shadow-none">
               <Settings2 size={16} />
             </div>
             <div className="space-y-0.5">

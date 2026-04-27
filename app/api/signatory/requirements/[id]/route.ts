@@ -57,6 +57,28 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
                         { status: 400 }
                     );
                 }
+                const depPlaceholders = conditionalSignatoryIds.map(() => "?").join(",");
+                const [dependencyRows]: any = await db.query(
+                    `SELECT signatory_id AS signatoryId, department
+                     FROM signatories
+                     WHERE signatory_id IN (${depPlaceholders})`,
+                    conditionalSignatoryIds
+                );
+                if (dependencyRows.length !== conditionalSignatoryIds.length) {
+                    return NextResponse.json(
+                        { error: "Some selected dependent signatories do not exist." },
+                        { status: 400 }
+                    );
+                }
+                const hasInvalidDependency = dependencyRows.some(
+                    (row: any) => resolveRequirementTypePermission(row.department).scope !== "normal"
+                );
+                if (hasInvalidDependency) {
+                    return NextResponse.json(
+                        { error: "Dependent signatories must exclude Director SDS and Dean." },
+                        { status: 400 }
+                    );
+                }
                 conditionalPolicy = "manual_signatories";
             } else if (permission.scope === "dean") {
                 const [directorRows]: any = await db.query(

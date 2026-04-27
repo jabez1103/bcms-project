@@ -12,9 +12,9 @@ import { SkeletonMobileCard, SkeletonTableRow } from "@/components/ui/Skeleton";
 
 /* ================= TYPES ================= */
 type SubmissionStatus = "Pending" | "Approved" | "Rejected";
-type Program = "BSCS" | "BSIT";
-type Year = "1st Year" | "2nd Year" | "3rd Year" | "4th Year";
-type Section = "A" | "B";
+type Program = string;
+type Year = string;
+type Section = string;
 
 interface Student {
   id: string;
@@ -53,6 +53,8 @@ export default function UltimateClearancePortal() {
   // Filter States
   const [search, setSearch] = useState("");
   const [programFilter, setProgramFilter] = useState<Program | "All">("All");
+  const [levelFilter, setLevelFilter] = useState<Year | "All">("All");
+  const [sectionFilter, setSectionFilter] = useState<Section | "All">("All");
   const [statusFilter, setStatusFilter] = useState<SubmissionStatus | "All">("All");
 
   const [students, setStudents] = useState<Student[]>([]);
@@ -93,12 +95,24 @@ export default function UltimateClearancePortal() {
   }, [selectedStudent]);
 
   const filteredData = useMemo(() => {
+    const normalizedSearch = String(search ?? "").toLowerCase().trim();
     return students.filter(s => {
-      const matchesSearch = s.name.toLowerCase().includes(search.toLowerCase()) || s.id.includes(search);
+      const matchesProgram = programFilter === "All" || String(s.program ?? "") === programFilter;
+      const matchesLevel = levelFilter === "All" || String(s.year ?? "") === levelFilter;
+      const matchesSection = sectionFilter === "All" || String(s.section ?? "") === sectionFilter;
       const matchesStatus = statusFilter === "All" || s.status === statusFilter;
-      return matchesSearch && matchesStatus;
+      const matchesMeta = matchesProgram && matchesLevel && matchesSection && matchesStatus;
+
+      if (!normalizedSearch) {
+        return matchesMeta;
+      }
+      const normalizedName = String(s.name ?? "").toLowerCase();
+      const normalizedId = String(s.id ?? "").toLowerCase();
+      const matchesSearch =
+        normalizedName.includes(normalizedSearch) || normalizedId.includes(normalizedSearch);
+      return matchesSearch && matchesMeta;
     });
-  }, [search, statusFilter, students]);
+  }, [search, statusFilter, programFilter, levelFilter, sectionFilter, students]);
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
   const paginatedData = useMemo(() => {
@@ -106,7 +120,23 @@ export default function UltimateClearancePortal() {
     return filteredData.slice(start, start + itemsPerPage);
   }, [filteredData, currentPage, itemsPerPage]);
 
-  useEffect(() => { setCurrentPage(1); }, [search, statusFilter]);
+  useEffect(() => { setCurrentPage(1); }, [search, statusFilter, programFilter, levelFilter, sectionFilter]);
+
+  const programOptions = useMemo(
+    () =>
+      Array.from(new Set(students.map((s) => String(s.program ?? "").trim()).filter(Boolean))).sort(),
+    [students]
+  );
+  const levelOptions = useMemo(
+    () =>
+      Array.from(new Set(students.map((s) => String(s.year ?? "").trim()).filter(Boolean))).sort(),
+    [students]
+  );
+  const sectionOptions = useMemo(
+    () =>
+      Array.from(new Set(students.map((s) => String(s.section ?? "").trim()).filter(Boolean))).sort(),
+    [students]
+  );
 
   const handleBulkAction = async () => {
     if (!showBulkModal) return;
@@ -172,7 +202,7 @@ export default function UltimateClearancePortal() {
       <header className="sticky top-0 z-[20] bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200/60 dark:border-slate-800 px-2 py-3 sm:px-4 lg:px-6">
         <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-slate-900 dark:bg-slate-800 rounded-lg sm:rounded-xl flex items-center justify-center text-white shadow-lg shadow-slate-200 dark:shadow-none">
+            <div className="hidden sm:flex w-8 h-8 sm:w-10 sm:h-10 bg-slate-900 dark:bg-slate-800 rounded-lg sm:rounded-xl items-center justify-center text-white shadow-lg shadow-slate-200 dark:shadow-none">
               <Eye size={16} />
             </div>
             <div className="space-y-0.5">
@@ -225,6 +255,45 @@ export default function UltimateClearancePortal() {
                 <TableIcon size={16} /> <span className="hidden sm:inline">Table</span>
               </button>
             </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
+            <select
+              value={programFilter}
+              onChange={(e) => setProgramFilter(e.target.value)}
+              className="h-10 sm:h-11 rounded-lg sm:rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 text-[10px] sm:text-xs font-black uppercase tracking-[0.1em] px-3 outline-none"
+            >
+              <option value="All">All Programs</option>
+              {programOptions.map((opt) => (
+                <option key={opt} value={opt}>
+                  {opt}
+                </option>
+              ))}
+            </select>
+            <select
+              value={levelFilter}
+              onChange={(e) => setLevelFilter(e.target.value)}
+              className="h-10 sm:h-11 rounded-lg sm:rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 text-[10px] sm:text-xs font-black uppercase tracking-[0.1em] px-3 outline-none"
+            >
+              <option value="All">All Levels</option>
+              {levelOptions.map((opt) => (
+                <option key={opt} value={opt}>
+                  {opt}
+                </option>
+              ))}
+            </select>
+            <select
+              value={sectionFilter}
+              onChange={(e) => setSectionFilter(e.target.value)}
+              className="h-10 sm:h-11 rounded-lg sm:rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 text-[10px] sm:text-xs font-black uppercase tracking-[0.1em] px-3 outline-none"
+            >
+              <option value="All">All Sections</option>
+              {sectionOptions.map((opt) => (
+                <option key={opt} value={opt}>
+                  {opt}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* MOBILE QUICK CONTROLS */}

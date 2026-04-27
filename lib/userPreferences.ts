@@ -63,7 +63,13 @@ function safeWrite<T>(key: string, value: T): void {
 }
 
 export function getNotificationPreferences(): NotificationPreferences {
-  return safeRead(NOTIFICATION_KEY, DEFAULT_NOTIFICATION_PREFERENCES);
+  const merged = safeRead(NOTIFICATION_KEY, DEFAULT_NOTIFICATION_PREFERENCES);
+  return {
+    system: Boolean(merged.system),
+    status: Boolean(merged.status),
+    approval: Boolean(merged.approval),
+    adminAnnouncements: Boolean(merged.adminAnnouncements),
+  };
 }
 
 export function setNotificationPreferences(value: NotificationPreferences): void {
@@ -71,7 +77,23 @@ export function setNotificationPreferences(value: NotificationPreferences): void
 }
 
 export function getAppearancePreferences(): AppearancePreferences {
-  return safeRead(APPEARANCE_KEY, DEFAULT_APPEARANCE_PREFERENCES);
+  const merged = safeRead(APPEARANCE_KEY, DEFAULT_APPEARANCE_PREFERENCES);
+  const validFontSize = ["small", "standard", "large"] as const;
+  const validLanguage = ["en", "fil"] as const;
+  const validLayout = ["standard", "compact"] as const;
+
+  return {
+    fontSize: validFontSize.includes(merged.fontSize as AppearancePreferences["fontSize"])
+      ? (merged.fontSize as AppearancePreferences["fontSize"])
+      : DEFAULT_APPEARANCE_PREFERENCES.fontSize,
+    language: validLanguage.includes(merged.language as AppearancePreferences["language"])
+      ? (merged.language as AppearancePreferences["language"])
+      : DEFAULT_APPEARANCE_PREFERENCES.language,
+    layout: validLayout.includes(merged.layout as AppearancePreferences["layout"])
+      ? (merged.layout as AppearancePreferences["layout"])
+      : DEFAULT_APPEARANCE_PREFERENCES.layout,
+    highContrast: Boolean(merged.highContrast),
+  };
 }
 
 export function setAppearancePreferences(value: AppearancePreferences): void {
@@ -79,7 +101,15 @@ export function setAppearancePreferences(value: AppearancePreferences): void {
 }
 
 export function getSecurityPreferences(): SecurityPreferences {
-  return safeRead(SECURITY_KEY, DEFAULT_SECURITY_PREFERENCES);
+  const merged = safeRead(SECURITY_KEY, DEFAULT_SECURITY_PREFERENCES);
+  const validAutoLogout = ["15m", "30m", "1h"] as const;
+
+  return {
+    autoLogout: validAutoLogout.includes(merged.autoLogout as SecurityPreferences["autoLogout"])
+      ? (merged.autoLogout as SecurityPreferences["autoLogout"])
+      : DEFAULT_SECURITY_PREFERENCES.autoLogout,
+    securityAlerts: Boolean(merged.securityAlerts),
+  };
 }
 
 export function setSecurityPreferences(value: SecurityPreferences): void {
