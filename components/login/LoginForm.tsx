@@ -197,13 +197,13 @@ export default function LoginForm({ mobile = false }: LoginFormProps) {
   {/* Local purple cursor aura (form-only) */}
   <div
     aria-hidden="true"
-    className="pointer-events-none absolute z-0 h-44 w-44 rounded-full blur-2xl transition-opacity duration-200"
+    className="pointer-events-none absolute z-0 h-52 w-52 rounded-full blur-3xl transition-opacity duration-200"
     style={{
-      opacity: isAuraVisible ? 0.3 : 0,
-      left: auraPosition.x - 88,
-      top: auraPosition.y - 88,
+      opacity: isAuraVisible ? 0.45 : 0,
+      left: auraPosition.x - 104,
+      top: auraPosition.y - 104,
       background:
-        "radial-gradient(circle at center, rgba(139,92,246,0.55) 0%, rgba(124,58,237,0.25) 45%, rgba(99,102,241,0.06) 75%, rgba(99,102,241,0) 100%)",
+        "radial-gradient(circle at center, rgba(139,92,246,0.72) 0%, rgba(124,58,237,0.36) 45%, rgba(99,102,241,0.12) 75%, rgba(99,102,241,0) 100%)",
     }}
   />
 

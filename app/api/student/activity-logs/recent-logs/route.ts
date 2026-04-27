@@ -33,6 +33,8 @@ export async function GET(request: NextRequest) {
          req.requirement_name                            AS requirementName,
          sg.department                                   AS department,
          COALESCE(a.decision_status, 'pending')          AS decisionStatus,
+         COALESCE(a.remarks, '')                         AS signatoryRemarks,
+         COALESCE(sub.comment, '')                       AS studentComment,
          DATE_FORMAT(sub.submission_date, '%M %d, %Y %h:%i %p') AS submittedAt
        FROM submissions sub
        JOIN requirements req ON sub.requirement_id = req.requirement_id
@@ -47,13 +49,24 @@ export async function GET(request: NextRequest) {
     const logs = rows.map((r: any) => {
       let action = "";
       let status = "pending";
+      const trimmedComment = String(r.studentComment ?? "").trim();
+      const trimmedRemarks = String(r.signatoryRemarks ?? "").trim();
 
       if (r.decisionStatus === "approved") {
         action = `${r.department} approved your submission for "${r.requirementName}"`;
+        if (trimmedRemarks) {
+          action += ` — message: "${trimmedRemarks}"`;
+        }
         status = "success";
       } else if (r.decisionStatus === "rejected") {
         action = `${r.department} rejected your submission for "${r.requirementName}"`;
+        if (trimmedRemarks) {
+          action += ` — message: "${trimmedRemarks}"`;
+        }
         status = "error";
+      } else if (trimmedComment) {
+        action = `You commented on ${r.department} — "${r.requirementName}": "${trimmedComment}"`;
+        status = "pending";
       } else {
         action = `You submitted a document for ${r.department} — "${r.requirementName}"`;
         status = "pending";

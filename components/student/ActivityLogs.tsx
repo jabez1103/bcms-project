@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Activity, CheckCircle2, AlertCircle, FileText, UploadCloud, Loader2, History } from "lucide-react";
 import { PageHeader } from "@/components/shared/PageHeader";
+import { useRouter } from "next/navigation";
 
 /* ── Types ───────────────────────────────────────────────── */
 type LogStatus = "success" | "error" | "pending" | "neutral" | "active";
@@ -50,6 +51,7 @@ function LogSkeleton() {
 
 /* ── Main component ──────────────────────────────────────── */
 export default function ActivityLogs() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<"recent" | "history">("recent");
   const [recentLogs, setRecentLogs] = useState<LogItem[]>([]);
   const [systemHistory, setSystemHistory] = useState<LogItem[]>([]);
@@ -124,10 +126,28 @@ export default function ActivityLogs() {
             <div className="space-y-0 divide-y divide-slate-100 dark:divide-slate-800">
               {displayData.map((log) => {
                 const { Icon, color } = iconAndColor(log.status, activeTab);
+                const isRecentNavigable = activeTab === "recent" && typeof log.requirementId === "number";
                 return (
                   <div
                     key={log.id}
-                    className="flex items-start gap-4 px-3 py-4 md:p-4 rounded-none transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50 group"
+                    className={`flex items-start gap-4 px-3 py-4 md:p-4 rounded-none transition-colors group ${
+                      isRecentNavigable
+                        ? "cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                        : "hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                    }`}
+                    onClick={() => {
+                      if (!isRecentNavigable) return;
+                      router.push(`/student/signatories/${log.requirementId}`);
+                    }}
+                    role={isRecentNavigable ? "button" : undefined}
+                    tabIndex={isRecentNavigable ? 0 : undefined}
+                    onKeyDown={(event) => {
+                      if (!isRecentNavigable) return;
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        router.push(`/student/signatories/${log.requirementId}`);
+                      }
+                    }}
                   >
                     <div className={`p-3 rounded-xl shrink-0 transition-colors ${color}`}>
                       <Icon size={18} />
@@ -139,6 +159,11 @@ export default function ActivityLogs() {
                       <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1">
                         {log.time}
                       </p>
+                      {isRecentNavigable && (
+                        <p className="text-[10px] font-bold text-brand-500 dark:text-brand-400 uppercase tracking-widest mt-2">
+                          Open requirement
+                        </p>
+                      )}
                     </div>
                     {/* Status badge */}
                     {log.status !== "neutral" && (
