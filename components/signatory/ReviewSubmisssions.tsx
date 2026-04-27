@@ -262,7 +262,7 @@ export default function UltimateClearancePortal() {
                   : "bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700"
               }`}
             >
-              Select All
+              {isPageSelected ? "Unselect All" : "Select All"}
             </button>
           </div>
 
@@ -300,7 +300,7 @@ export default function UltimateClearancePortal() {
                   <div className="w-2.5 h-0.5 rounded bg-white" />
                 )}
               </div>
-              Select All Page
+              {isPageSelected ? "Unselect Page" : "Select All Page"}
             </button>
             {selectedIds.length > 0 && (
                 <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
