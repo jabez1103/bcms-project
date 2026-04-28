@@ -1,20 +1,8 @@
 import { verifySessionFromCookies } from "@/lib/requestSession";
 import { NextRequest, NextResponse } from "next/server";
-
 import { createConnection } from "@/lib/db";
 import { createNotification } from "@/lib/notifications";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
-
-const allowLocalUploadsInProduction =
-  process.env.ALLOW_LOCAL_UPLOADS_IN_PRODUCTION === "true";
-const uploadStorageDirEnv = process.env.UPLOAD_STORAGE_DIR?.trim();
-const uploadPublicBasePath = process.env.UPLOAD_PUBLIC_BASE_PATH?.trim() || "/api/uploads";
-const localUploadsRoot = uploadStorageDirEnv || path.join(process.cwd(), "storage", "uploads");
-
-function sanitizeFilename(filename: string) {
-    return filename.replace(/[^a-zA-Z0-9._-]/g, "_");
-}
+import cloudinary from "@/lib/cloudinary";
 
 export async function POST(request: NextRequest) {
     const payload = await verifySessionFromCookies(request) as any;
@@ -90,29 +78,16 @@ export async function POST(request: NextRequest) {
       const bytes = await file.arrayBuffer();
       const buffer = Buffer.from(bytes);
 
-      const fileExt = path.extname(file.name);
-      const baseName = path.basename(file.name, fileExt);
-      const normalizedBaseName = sanitizeFilename(baseName || "upload");
+      // Cloudinary Upload
+      const base64Data = buffer.toString("base64");
+      const fileUri = `data:${fileType};base64,${base64Data}`;
 
-      const isProduction = process.env.NODE_ENV === "production";
-      const hasConfiguredPersistentUploadDir = Boolean(uploadStorageDirEnv);
-      if (isProduction && !allowLocalUploadsInProduction && !hasConfiguredPersistentUploadDir) {
-        return NextResponse.json(
-          {
-            error:
-              "Uploads are disabled in production unless a persistent upload directory is configured. Set UPLOAD_STORAGE_DIR or ALLOW_LOCAL_UPLOADS_IN_PRODUCTION=true.",
-          },
-          { status: 503 }
-        );
-      }
+      const uploadResponse = await cloudinary.uploader.upload(fileUri, {
+        folder: "submissions",
+        resource_type: "auto",
+      });
 
-      const uploadDir = path.join(localUploadsRoot, "submissions");
-      await mkdir(uploadDir, { recursive: true });
-
-      const fileName = `submission_${student_id}_${requirement_id}_${Date.now()}_${normalizedBaseName}${fileExt}`;
-      const filePath = path.join(uploadDir, fileName);
-      await writeFile(filePath, buffer);
-      const publicUrl = `${uploadPublicBasePath.replace(/\/$/, "")}/submissions/${fileName}`;
+      const publicUrl = uploadResponse.secure_url;
 
       const [existing]: any = await db.query(
           "SELECT submission_id FROM submissions WHERE student_id = ? AND requirement_id = ?",
