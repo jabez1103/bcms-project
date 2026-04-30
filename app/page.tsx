@@ -6,9 +6,10 @@ import Link from "next/link";
 import { 
   ArrowRight, 
   Menu, X, ShieldCheck,
-  Zap, Monitor, Moon, Sun 
+  Zap, Monitor, Moon, Sun, User
   } from "lucide-react";
 import { useTheme } from "next-themes";
+import { roleHomePath } from "@/lib/authSync";
 
 export default function LandingPage() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -19,6 +20,7 @@ export default function LandingPage() {
   const [typedTagline, setTypedTagline] = useState("");
   const [isHeadlineDone, setIsHeadlineDone] = useState(false);
   const [isTaglineDone, setIsTaglineDone] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   const TYPEWRITER_SPEED: "slow" | "normal" | "fast" = "normal";
   const SPEED_MS = { slow: 90, normal: 55, fast: 35 } as const;
@@ -28,6 +30,33 @@ export default function LandingPage() {
 
   useEffect(() => {
     setMounted(true);
+
+    const checkAuth = async () => {
+      try {
+        const storedUser = localStorage.getItem("user");
+        if (storedUser) {
+           const parsedUser = JSON.parse(storedUser);
+           if (parsedUser.role) {
+             setUserRole(parsedUser.role);
+           }
+        }
+        
+        const res = await fetch("/api/session/validate");
+        if (res.ok) {
+           const data = await res.json();
+           if (data.ok && data.role) {
+             setUserRole(data.role);
+           } else {
+             setUserRole(null);
+           }
+        } else {
+           setUserRole(null);
+        }
+      } catch (e) {
+        // Ignore
+      }
+    };
+    checkAuth();
   }, []);
 
   useEffect(() => {
@@ -144,11 +173,11 @@ export default function LandingPage() {
               </button>
             ))}
             <Link 
-              href="/login"
+              href={userRole ? roleHomePath(userRole) : "/login"}
               onClick={() => setMobileMenuOpen(false)}
               className="mt-3 sm:mt-4 inline-flex items-center gap-2.5 text-xl sm:text-2xl font-bold text-brand-400 underline decoration-2 underline-offset-8"
             >
-              Sign in to Portal <ArrowRight />
+              {userRole ? "Go to Dashboard" : "Sign in to Portal"} <ArrowRight />
             </Link>
 
             {mounted && (
@@ -227,11 +256,25 @@ export default function LandingPage() {
               </button>
             )}
 
+            {mounted && (
+              <Link
+                href={userRole ? roleHomePath(userRole) : "/login"}
+                className={`p-2.5 rounded-xl transition-colors hidden sm:flex items-center justify-center ${
+                  isScrolled 
+                  ? "text-gray-600 dark:text-slate-300 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700" 
+                  : "text-white bg-white/10 hover:bg-white/20"
+                }`}
+                aria-label="Profile/Dashboard"
+              >
+                <User size={18} />
+              </Link>
+            )}
+
             <Link 
-              href="/login" 
+              href={userRole ? roleHomePath(userRole) : "/login"} 
               className="hidden sm:flex items-center gap-2 rounded-xl bg-brand-600 px-6 py-2.5 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-brand-500/20 transition-all hover:bg-brand-700 hover:-translate-y-0.5 active:translate-y-0"
             >
-              Sign In
+              {userRole ? "Dashboard" : "Sign In"}
               <ArrowRight size={12} />
             </Link>
 
@@ -295,8 +338,8 @@ export default function LandingPage() {
           </div>
 
           <div className="mt-7 sm:mt-12 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-5">
-            <Link href="/login" className="group h-11 sm:h-14 px-7 sm:px-10 flex items-center justify-center rounded-xl bg-white dark:bg-slate-900 text-brand-900 dark:text-brand-100 font-black text-[11px] sm:text-sm uppercase tracking-widest shadow-[0_20px_40px_-10px_rgba(255,255,255,0.3)] dark:shadow-[0_20px_40px_-10px_rgba(124,58,237,0.3)] transition-all hover:scale-[1.02] hover:bg-brand-50 dark:hover:bg-slate-800 active:scale-95">
-              Access Portal
+            <Link href={userRole ? roleHomePath(userRole) : "/login"} className="group h-11 sm:h-14 px-7 sm:px-10 flex items-center justify-center rounded-xl bg-white dark:bg-slate-900 text-brand-900 dark:text-brand-100 font-black text-[11px] sm:text-sm uppercase tracking-widest shadow-[0_20px_40px_-10px_rgba(255,255,255,0.3)] dark:shadow-[0_20px_40px_-10px_rgba(124,58,237,0.3)] transition-all hover:scale-[1.02] hover:bg-brand-50 dark:hover:bg-slate-800 active:scale-95">
+              {userRole ? "Go to Dashboard" : "Access Portal"}
               <ArrowRight size={16} className="ml-2 group-hover:translate-x-1.5 transition-transform" />
             </Link>
             <button
