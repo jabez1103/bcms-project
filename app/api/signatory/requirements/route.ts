@@ -240,6 +240,35 @@ export async function POST(request: NextRequest) {
             conditionalPolicy,
         ]);
 
+        if (normalizedFormat !== "conditional") {
+            const numericYearMap: Record<string, number> = {
+                "1st Year": 1,
+                "2nd Year": 2,
+                "3rd Year": 3,
+                "4th Year": 4,
+            };
+            const targetYearNumeric = numericYearMap[data.targetYear] || null;
+
+            await db.query(`
+                DELETE a FROM approvals a
+                JOIN submissions sub ON a.submission_id = sub.submission_id
+                JOIN requirements req ON sub.requirement_id = req.requirement_id
+                JOIN students s ON sub.student_id = s.student_id
+                WHERE req.period_id = ?
+                  AND LOWER(req.requirement_type) = 'conditional'
+                  AND (? = 'All Years' OR s.year_level = ?)
+            `, [period_id, data.targetYear, targetYearNumeric]);
+
+            await db.query(`
+                DELETE sub FROM submissions sub
+                JOIN requirements req ON sub.requirement_id = req.requirement_id
+                JOIN students s ON sub.student_id = s.student_id
+                WHERE req.period_id = ?
+                  AND LOWER(req.requirement_type) = 'conditional'
+                  AND (? = 'All Years' OR s.year_level = ?)
+            `, [period_id, data.targetYear, targetYearNumeric]);
+        }
+
         return NextResponse.json({ success: true, id: result.insertId });
     } catch (e: any) {
         console.error("POST Requirements Error:", e);
