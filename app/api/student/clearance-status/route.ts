@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { createConnection } from "@/lib/db";
 import { ensureRequirementConditionalColumns } from "@/lib/ensureRequirementConditionalColumns";
+import { ensureSignatoryAssignedProgramColumn } from "@/lib/ensureSignatoryAssignedProgramColumn";
 import { parseStoredConditionalIds } from "@/lib/requirementTypeAccess";
 
 export async function GET(request: NextRequest) {
@@ -15,6 +16,7 @@ export async function GET(request: NextRequest) {
 
     const db = await createConnection();
     await ensureRequirementConditionalColumns(db);
+    await ensureSignatoryAssignedProgramColumn(db);
 
     const [student]: any = await db.query(
         "SELECT student_id, year_level, program FROM students WHERE user_id = ?",
