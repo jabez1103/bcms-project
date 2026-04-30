@@ -37,6 +37,10 @@ export async function POST(request: NextRequest) {
 
       if (!file || !requirement_id) return NextResponse.json({ error: "File and requirement are required" }, { status: 400 });
 
+      if (file.size > 5 * 1024 * 1024) {
+          return NextResponse.json({ error: "File exceeds the 5MB maximum limit." }, { status: 400 });
+      }
+
       const [requirementRows]: any = await db.query(
           `SELECT r.requirement_type, r.allow_file_upload, r.allow_comment, cp.period_id, sg.department, sg.assigned_program
            FROM requirements r
@@ -142,16 +146,30 @@ export async function POST(request: NextRequest) {
         );
         if (reqRows.length > 0) {
           const { user_id: sigUserId, requirement_name, studentName } = reqRows[0];
-          await createNotification({
-            db,
-            userId: sigUserId,
-            role: "signatory",
-            type: "submission_received",
-            title: "📄 New Submission",
-            message: `${studentName} submitted "${requirement_name}" — please review.`,
-            targetId: Number(requirement_id),
-            clearancePeriodId: requirement.period_id,
-          });
+
+          // Check if an unread notification already exists to prevent spam
+          const [existingNotif]: any = await db.query(
+            `SELECT notification_id FROM notifications 
+             WHERE user_id = ? 
+               AND type = 'submission_received' 
+               AND target_id = ? 
+               AND is_read = false 
+             LIMIT 1`,
+            [sigUserId, Number(requirement_id)]
+          );
+
+          if (existingNotif.length === 0) {
+            await createNotification({
+              db,
+              userId: sigUserId,
+              role: "signatory",
+              type: "submission_received",
+              title: "📄 New Submission",
+              message: `${studentName} submitted "${requirement_name}" — please review.`,
+              targetId: Number(requirement_id),
+              clearancePeriodId: requirement.period_id,
+            });
+          }
         }
       } catch (err) {
         console.error("[Notification Error - submit]", err);

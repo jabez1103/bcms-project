@@ -78,18 +78,31 @@ export async function POST(request: NextRequest) {
       "SELECT user_id FROM users WHERE LOWER(role) = 'admin' AND LOWER(account_status) = 'active'",
     );
 
-    await createNotificationBulk(
-      db,
-      admins.map((row) => ({ userId: Number(row.user_id), role: "admin" as const })),
-      "password_reset_requested",
-      "Password Reset Request",
-      requestedUserName
-        ? `${requestedUserName} (${email}) requested a password reset. Click to open the account list with this user filtered.`
-        : `A user requested a password reset for ${email}. Please review and reset the account if verified.`,
-      {
-        targetId: requestedUser ? Number(requestedUser.user_id) : undefined,
-      },
+    // Check if there is an unread password reset request for this email
+    type NotifRow = RowDataPacket & { notification_id: number };
+    const [recentNotifs] = await db.query<NotifRow[]>(
+      `SELECT notification_id FROM notifications 
+       WHERE type = 'password_reset_requested' 
+         AND is_read = false 
+         AND message LIKE ? 
+       LIMIT 1`,
+       [`%${email}%`]
     );
+
+    if (recentNotifs.length === 0) {
+      await createNotificationBulk(
+        db,
+        admins.map((row) => ({ userId: Number(row.user_id), role: "admin" as const })),
+        "password_reset_requested",
+        "Password Reset Request",
+        requestedUserName
+          ? `${requestedUserName} (${email}) requested a password reset. Click to open the account list with this user filtered.`
+          : `A user requested a password reset for ${email}. Please review and reset the account if verified.`,
+        {
+          targetId: requestedUser ? Number(requestedUser.user_id) : undefined,
+        },
+      );
+    }
   } catch {
     // Avoid leaking internal errors to public endpoint callers.
   } finally {
