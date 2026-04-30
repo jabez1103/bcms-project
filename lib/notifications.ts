@@ -101,14 +101,11 @@ export async function fetchLatestNotificationsForUser(
     timestamp: string;
   };
 
-  // If a periodId is provided, only return notifications for that cycle.
-  // Notifications without a clearance_period_id (legacy) are excluded when filtering.
-  const periodClause = periodId != null
-    ? `AND clearance_period_id = ?`
-    : ``;
-  const params: (number | string)[] = periodId != null
-    ? [userId, periodId, capped]
-    : [userId, capped];
+  // periodId filtering is reserved for future use once the clearance_period_id
+  // column is added to the notifications table. For now, ignore it so all
+  // notifications are returned regardless of period.
+  const periodClause = ``;
+  const params: (number | string)[] = [userId, capped];
 
   const [rows] = await db.query<NotificationRow[]>(
     `SELECT
@@ -191,9 +188,9 @@ export async function createNotification({
   clearancePeriodId,
 }: CreateNotificationParams): Promise<void> {
   const [result] = await db.query<ResultSetHeader>(
-    `INSERT INTO notifications (user_id, role, type, title, message, target_id, clearance_period_id)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    [userId, role, type, title, message, targetId ?? null, clearancePeriodId ?? null]
+    `INSERT INTO notifications (user_id, role, type, title, message, target_id)
+     VALUES (?, ?, ?, ?, ?, ?)`,
+    [userId, role, type, title, message, targetId ?? null]
   );
   await trimNotificationsForUser(db, userId);
 
@@ -235,9 +232,9 @@ export async function createNotificationBulk(
   const pushBody = (options?.pushBody ?? message).slice(0, PUSH_BODY_MAX);
   const clearancePeriodId = options?.clearancePeriodId ?? null;
 
-  const values = users.map((u) => [u.userId, u.role, type, title, message, targetId, clearancePeriodId]);
+  const values = users.map((u) => [u.userId, u.role, type, title, message, targetId]);
   const [insertResult] = await db.query<ResultSetHeader>(
-    `INSERT INTO notifications (user_id, role, type, title, message, target_id, clearance_period_id)
+    `INSERT INTO notifications (user_id, role, type, title, message, target_id)
      VALUES ?`,
     [values]
   );
