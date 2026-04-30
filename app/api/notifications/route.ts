@@ -18,7 +18,13 @@ export async function GET(request: NextRequest) {
   const db = await createConnection();
 
   try {
-    const rows = await fetchLatestNotificationsForUser(db, Number(payload.user_id), 10);
+    const [activePeriodRows] = await db.query(
+      `SELECT period_id FROM clearance_periods WHERE period_status = 'live' ORDER BY created_at DESC LIMIT 1`
+    ) as [Array<{ period_id: number }>, unknown];
+
+    const currentPeriodId = activePeriodRows.length > 0 ? activePeriodRows[0].period_id : null;
+
+    const rows = await fetchLatestNotificationsForUser(db, Number(payload.user_id), 10, currentPeriodId);
 
     const role = payload.role as NotificationRole;
     const notifications = rows.map((row) => ({

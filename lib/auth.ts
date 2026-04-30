@@ -64,6 +64,7 @@ export function getAuthCookieOptions(maxAgeSeconds = DEFAULT_JWT_TTL_SECONDS) {
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax" as const,
     maxAge: maxAgeSeconds,
+    expires: new Date(Date.now() + maxAgeSeconds * 1000),
     path: "/",
   };
 }

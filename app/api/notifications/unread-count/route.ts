@@ -17,10 +17,21 @@ export async function GET(request: NextRequest) {
 
   try {
     type CountRow = RowDataPacket & { count: number };
-    const [rows] = await db.query<CountRow[]>(
-      `SELECT COUNT(*) AS count FROM notifications WHERE user_id = ? AND is_read = 0`,
-      [payload.user_id]
-    );
+    const [activePeriodRows] = await db.query(
+      `SELECT period_id FROM clearance_periods WHERE period_status = 'live' ORDER BY created_at DESC LIMIT 1`
+    ) as [Array<{ period_id: number }>, unknown];
+
+    const currentPeriodId = activePeriodRows.length > 0 ? activePeriodRows[0].period_id : null;
+
+    let query = `SELECT COUNT(*) AS count FROM notifications WHERE user_id = ? AND is_read = 0`;
+    const params: any[] = [payload.user_id];
+
+    if (currentPeriodId != null) {
+      query += ` AND clearance_period_id = ?`;
+      params.push(currentPeriodId);
+    }
+
+    const [rows] = await db.query<CountRow[]>(query, params);
 
     return NextResponse.json({ success: true, count: rows[0].count });
   } catch (err: unknown) {

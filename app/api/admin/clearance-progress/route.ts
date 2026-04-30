@@ -93,10 +93,16 @@ export async function GET(request: NextRequest) {
              ELSE 'All Years'
            END
          )
-       LEFT JOIN submissions s
-         ON s.requirement_id = r.requirement_id AND s.student_id = st.student_id
-       LEFT JOIN approvals a ON a.submission_id = s.submission_id
-       WHERE u.role = 'student' AND u.account_status = 'active'
+        LEFT JOIN submissions s
+          ON s.requirement_id = r.requirement_id AND s.student_id = st.student_id
+        LEFT JOIN approvals a ON a.submission_id = s.submission_id
+        INNER JOIN signatories sg ON r.signatory_id = sg.signatory_id
+        WHERE u.role = 'student' AND u.account_status = 'active'
+          AND (
+            LOWER(sg.department) NOT LIKE '%dean%'
+            OR sg.assigned_program IS NULL
+            OR sg.assigned_program = st.program
+          )
        GROUP BY st.student_id, u.user_id, u.first_name, u.last_name, u.email, st.program, st.year_level
        ORDER BY u.first_name ASC, u.last_name ASC, st.student_id ASC`
     );

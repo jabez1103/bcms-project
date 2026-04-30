@@ -14,12 +14,13 @@ export async function POST(request: NextRequest) {
     const db = await createConnection();
     try {
       const [student]: any = await db.query(
-          "SELECT student_id, year_level FROM students WHERE user_id = ?",
+          "SELECT student_id, year_level, program FROM students WHERE user_id = ?",
           [payload.user_id]
       );
       if (student.length === 0) return NextResponse.json({ error: "Student not found" }, { status: 404 });
 
       const student_id = student[0].student_id;
+      const student_program = student[0].program;
       const year_level = Number(student[0].year_level);
       const yearMap: Record<number, string> = {
         1: "1st Year",
@@ -37,9 +38,10 @@ export async function POST(request: NextRequest) {
       if (!file || !requirement_id) return NextResponse.json({ error: "File and requirement are required" }, { status: 400 });
 
       const [requirementRows]: any = await db.query(
-          `SELECT r.requirement_type, r.allow_file_upload, r.allow_comment
+          `SELECT r.requirement_type, r.allow_file_upload, r.allow_comment, cp.period_id, sg.department, sg.assigned_program
            FROM requirements r
            JOIN clearance_periods cp ON r.period_id = cp.period_id
+           JOIN signatories sg ON r.signatory_id = sg.signatory_id
            WHERE r.requirement_id = ?
              AND cp.period_status = 'live'
              AND COALESCE(r.req_status, 'active') = 'active'
@@ -54,6 +56,16 @@ export async function POST(request: NextRequest) {
 
       const allowUpload = Boolean(requirement.allow_file_upload);
       const allowComment = Boolean(requirement.allow_comment);
+
+      const sigDepartment = String(requirement.department || "").toLowerCase();
+      if (sigDepartment.includes("dean") && requirement.assigned_program) {
+          if (requirement.assigned_program !== student_program) {
+              return NextResponse.json(
+                  { error: "You cannot submit to a Dean of a different program." },
+                  { status: 403 }
+              );
+          }
+      }
 
       if (!allowUpload) {
           return NextResponse.json(
@@ -138,6 +150,7 @@ export async function POST(request: NextRequest) {
             title: "📄 New Submission",
             message: `${studentName} submitted "${requirement_name}" — please review.`,
             targetId: Number(requirement_id),
+            clearancePeriodId: requirement.period_id,
           });
         }
       } catch (err) {

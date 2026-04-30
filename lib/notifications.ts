@@ -58,6 +58,8 @@ export type NotificationBulkOptions = {
   pushBody?: string;
   /** Groups/replaces prior push with the same tag on the client. */
   pushTag?: string;
+  /** Links this notification to a specific clearance period cycle. */
+  clearancePeriodId?: number;
 };
 
 export type NotificationListItem = {
@@ -78,12 +80,14 @@ interface CreateNotificationParams {
   title: string;
   message: string;
   targetId?: number; // requirement_id or submission_id for click-through navigation
+  clearancePeriodId?: number; // links notification to a specific clearance cycle
 }
 
 export async function fetchLatestNotificationsForUser(
   db: Connection,
   userId: number,
   limit = getMaxNotificationsPerUser(),
+  periodId?: number | null,
 ): Promise<NotificationListItem[]> {
   const maxPerUser = getMaxNotificationsPerUser();
   const capped = Math.max(1, Math.min(Math.floor(limit), maxPerUser));
@@ -96,6 +100,16 @@ export async function fetchLatestNotificationsForUser(
     isRead: 0 | 1;
     timestamp: string;
   };
+
+  // If a periodId is provided, only return notifications for that cycle.
+  // Notifications without a clearance_period_id (legacy) are excluded when filtering.
+  const periodClause = periodId != null
+    ? `AND clearance_period_id = ?`
+    : ``;
+  const params: (number | string)[] = periodId != null
+    ? [userId, periodId, capped]
+    : [userId, capped];
+
   const [rows] = await db.query<NotificationRow[]>(
     `SELECT
        notification_id  AS id,
@@ -107,9 +121,10 @@ export async function fetchLatestNotificationsForUser(
        created_at       AS timestamp
      FROM notifications
      WHERE user_id = ?
+     ${periodClause}
      ORDER BY created_at DESC, notification_id DESC
      LIMIT ?`,
-    [userId, capped],
+    params,
   );
 
   return rows.map((r) => ({
@@ -173,11 +188,12 @@ export async function createNotification({
   title,
   message,
   targetId,
+  clearancePeriodId,
 }: CreateNotificationParams): Promise<void> {
   const [result] = await db.query<ResultSetHeader>(
-    `INSERT INTO notifications (user_id, role, type, title, message, target_id)
-     VALUES (?, ?, ?, ?, ?, ?)`,
-    [userId, role, type, title, message, targetId ?? null]
+    `INSERT INTO notifications (user_id, role, type, title, message, target_id, clearance_period_id)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    [userId, role, type, title, message, targetId ?? null, clearancePeriodId ?? null]
   );
   await trimNotificationsForUser(db, userId);
 
@@ -217,10 +233,11 @@ export async function createNotificationBulk(
   const targetId = options?.targetId ?? null;
   const pushTitle = options?.pushTitle ?? title;
   const pushBody = (options?.pushBody ?? message).slice(0, PUSH_BODY_MAX);
+  const clearancePeriodId = options?.clearancePeriodId ?? null;
 
-  const values = users.map((u) => [u.userId, u.role, type, title, message, targetId]);
+  const values = users.map((u) => [u.userId, u.role, type, title, message, targetId, clearancePeriodId]);
   const [insertResult] = await db.query<ResultSetHeader>(
-    `INSERT INTO notifications (user_id, role, type, title, message, target_id)
+    `INSERT INTO notifications (user_id, role, type, title, message, target_id, clearance_period_id)
      VALUES ?`,
     [values]
   );

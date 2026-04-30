@@ -56,6 +56,7 @@ export default function SignatoryTableWithDate() {
   // New state for Review Modal
   const [studentProgress, setStudentProgress] = useState<any[]>([]);
   const [loadingProgress, setLoadingProgress] = useState(false);
+  const [isDean, setIsDean] = useState(false);
 
   React.useEffect(() => {
     const fetchRows = async () => {
@@ -78,6 +79,7 @@ export default function SignatoryTableWithDate() {
             section: s.section
           }));
           setRows(formatted);
+          setIsDean(data.isDean || false);
         }
       } catch (error) {
         console.error("Failed to fetch student status", error);
@@ -197,7 +199,9 @@ const toSignatoryStatus = (status: SignatoryStatus): ClearanceStatus => {
             </div>
 
             <div className="grid grid-cols-3 gap-1.5 sm:gap-2 items-center w-full xl:w-auto">
-              <FilterGroup icon={<GraduationCap size={14}/>} value={programFilter} onChange={setProgramFilter} options={["All", "BSIT", "BSCS", "BSES", "BEED", "BEEDMATH", "BTLED", "HM"]} />
+              {!isDean && (
+                <FilterGroup icon={<GraduationCap size={14}/>} value={programFilter} onChange={setProgramFilter} options={["All", "BSIT", "BSCS", "BSES", "BEED", "BEEDMATH", "BTLED", "HM"]} />
+              )}
               <FilterGroup icon={<Layers size={14}/>} value={yearFilter} onChange={setYearFilter} options={["All", "1st Year", "2nd Year", "3rd Year", "4th Year"]} />
               <FilterGroup icon={<Hash size={14}/>} value={sectionFilter} onChange={setSectionFilter} options={["All", "A", "B", "C", "D", "E"]} />
             </div>

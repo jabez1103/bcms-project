@@ -202,6 +202,13 @@ export function validateUserPayload(
     } else if (!DEPARTMENTS.includes(department as (typeof DEPARTMENTS)[number])) {
       errors.department = "Please select a valid department.";
     }
+
+    // Program is strictly mandatory for ALL signatories
+    if (!program) {
+      errors.program = "Program is required for all signatory accounts.";
+    } else if (!(program in PROGRAMS)) {
+      errors.program = "Please select a valid program.";
+    }
   }
 
   if (Object.keys(errors).length > 0) {
@@ -221,7 +228,7 @@ export function validateUserPayload(
       role: role as (typeof VALID_ROLES)[number],
       account_status: account_status as (typeof VALID_ACCOUNT_STATUSES)[number],
       profile_picture,
-      program: role === "student" ? program : null,
+      program: role === "student" ? program : role === "signatory" ? (program || null) : null,
       year_level: role === "student" ? year_level : null,
       department: role === "signatory" ? department : null,
       credentials: role === "signatory" ? credentials : null,
@@ -243,7 +250,7 @@ export async function syncRoleRecords(
   payload: Pick<
     ValidatedUserPayload,
     "role" | "program" | "year_level" | "department" | "credentials"
-  >,
+  > & { program?: string | null },
 ) {
   await db.query("DELETE FROM students WHERE user_id = ?", [userId]);
   await db.query("DELETE FROM signatories WHERE user_id = ?", [userId]);
@@ -259,8 +266,8 @@ export async function syncRoleRecords(
 
   if (payload.role === "signatory") {
     await db.query(
-      "INSERT INTO signatories (signatory_id, user_id, department, academic_credentials, contact_number) VALUES (?, ?, ?, ?, ?)",
-      [userId, userId, payload.department, payload.credentials, null],
+      "INSERT INTO signatories (signatory_id, user_id, department, assigned_program, academic_credentials, contact_number) VALUES (?, ?, ?, ?, ?, ?)",
+      [userId, userId, payload.department, payload.program || null, payload.credentials, null],
     );
     return;
   }

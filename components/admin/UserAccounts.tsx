@@ -23,6 +23,7 @@ type User = {
   program: string | null;
   year_level: number | null;
   department: string | null;
+  credentials: string | null;
 };
 
 type FormState = {
@@ -198,10 +199,10 @@ function userToForm(user: User): FormState {
     role: user.role ?? "student",
     account_status: user.account_status ?? "active",
     profile_picture: user.profile_picture ?? "/avatars/defaultAvatar.jpg",
-    program: user.program ?? "BSCS",
+    program: user.program ?? (user.role === "student" ? "BSCS" : ""),
     year_level: user.year_level ? String(user.year_level) : "1",
-    department: user.department ?? "Registrar",
-    credentials: (user as any).credentials ?? "",
+    department: user.department ?? "Director, Scholarship and Admission",
+    credentials: user.credentials ?? "",
   };
 }
 
@@ -278,8 +279,15 @@ function validateForm(form: FormState, isEditing: boolean) {
     }
   }
 
-  if (form.role === "signatory" && !DEPARTMENTS.includes(form.department)) {
-    errors.department = "Please select a valid department.";
+  if (form.role === "signatory") {
+    if (!DEPARTMENTS.includes(form.department)) {
+      errors.department = "Please select a valid department.";
+    }
+
+    // Program is strictly mandatory for all signatories
+    if (!form.program || !PROGRAMS[form.program]) {
+      errors.program = "Program is required for all signatory accounts.";
+    }
   }
 
   return errors;
@@ -352,6 +360,8 @@ export default function UserAccounts() {
   const [activeResultTab, setActiveResultTab]   = useState<"skipped" | "errors">("skipped");
 
   const [roleFilter, setRoleFilter] = useState("all");
+  const [programFilter, setProgramFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -423,6 +433,15 @@ export default function UserAccounts() {
       const matchesRole =
         roleFilter === "all" || u.role.toLowerCase() === roleFilter.toLowerCase();
       if (!matchesRole) return false;
+
+      const matchesProgram =
+        programFilter === "all" || (u.program ?? "").toUpperCase() === programFilter.toUpperCase();
+      if (!matchesProgram) return false;
+
+      const matchesStatus =
+        statusFilter === "all" || u.account_status.toLowerCase() === statusFilter.toLowerCase();
+      if (!matchesStatus) return false;
+
       if (!q) return true;
 
       const fullName = `${u.first_name} ${u.middle_name ?? ""} ${u.last_name}`
@@ -432,10 +451,12 @@ export default function UserAccounts() {
       return (
         fullName.includes(q) ||
         String(u.user_id).toLowerCase().includes(q) ||
-        String(u.email ?? "").toLowerCase().includes(q)
+        String(u.email ?? "").toLowerCase().includes(q) ||
+        String(u.program ?? "").toLowerCase().includes(q) ||
+        String(u.department ?? "").toLowerCase().includes(q)
       );
     });
-  }, [users, roleFilter, searchQuery]);
+  }, [users, roleFilter, programFilter, statusFilter, searchQuery]);
 
   const totalPages = Math.max(1, Math.ceil(filteredUsers.length / itemsPerPage));
 
@@ -446,7 +467,7 @@ export default function UserAccounts() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [roleFilter, searchQuery]);
+  }, [roleFilter, programFilter, statusFilter, searchQuery]);
 
   useEffect(() => {
     if (currentPage > totalPages) {
@@ -558,8 +579,11 @@ export default function UserAccounts() {
       password: isEditing ? form.password.trim() : form.password,
     };
 
-    if (form.role !== "student") {
+    if (form.role !== "student" && form.role !== "signatory") {
       delete payload.program;
+    }
+
+    if (form.role !== "student") {
       delete payload.year_level;
     }
 
@@ -958,8 +982,29 @@ export default function UserAccounts() {
               ))}
             </div>
           </div>
-          <div className="px-4 text-[10px] md:text-xs font-black text-slate-400 uppercase tracking-widest hidden sm:block">
-            {filteredUsers.length} Users Registered
+          <div className="flex items-center gap-2 w-full lg:w-auto">
+            <select
+              value={programFilter}
+              onChange={(e) => setProgramFilter(e.target.value)}
+              className="flex-1 lg:flex-none bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-[11px] md:text-xs font-bold text-slate-600 dark:text-slate-300 outline-none focus:border-brand-500 transition-all"
+            >
+              <option value="all">All Programs</option>
+              {Object.keys(PROGRAMS).map((p) => (
+                <option key={p} value={p}>{p}</option>
+              ))}
+            </select>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="flex-1 lg:flex-none bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-[11px] md:text-xs font-bold text-slate-600 dark:text-slate-300 outline-none focus:border-brand-500 transition-all"
+            >
+              <option value="all">All Status</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+            <div className="px-3 text-[10px] md:text-xs font-black text-slate-400 uppercase tracking-widest hidden sm:block whitespace-nowrap">
+              {filteredUsers.length} Found
+            </div>
           </div>
         </div>
 
@@ -1494,6 +1539,30 @@ export default function UserAccounts() {
                         ))}
                       </select>
                       <FieldError message={formErrors.department} />
+                    </div>
+
+                    {/* Program — strictly mandatory for all signatories */}
+                    <div className="md:col-span-2">
+                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">
+                        Program <span className="text-rose-400 normal-case font-medium">(required)</span>
+                      </label>
+                      <select
+                        value={form.program}
+                        onChange={(e) => updateFormFields("program", e.target.value)}
+                        className={`w-full border-2 rounded-xl md:rounded-2xl p-3 md:p-3.5 text-sm font-bold outline-none bg-white dark:bg-slate-900 ${
+                          formErrors.program
+                            ? "border-rose-300 bg-rose-50 dark:border-rose-500/40 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300"
+                            : "border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 focus:border-brand-500"
+                        }`}
+                      >
+                        <option value="">— No Program —</option>
+                        {Object.entries(PROGRAMS).map(([key, val]) => (
+                          <option key={key} value={key}>
+                            {key} — {val.label}
+                          </option>
+                        ))}
+                      </select>
+                      <FieldError message={formErrors.program} />
                     </div>
 
                     {/* Academic Credentials */}

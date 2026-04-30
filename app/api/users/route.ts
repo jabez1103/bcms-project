@@ -48,9 +48,10 @@ export async function GET(request: NextRequest) {
         u.role,
         u.account_status,
         u.profile_picture,
-        s.program,
+        COALESCE(s.program, sg.assigned_program) AS program,
         s.year_level,
-        sg.department
+        sg.department,
+        sg.academic_credentials AS credentials
       FROM users u
       LEFT JOIN students s ON s.user_id = u.user_id
       LEFT JOIN signatories sg ON sg.user_id = u.user_id

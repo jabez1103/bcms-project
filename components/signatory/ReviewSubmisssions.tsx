@@ -61,6 +61,7 @@ export default function UltimateClearancePortal() {
   const [showBulkModal, setShowBulkModal] = useState<"Approve" | "Reject" | null>(null);
   const [feedback, setFeedback] = useState("");
   const [loading, setLoading] = useState(true);
+  const [isDean, setIsDean] = useState(false);
 
   const [viewMode, setViewMode] = useState<"grid" | "table">("table");
 
@@ -76,6 +77,7 @@ export default function UltimateClearancePortal() {
         const data = await res.json();
         if (data.success) {
             setStudents(data.submissions);
+            setIsDean(data.isDean || false);
         }
       } catch (error) {
         console.error("Failed to fetch submissions", error);
@@ -258,18 +260,20 @@ export default function UltimateClearancePortal() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
-            <select
-              value={programFilter}
-              onChange={(e) => setProgramFilter(e.target.value)}
-              className="h-10 sm:h-11 rounded-lg sm:rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 text-[10px] sm:text-xs font-black uppercase tracking-[0.1em] px-3 outline-none"
-            >
-              <option value="All">All Programs</option>
-              {programOptions.map((opt) => (
-                <option key={opt} value={opt}>
-                  {opt}
-                </option>
-              ))}
-            </select>
+            {!isDean && (
+              <select
+                value={programFilter}
+                onChange={(e) => setProgramFilter(e.target.value)}
+                className="h-10 sm:h-11 rounded-lg sm:rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 text-[10px] sm:text-xs font-black uppercase tracking-[0.1em] px-3 outline-none"
+              >
+                <option value="All">All Programs</option>
+                {programOptions.map((opt) => (
+                  <option key={opt} value={opt}>
+                    {opt}
+                  </option>
+                ))}
+              </select>
+            )}
             <select
               value={levelFilter}
               onChange={(e) => setLevelFilter(e.target.value)}

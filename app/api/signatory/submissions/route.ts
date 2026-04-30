@@ -13,14 +13,19 @@ export async function GET(request: NextRequest) {
 
     const db = await createConnection();
 
-    // Get signatory_id
+    // Get signatory_id and assigned_program
     const [sig]: any = await db.query(
-        "SELECT signatory_id, department FROM signatories WHERE user_id = ?",
+        "SELECT signatory_id, department, assigned_program FROM signatories WHERE user_id = ?",
         [payload.user_id]
     );
     if (sig.length === 0) return NextResponse.json({ error: "Signatory profile not found" }, { status: 404 });
     const signatory_id = sig[0].signatory_id;
+    const assigned_program = sig[0].assigned_program;
     const permission = resolveRequirementTypePermission(sig[0].department);
+    const isDean = permission.scope === "dean";
+
+    const programClause = (isDean && assigned_program) ? " AND s.program = ? " : "";
+    const queryParams = (isDean && assigned_program) ? [signatory_id, assigned_program] : [signatory_id];
 
     const [rows]: any = await db.query(`
         SELECT 
@@ -42,8 +47,9 @@ export async function GET(request: NextRequest) {
         JOIN requirements req ON sub.requirement_id = req.requirement_id
         LEFT JOIN approvals a ON sub.submission_id = a.submission_id
         WHERE req.signatory_id = ?
+          ${programClause}
         ORDER BY sub.submission_date DESC, sub.submission_id DESC
-    `, [signatory_id]);
+    `, queryParams);
 
     const formattedRows = rows.map((r: any) => ({
         ...r,
@@ -91,8 +97,9 @@ export async function GET(request: NextRequest) {
          WHERE req.signatory_id = ?
            AND LOWER(req.requirement_type) = 'conditional'
            AND COALESCE(req.req_status, 'active') = 'active'
-           AND sub.submission_id IS NULL`,
-        [signatory_id]
+           AND sub.submission_id IS NULL
+           ${programClause}`,
+        queryParams
       );
 
       if (queuedCandidates.length > 0) {
@@ -160,5 +167,9 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({ success: true, submissions: filteredRows });
+    return NextResponse.json({ 
+      success: true, 
+      submissions: filteredRows,
+      isDean: isDirectorOrDeanScope && permission.scope === "dean" 
+    });
 }

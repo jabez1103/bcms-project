@@ -93,7 +93,7 @@ async function validateActiveSession(
   }
 }
 
-export async function proxy(request: NextRequest) {
+export default async function proxy(request: NextRequest) {
   const token =
     request.cookies.get(AUTH_COOKIE_NAME)?.value;
   const path = request.nextUrl.pathname;

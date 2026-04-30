@@ -13,12 +13,23 @@ export async function GET(request: NextRequest) {
   const db = await createConnection();
 
   const [sigRows] = await db.query<RowDataPacket[]>(
-    "SELECT signatory_id FROM signatories WHERE user_id = ?",
+    "SELECT signatory_id, department, assigned_program FROM signatories WHERE user_id = ?",
     [payload.user_id]
   );
   if (sigRows.length === 0) {
     await db.end();
     return NextResponse.json({ error: "Signatory profile not found" }, { status: 404 });
+  }
+
+  const signatoryDept = String(sigRows[0].department || "").toLowerCase();
+  const signatoryProgram = sigRows[0].assigned_program;
+
+  let programFilterSql = "";
+  const queryParams: any[] = [];
+
+  if (signatoryDept.includes("dean") && signatoryProgram) {
+    programFilterSql = "WHERE s.program = ?";
+    queryParams.push(signatoryProgram);
   }
 
   try {
@@ -101,9 +112,10 @@ export async function GET(request: NextRequest) {
        LEFT JOIN submissions sub
          ON sub.requirement_id = req.requirement_id AND sub.student_id = s.student_id
        LEFT JOIN approvals a ON a.submission_id = sub.submission_id
+       ${programFilterSql}
        GROUP BY s.student_id, u.first_name, u.last_name, s.program, s.year_level
        ORDER BY u.first_name ASC, u.last_name ASC, s.student_id ASC`,
-      []
+      queryParams
     );
 
     const toStr = (v: unknown) => (v == null ? "" : String(v));
@@ -139,7 +151,7 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    return NextResponse.json({ success: true, statuses: formattedRows });
+    return NextResponse.json({ success: true, statuses: formattedRows, isDean: signatoryDept.includes("dean") });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Failed to load student status";
     return NextResponse.json({ success: false, error: message }, { status: 500 });

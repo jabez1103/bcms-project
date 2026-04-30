@@ -250,6 +250,14 @@ export default function ProfilePage() {
                 <StaticField label="Legal Name" value={user.full_name as string} icon={<User size={14}/>} />
                 <StaticField label="University ID" value={user.user_id as string} icon={<CreditCard size={14}/>} />
                 
+                {user.program && (
+                  <StaticField label="Program" value={String(user.program)} icon={<CreditCard size={14}/>} />
+                )}
+
+                {user.department && (
+                  <StaticField label="Department" value={String(user.department)} icon={<CreditCard size={14}/>} />
+                )}
+
                 <EditableField 
                   label="Primary Email" 
                   value={email} 

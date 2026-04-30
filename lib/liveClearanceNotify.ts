@@ -69,6 +69,7 @@ export async function notifyClearancePeriodLive(db: Connection, row: LivePeriodR
         pushTitle: s.pushTitle,
         pushBody: s.pushBody,
         pushTag: s.pushTag,
+        clearancePeriodId: row.periodId,
       }
     );
   }
@@ -86,6 +87,7 @@ export async function notifyClearancePeriodLive(db: Connection, row: LivePeriodR
         pushTitle: g.pushTitle,
         pushBody: g.pushBody,
         pushTag: g.pushTag,
+        clearancePeriodId: row.periodId,
       }
     );
   }
@@ -125,6 +127,7 @@ export async function notifyClearancePeriodClosed(db: Connection, row: LivePerio
         pushTitle: studentTitle,
         pushBody: studentMessage,
         pushTag: `clearance-closed-${row.periodId}-student`,
+        clearancePeriodId: row.periodId,
       }
     );
   }
@@ -141,6 +144,7 @@ export async function notifyClearancePeriodClosed(db: Connection, row: LivePerio
         pushTitle: signatoryTitle,
         pushBody: signatoryMessage,
         pushTag: `clearance-closed-${row.periodId}-signatory`,
+        clearancePeriodId: row.periodId,
       }
     );
   }

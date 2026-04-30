@@ -41,9 +41,14 @@ export async function GET(request: NextRequest) {
     await ensureUsersContactNumberColumn(db);
     const userId = Number(session.payload.user_id);
     const [rows] = await db.query<RowDataPacket[]>(
-      `SELECT first_name, middle_name, last_name, email, role, profile_picture, contact_number
-       FROM users
-       WHERE user_id = ?
+      `SELECT u.first_name, u.middle_name, u.last_name, u.email, u.role, u.profile_picture, u.contact_number,
+              COALESCE(s.program, sg.assigned_program) AS program,
+              s.year_level,
+              sg.department
+       FROM users u
+       LEFT JOIN students s ON s.user_id = u.user_id
+       LEFT JOIN signatories sg ON sg.user_id = u.user_id
+       WHERE u.user_id = ?
        LIMIT 1`,
       [userId]
     );
@@ -63,6 +68,9 @@ export async function GET(request: NextRequest) {
         role: normalizeRole(row?.role ?? session.payload.role),
         avatar: row?.profile_picture ?? session.payload.avatar ?? null,
         contact_number: contactNumber,
+        program: row?.program ?? null,
+        year_level: row?.year_level ?? null,
+        department: row?.department ?? null,
       },
     });
     return response;

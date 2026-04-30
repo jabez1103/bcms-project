@@ -121,6 +121,8 @@ export default function ProfileContent() {
               { label: "Legal Name", value: String(user.full_name ?? "—"), icon: <UserIcon size={16}/> },
               { label: "University ID", value: String(user.user_id ?? "—"), icon: <Lock size={14}/> },
               { label: "Role", value: String(user.role ?? "—"), icon: <Lock size={14}/> },
+              ...((user as any).program ? [{ label: "Program", value: String((user as any).program), icon: <Lock size={14}/> }] : []),
+              ...((user as any).department ? [{ label: "Department", value: String((user as any).department), icon: <Lock size={14}/> }] : []),
             ].map((field) => (
             <div key={field.label} className="group transition-all">
               <label className="text-[10px] font-bold text-slate-400 uppercase tracking-tight ml-1">

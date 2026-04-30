@@ -83,27 +83,42 @@ export async function fetchStudentLiveRequirements(
        ON s.requirement_id = r.requirement_id AND s.student_id = st.student_id
      LEFT JOIN approvals a ON a.submission_id = s.submission_id
      WHERE st.student_id = ?
+       AND (
+         LOWER(sg.department) NOT LIKE '%dean%'
+         OR sg.assigned_program IS NULL
+         OR sg.assigned_program = st.program
+       )
        ${sigClause}
      ORDER BY sg.department ASC, r.requirement_id ASC`,
     params
   );
 
-  return rows.map((row) => ({
-    requirementId: Number(row.requirementId),
-    requirementName: String(row.requirementName ?? ""),
-    requirementType: row.requirementType != null ? String(row.requirementType) : null,
-    description: row.description != null ? String(row.description) : null,
-    targetYear: row.targetYear != null ? String(row.targetYear) : null,
-    signatoryId: Number(row.signatoryId),
-    department: String(row.department ?? ""),
-    signatoryName: String(row.signatoryName ?? ""),
-    submissionId: row.submissionId != null ? Number(row.submissionId) : null,
-    filePath: row.filePath != null ? String(row.filePath) : null,
-    studentComment: row.studentComment != null ? String(row.studentComment) : null,
-    submittedAt: row.submittedAt != null ? String(row.submittedAt) : null,
-    status: String(row.status ?? "not_submitted").toLowerCase(),
-    rejectionComment: row.rejectionComment != null ? String(row.rejectionComment) : null,
-  }));
+  return rows.map((row) => {
+    let rawStatus = String(row.status ?? "not_submitted").toLowerCase();
+    
+    // Global Rule: Conditional requirements default to 'pending' unless explicitly approved/rejected
+    const type = String(row.requirementType ?? "").toLowerCase();
+    if (type === "conditional" && rawStatus !== "approved" && rawStatus !== "rejected") {
+      rawStatus = "pending";
+    }
+
+    return {
+      requirementId: Number(row.requirementId),
+      requirementName: String(row.requirementName ?? ""),
+      requirementType: row.requirementType != null ? String(row.requirementType) : null,
+      description: row.description != null ? String(row.description) : null,
+      targetYear: row.targetYear != null ? String(row.targetYear) : null,
+      signatoryId: Number(row.signatoryId),
+      department: String(row.department ?? ""),
+      signatoryName: String(row.signatoryName ?? ""),
+      submissionId: row.submissionId != null ? Number(row.submissionId) : null,
+      filePath: row.filePath != null ? String(row.filePath) : null,
+      studentComment: row.studentComment != null ? String(row.studentComment) : null,
+      submittedAt: row.submittedAt != null ? String(row.submittedAt) : null,
+      status: rawStatus,
+      rejectionComment: row.rejectionComment != null ? String(row.rejectionComment) : null,
+    };
+  });
 }
 
 /** Roll up per-requirement rows into office-level rows for legacy DOCX export. */

@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     await ensureRequirementConditionalColumns(db);
 
     const [student]: any = await db.query(
-        "SELECT student_id, year_level FROM students WHERE user_id = ?",
+        "SELECT student_id, year_level, program FROM students WHERE user_id = ?",
         [payload.user_id]
     );
 
@@ -27,6 +27,7 @@ export async function GET(request: NextRequest) {
 
     const student_id = student[0].student_id;
     const year_level  = student[0].year_level;  // numeric: 1, 2, 3, 4
+    const student_program = student[0].program;
 
     // Map numeric year_level to the string stored in requirements.target_year
     const yearMap: Record<number, string> = {
@@ -62,8 +63,13 @@ export async function GET(request: NextRequest) {
         WHERE cp.period_status = 'live'
           AND COALESCE(r.req_status, 'active') = 'active'
           AND (r.target_year = 'All Years' OR r.target_year = ?)
+          AND (
+            LOWER(sg.department) NOT LIKE '%dean%'
+            OR sg.assigned_program IS NULL
+            OR sg.assigned_program = ?
+          )
         ORDER BY r.requirement_id ASC
-        `, [student_id, studentYearLabel ?? 'All Years']);
+        `, [student_id, studentYearLabel ?? 'All Years', student_program]);
 
     const [approvedRows]: any = await db.query(
       `SELECT DISTINCT req.signatory_id AS signatoryId
@@ -83,11 +89,16 @@ export async function GET(request: NextRequest) {
     const normalizedRows = rows.map((row: any) => {
       const type = String(row.format ?? "").toLowerCase();
       if (type !== "conditional") return row;
-      const dependencyIds = parseStoredConditionalIds(row.conditionalSignatoryIdsRaw);
-      const isApproved = dependencyIds.length > 0 && dependencyIds.every((id) => approvedSignatoryIds.has(id));
+      
+      // If the backend already auto-approved it and saved it in the database, respect it!
+      if (String(row.status).toLowerCase() === "approved") {
+        return row;
+      }
+      
+      // Otherwise, conditional requirements are always 'pending' (waiting for auto-approval)
       return {
         ...row,
-        status: isApproved ? "approved" : "pending",
+        status: "pending",
       };
     });
 

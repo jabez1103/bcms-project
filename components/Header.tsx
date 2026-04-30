@@ -134,6 +134,7 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
 
   // --- Fetch unread count (runs on mount + every 60s) ---
   const fetchUnreadCount = useCallback(async () => {
+    if (!user) return;
     try {
       const res = await fetch("/api/notifications/unread-count");
       const data = await res.json();
@@ -142,7 +143,7 @@ export function Header({ role, activePage, onPageClick, onMobileMenuToggle }: He
         setUnreadCount(data.count);
       }
     } catch (_) {}
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     fetchUnreadCount();

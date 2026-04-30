@@ -176,11 +176,12 @@ export async function POST(request: NextRequest) {
             );
           } else if (roleNorm === "signatory") {
             await db.query(
-              "INSERT INTO signatories (signatory_id, user_id, department, academic_credentials, contact_number) VALUES (?,?,?,?,?)",
+              "INSERT INTO signatories (signatory_id, user_id, department, assigned_program, academic_credentials, contact_number) VALUES (?,?,?,?,?,?)",
               [
                 uidNum,
                 uidNum,
                 department ? String(department).trim() : null,
+                program ? String(program).trim().toUpperCase() : null,
                 credentials ? String(credentials).trim() : null,
                 null,
               ],

@@ -7,7 +7,7 @@ import { ensureRequirementConditionalColumns } from "@/lib/ensureRequirementCond
 import { parseStoredConditionalIds } from "@/lib/requirementTypeAccess";
 import { resolveRequirementTypePermission } from "@/lib/requirementTypeAccess";
 
-async function applyConditionalAutoApprovals(
+async function syncConditionalApprovals(
   db: Awaited<ReturnType<typeof createConnection>>,
   submissionIds: number[],
 ) {
@@ -127,8 +127,8 @@ async function applyConditionalAutoApprovals(
 
       let isCleared = false;
 
-      if (ownerScope === "director_sds") {
-        // Director SDS stage: requires all initial signatories
+      if (ownerScope === "director_sds" || ownerScope === "dean") {
+        // Both Dean and Director SDS stage: require all initial signatories
         // except Dean/Director scope signatories and the owner signatory.
         const neededIds = Array.from(requiredInitialSignatorySet).filter((requiredId) => {
           if (requiredId === requirementOwnerSignatoryId) return false;
@@ -138,15 +138,6 @@ async function applyConditionalAutoApprovals(
         isCleared =
           neededIds.length > 0 &&
           neededIds.every((requiredId) => approvedSignatorySet.has(requiredId));
-      } else if (ownerScope === "dean") {
-        // Dean stage: requires Director SDS approval first.
-        const directorDependencies =
-          storedDependencyIds.length > 0
-            ? storedDependencyIds.filter((id) => directorSignatoryIds.has(id))
-            : Array.from(directorSignatoryIds);
-        isCleared =
-          directorDependencies.length > 0 &&
-          directorDependencies.every((directorId) => approvedSignatorySet.has(directorId));
       } else {
         // Fallback behavior for other conditional owners.
         isCleared =
@@ -154,7 +145,21 @@ async function applyConditionalAutoApprovals(
           storedDependencyIds.every((depId) => approvedSignatorySet.has(depId));
       }
 
-      if (!isCleared) continue;
+      if (!isCleared) {
+        // If no longer cleared (e.g. someone rejected), we must REVERT the auto-approval
+        // by deleting the system-generated approval and submission.
+        await db.query(
+          `DELETE FROM approvals WHERE submission_id IN (
+             SELECT submission_id FROM submissions WHERE student_id = ? AND requirement_id = ?
+           )`,
+          [studentId, Number(row.requirementId)]
+        );
+        await db.query(
+          `DELETE FROM submissions WHERE student_id = ? AND requirement_id = ?`,
+          [studentId, Number(row.requirementId)]
+        );
+        continue;
+      }
 
       const requirementId = Number(row.requirementId);
       const signatoryId = Number(row.signatoryId);
@@ -278,9 +283,8 @@ export async function POST(request: NextRequest) {
         `, [normalizedStatus, normalizedFeedback, ...normalizedIds, signatory_id]);
     }
 
-    if (normalizedStatus === "approved") {
-      await applyConditionalAutoApprovals(db, normalizedIds);
-    }
+    // Always sync conditional approvals (auto-approve if met, auto-revert if no longer met)
+    await syncConditionalApprovals(db, normalizedIds);
 
     // --- Notify each affected student ---
     try {
@@ -289,6 +293,7 @@ export async function POST(request: NextRequest) {
            st.user_id              AS studentUserId,
            req.requirement_id      AS requirementId,
            req.requirement_name    AS requirementName,
+           req.period_id           AS periodId,
            sg.department           AS signatoryDept
          FROM submissions sub
          JOIN students st       ON sub.student_id = st.student_id
@@ -311,6 +316,7 @@ export async function POST(request: NextRequest) {
             ? `Your submission for "${row.requirementName}" was approved by ${row.signatoryDept}.`
             : `Your submission for "${row.requirementName}" was rejected by ${row.signatoryDept}. Please resubmit.`,
           targetId: row.requirementId,
+          clearancePeriodId: row.periodId,
         });
       }
     } catch (err) {
